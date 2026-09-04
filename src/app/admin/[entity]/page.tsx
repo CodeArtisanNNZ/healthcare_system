@@ -8,6 +8,7 @@ import { ActionForm } from "@/components/action-form";
 import { saveEntity, deleteEntity, manageUser } from "@/app/actions";
 import { supabase } from "@/lib/supabase/server";
 import { z } from "zod";
+import { DoctorAutofill } from "@/components/doctor-autofill";
 export default async function AdminEntity({
   params,
   searchParams,
@@ -171,6 +172,7 @@ export default async function AdminEntity({
           label={edit ? "Save changes" : "Add " + entity.singular}
         >
           <input type="hidden" name="entity" value={key} />
+          {key === "doctors" && <DoctorAutofill />}
           {edit && <input type="hidden" name="id" value={edit.id} />}
           <Fields
             entity={entity}
@@ -184,6 +186,7 @@ export default async function AdminEntity({
             "caregivers",
             "ambulances",
             "lab_tests",
+            "medicines",
           ].includes(key) && (
             <label>
               Image (PNG/JPEG; up to 3 MB)
