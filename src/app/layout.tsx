@@ -5,7 +5,10 @@ import { configured } from "@/lib/supabase/server";
 import { logout } from "./actions";
 import "./globals.css";
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata: Metadata = {  icons: {
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
   title: { default: "Healthcare Central", template: "%s | Healthcare Central" },
   description:
     "One account. Total well-being. Doctors, hospitals, medicines and health records.",
