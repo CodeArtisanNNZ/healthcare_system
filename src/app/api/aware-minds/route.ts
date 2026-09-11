@@ -23,7 +23,7 @@ type Category = z.infer<typeof categorySchema>;
 
 const requestSchema = z
   .object({
-    message: z.string().trim().max(500),
+    message: z.string().trim().min(1).max(500),
     category: categorySchema,
     location: z.string().trim().max(100),
     history: z
@@ -55,9 +55,7 @@ const interpretationSchema = z
   .strict();
 
 type Interpretation = z.infer<typeof interpretationSchema>;
-
 type ResultDetail = { label: string; value: string };
-
 type SearchResult = {
   id: string;
   title: string;
@@ -135,22 +133,25 @@ function hasEmergencySignals(text: string) {
   return patterns.some((pattern) => pattern.test(value));
 }
 
-function extractOutputText(payload: unknown) {
+function extractGeminiText(payload: unknown) {
   if (!payload || typeof payload !== "object") return "";
   const data = payload as {
-    output?: Array<{
+    steps?: Array<{
       type?: string;
       content?: Array<{ type?: string; text?: string }>;
     }>;
   };
-  for (const item of data.output || []) {
-    if (item.type !== "message") continue;
-    for (const part of item.content || []) {
-      if (part.type === "output_text" && typeof part.text === "string") {
-        return part.text;
-      }
-    }
+
+  for (const step of [...(data.steps || [])].reverse()) {
+    if (step.type !== "model_output") continue;
+    const text = (step.content || [])
+      .filter((part) => part.type === "text" && typeof part.text === "string")
+      .map((part) => part.text || "")
+      .join("")
+      .trim();
+    if (text) return text;
   }
+
   return "";
 }
 
@@ -162,74 +163,78 @@ async function interpretQuery(args: {
   specialties: string[];
   symptomMappings: string[];
 }): Promise<Interpretation> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "Aware Minds AI is not configured. Add OPENAI_API_KEY in your Vercel environment variables.",
+      "Aware Minds AI is not configured. Add GEMINI_API_KEY in your Vercel environment variables.",
     );
   }
 
-  const model = process.env.OPENAI_AWARE_MINDS_MODEL || "gpt-5.4-nano";
+  const model = process.env.GEMINI_AWARE_MINDS_MODEL || "gemini-3.7-flash";
   const historyText = args.history.length
     ? args.history
-        .map((item) => `${item.role === "user" ? "Patient" : "Aware Minds"}: ${item.content}`)
+        .map(
+          (item) =>
+            `${item.role === "user" ? "Patient" : "Aware Minds"}: ${item.content}`,
+        )
         .join("\n")
     : "No previous conversation.";
 
-  const instructions = `You are Aware Minds, a healthcare navigation classifier for Healthcare Central in Bangladesh.
+  const prompt = `You are Aware Minds, a healthcare navigation classifier for Healthcare Central in Bangladesh.
 
-Your job is ONLY to understand a patient's natural-language request and turn it into safe structured search intent. The user may write English, বাংলা, Banglish, mixed language, abbreviations, or misspellings.
+Your only job is to understand a patient's request and convert it into safe structured search intent for Healthcare Central's own database.
 
-Critical rules:
+The patient may write English, বাংলা, Banglish, mixed language, abbreviations, phonetic Banglish, or misspellings.
+
+IMPORTANT RULES:
 - Never diagnose a disease.
-- Never prescribe, recommend, or calculate medication doses.
-- Never invent a doctor, hospital, medicine, caregiver, ambulance, lab, price, availability, or location.
-- You may route symptoms to an appropriate broad medical specialty for navigation, but phrase the patient-facing message as a possibility, not a diagnosis.
-- Prefer the UI-selected category unless the patient's text clearly requests a different service.
-- If there are red-flag emergency symptoms, set urgent=true and route to hospital, or ambulance when transport is explicitly needed.
-- For a doctor request based on symptoms, specialty must be either one exact name from AVAILABLE SPECIALTIES or null.
-- search_term must be a short canonical English database search phrase. Correct obvious Bangla/Banglish/misspellings semantically. Examples: "matha betha" -> "headache"; "dater betha" -> "tooth pain". Do not invent medical facts.
-- For a generic request such as "show hospitals" or "need ambulance", search_term may be an empty string so the database can list results.
-- inferred_location must be one exact value from AVAILABLE LOCATIONS or null. If a location was selected in the UI, do not replace it.
-- assistant_message should be concise and should match the user's language style when practical. It should explain what Aware Minds understood and what type of service it will search, without diagnosing.
-- should_search=false only when the request is unrelated to healthcare navigation or too unclear to search safely.
+- Never prescribe medicines or recommend/calculate doses.
+- Never invent doctors, hospitals, medicines, caregivers, ambulances, labs, prices, availability, or locations.
+- The database, not you, determines which providers actually exist.
+- You may route symptoms to a broad appropriate specialty for navigation only.
+- Prefer the category selected in the UI unless the patient's message clearly asks for another service.
+- If there are red-flag emergency symptoms, set urgent=true and choose hospital, or ambulance if transport is explicitly requested.
+- For doctor searches, specialty must be one exact value from AVAILABLE SPECIALTIES or null.
+- search_term must be a short canonical English phrase useful for database search.
+- Normalize obvious Bangla/Banglish/misspellings semantically. Examples: "matha betha" -> "headache"; "dater betha" -> "tooth pain"; "skin e rash" -> "skin rash".
+- For generic requests such as "show hospitals", search_term may be empty.
+- inferred_location must be one exact value from AVAILABLE LOCATIONS or null.
+- If a location is already selected in the UI, do not replace it.
+- assistant_message must be concise, non-diagnostic, and preferably match the user's language style.
+- should_search=false only if the request is unrelated to healthcare navigation or too unclear to search safely.
 
 AVAILABLE SPECIALTIES:
-${args.specialties.length ? args.specialties.join(", ") : "No specialties are configured."}
+${args.specialties.length ? args.specialties.join(", ") : "No specialties configured."}
 
-REVIEWED SYMPTOM ROUTING EXAMPLES FROM THE DATABASE:
-${args.symptomMappings.length ? args.symptomMappings.join("; ") : "No reviewed mappings are configured."}
+REVIEWED SYMPTOM ROUTING EXAMPLES:
+${args.symptomMappings.length ? args.symptomMappings.join("; ") : "No reviewed mappings configured."}
 
 AVAILABLE LOCATIONS:
-${healthcareLocations.join(", ")}`;
+${healthcareLocations.join(", ")}
 
-  const input = `Preferred category selected in the UI: ${args.category}
-Selected location: ${args.location || "none"}
+UI SELECTED CATEGORY: ${args.category}
+UI SELECTED LOCATION: ${args.location || "none"}
 
-Recent conversation:
+RECENT CONVERSATION:
 ${historyText}
 
-Current patient message:
+CURRENT PATIENT MESSAGE:
 ${args.message}`;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      store: false,
-      reasoning: { effort: "none" },
-      instructions,
-      input,
-      max_output_tokens: 700,
-      text: {
-        format: {
-          type: "json_schema",
-          name: "aware_minds_search_intent",
-          strict: true,
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/interactions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        model,
+        input: prompt,
+        response_format: {
+          type: "text",
+          mime_type: "application/json",
           schema: {
             type: "object",
             additionalProperties: false,
@@ -276,9 +281,9 @@ ${args.message}`;
             ],
           },
         },
-      },
-    }),
-  });
+      }),
+    },
+  );
 
   const payload = (await response.json()) as unknown;
   if (!response.ok) {
@@ -286,23 +291,31 @@ ${args.message}`;
       payload && typeof payload === "object" && "error" in payload
         ? clean((payload as { error?: { message?: string } }).error?.message)
         : "";
-    throw new Error(message || "Aware Minds AI request failed.");
+    throw new Error(message || "Gemini request failed.");
   }
 
-  const text = extractOutputText(payload);
-  if (!text) throw new Error("Aware Minds AI returned no usable response.");
+  const text = extractGeminiText(payload);
+  if (!text) {
+    throw new Error("Gemini returned no usable structured response.");
+  }
+
+  const jsonText = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(text);
+    parsedJson = JSON.parse(jsonText);
   } catch {
-    throw new Error("Aware Minds AI returned invalid structured data.");
+    throw new Error("Gemini returned invalid structured data.");
   }
 
   const parsed = interpretationSchema.safeParse(parsedJson);
   if (!parsed.success) {
-    throw new Error("Aware Minds AI returned an unexpected response format.");
+    throw new Error("Gemini returned an unexpected response format.");
   }
+
   return parsed.data;
 }
 
@@ -464,16 +477,24 @@ export async function POST(request: NextRequest) {
     }
     if (!allowed) {
       return NextResponse.json(
-        { error: "Aware Minds is limited to five requests per minute. Please try again shortly." },
+        {
+          error:
+            "Aware Minds is limited to five requests per minute. Please try again shortly.",
+        },
         { status: 429 },
       );
     }
 
     const specialties = await lookups("specialties");
-    const specialtyNames = new Map(
-      specialties.map((item) => [clean(item.id), clean(item.name)]),
+    const specialtyNames = new Map<string, string>(
+      specialties.map((item): [string, string] => [
+        clean(item.id),
+        clean(item.name),
+      ]),
     );
-    const specialtyList = specialties.map((item) => clean(item.name)).filter(Boolean);
+    const specialtyList = specialties
+      .map((item) => clean(item.name))
+      .filter(Boolean);
 
     const { data: routingRules, error: routingError } = await db
       .from("symptom_rules")
@@ -535,7 +556,8 @@ export async function POST(request: NextRequest) {
 
     const matchedSpecialty = interpretation.specialty
       ? specialtyList.find(
-          (name) => name.toLowerCase() === interpretation.specialty!.toLowerCase(),
+          (name) =>
+            name.toLowerCase() === interpretation.specialty!.toLowerCase(),
         ) || null
       : null;
 
@@ -558,7 +580,9 @@ export async function POST(request: NextRequest) {
     }
 
     const results = await Promise.all(
-      rows.slice(0, 6).map((row) => makeResult(finalCategory, row, specialtyNames)),
+      rows
+        .slice(0, 6)
+        .map((row) => makeResult(finalCategory, row, specialtyNames)),
     );
 
     const params = new URLSearchParams();
