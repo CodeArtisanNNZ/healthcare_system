@@ -68,7 +68,7 @@ export default async function EmergencyPage({
 
           <div className={styles.heroAction}>
             <span>National emergency service</span>
-            <a href="tel:999">Call 999</a>
+            <a href="tel:16263">Call 16263</a>
           </div>
         </div>
       </section>
