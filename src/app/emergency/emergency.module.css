@@ -1,0 +1,351 @@
+.page {
+  min-height: calc(100vh - 80px);
+  background:
+    radial-gradient(circle at 82% 0%, rgba(235, 66, 82, 0.26), transparent 30%),
+    linear-gradient(180deg, #7b0d19 0%, #99111f 34%, #fff8f8 34%, #fffafa 100%);
+}
+
+.hero {
+  color: #fff;
+}
+
+.heroInner {
+  width: min(1240px, 92%);
+  min-height: 360px;
+  margin: 0 auto;
+  padding: 70px 0 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 50px;
+}
+
+.kicker,
+.smallLabel {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.kicker {
+  color: #ffd8dc;
+}
+
+.hero h1 {
+  max-width: 720px;
+  margin: 0 0 20px;
+  font-size: clamp(48px, 6vw, 78px);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  color: #fff;
+}
+
+.hero p {
+  max-width: 660px;
+  margin: 0;
+  color: #ffe8eb;
+  font-size: 18px;
+}
+
+.heroAction {
+  min-width: 250px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 18px;
+  background: rgba(75, 4, 13, 0.3);
+  box-shadow: 0 18px 50px rgba(70, 2, 10, 0.16);
+}
+
+.heroAction span {
+  display: block;
+  margin-bottom: 10px;
+  color: #ffd9dd;
+  font-size: 12px;
+}
+
+.heroAction a,
+.callButton,
+.bottomBar a,
+.empty a {
+  text-decoration: none;
+  font-weight: 850;
+}
+
+.heroAction a {
+  display: inline-flex;
+  min-height: 52px;
+  padding: 12px 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #fff;
+  color: #a10f20;
+  font-size: 22px;
+}
+
+.content {
+  width: min(1240px, 92%);
+  margin: 0 auto;
+  padding: 0 0 64px;
+}
+
+.locationCard {
+  margin-top: -34px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 1fr 320px auto;
+  gap: 18px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  border: 1px solid #eccbd0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(97, 7, 18, 0.12);
+}
+
+.smallLabel {
+  color: #bb1328;
+}
+
+.locationCard h2,
+.resultsHeading h2 {
+  margin: 0;
+  color: #2f3034;
+}
+
+.locationCard select {
+  min-height: 50px;
+  margin: 0;
+  border-color: #e4c5ca;
+  background: #fffafa;
+}
+
+.locationCard button {
+  min-height: 50px;
+  white-space: nowrap;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #d71930, #a90d20);
+  color: #fff;
+}
+
+.locationCard button:hover {
+  background: linear-gradient(135deg, #bd1027, #850b1a);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.guidance {
+  margin: 26px 0;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #eed5d9;
+  border-radius: 14px;
+  background: #fff;
+  color: #67363d;
+}
+
+.guidance span {
+  color: #76575c;
+}
+
+.resultsSection {
+  padding: 38px 0 10px;
+}
+
+.resultsHeading {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.resultsHeading a {
+  color: #9f1021;
+  font-weight: 750;
+}
+
+.resultsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.resultCard {
+  padding: 22px;
+  border: 1px solid #eccfd3;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(85, 11, 20, 0.04);
+}
+
+.resultTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.ambulanceIcon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #fff0f2;
+  color: #c31329;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.resultCard h3 {
+  margin: 0 0 4px;
+  color: #321b1e;
+  font-size: 18px;
+}
+
+.resultTop p,
+.meta {
+  margin: 0;
+  color: #76575c;
+  font-size: 13px;
+}
+
+.meta {
+  margin-bottom: 7px;
+}
+
+.callButton {
+  min-height: 46px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 11px;
+  background: #c9132a;
+  color: #fff;
+}
+
+.callButton:hover {
+  background: #9b0e1f;
+}
+
+.noPhone {
+  display: block;
+  margin-top: 16px;
+  color: #8b6b70;
+  font-size: 13px;
+}
+
+.empty {
+  padding: 42px 26px;
+  text-align: center;
+  border: 1px dashed #e0bcc2;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.empty h3 {
+  margin-bottom: 8px;
+  color: #4a2228;
+}
+
+.empty p {
+  color: #795960;
+}
+
+.empty a {
+  display: inline-flex;
+  min-height: 46px;
+  margin-top: 8px;
+  padding: 10px 20px;
+  align-items: center;
+  border-radius: 11px;
+  background: #c9132a;
+  color: #fff;
+}
+
+.bottomBar {
+  margin-top: 34px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  border-radius: 16px;
+  background: #7f0d19;
+  color: #fff;
+}
+
+.bottomBar strong,
+.bottomBar span {
+  display: block;
+}
+
+.bottomBar span {
+  color: #ffdce0;
+  font-size: 13px;
+}
+
+.bottomBar a {
+  min-height: 46px;
+  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 11px;
+  background: #fff;
+  color: #9b0e1f;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .heroInner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .heroAction {
+    min-width: 0;
+  }
+
+  .locationCard {
+    grid-template-columns: 1fr;
+  }
+
+  .resultsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .heroInner {
+    min-height: 0;
+    padding: 50px 0 70px;
+  }
+
+  .hero h1 {
+    font-size: clamp(46px, 14vw, 64px);
+  }
+
+  .resultsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resultsHeading,
+  .bottomBar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
