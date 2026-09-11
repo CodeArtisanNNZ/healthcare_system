@@ -109,7 +109,7 @@ export default async function EmergencyPage({
             <strong>Public ambulance lookup is not installed yet.</strong>
             <span>
               Run <code>003_public_emergency_directory.sql</code> in Supabase.
-              National emergency service 999 remains available.
+              National emergency service 16263 remains available.
             </span>
           </div>
         )}
@@ -172,7 +172,7 @@ export default async function EmergencyPage({
                   For a life-threatening emergency, use the national emergency
                   number.
                 </p>
-                <a href="tel:999">Call 999</a>
+                <a href="tel:16263">Call 16263</a>
               </div>
             )}
           </section>
@@ -183,7 +183,7 @@ export default async function EmergencyPage({
             <strong>Life-threatening emergency?</strong>
             <span>Call the national emergency service immediately.</span>
           </div>
-          <a href="tel:999">Call 999</a>
+          <a href="tel:16263">Call 16263</a>
         </div>
       </section>
     </div>
