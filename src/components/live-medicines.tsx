@@ -13,6 +13,7 @@ export function LiveMedicines() {
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const q = new FormData(event.currentTarget).get("q");
+
     setBusy(true);
     setError("");
     setOffers(null);
@@ -23,10 +24,14 @@ export function LiveMedicines() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q }),
       });
+
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || "Search failed");
-      setOffers(data.offers);
+      if (!response.ok) {
+        throw new Error(data.error || "Search failed");
+      }
+
+      setOffers(Array.isArray(data.offers) ? data.offers : []);
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "Search unavailable",
@@ -40,10 +45,17 @@ export function LiveMedicines() {
     offers &&
     [...offers].sort((a, b) => {
       if (!sortLow) return 0;
+
       const left =
-        a.currency === "BDT" && a.price !== null ? a.price : Infinity;
+        a.currency === "BDT" && typeof a.price === "number"
+          ? a.price
+          : Infinity;
+
       const right =
-        b.currency === "BDT" && b.price !== null ? b.price : Infinity;
+        b.currency === "BDT" && typeof b.price === "number"
+          ? b.price
+          : Infinity;
+
       return left - right;
     });
 
@@ -59,7 +71,7 @@ export function LiveMedicines() {
           <button
             className={styles.sortButton}
             type="button"
-            onClick={() => setSortLow(!sortLow)}
+            onClick={() => setSortLow((current) => !current)}
           >
             {sortLow ? "Original order" : "Lowest listed price"}
           </button>
@@ -75,6 +87,7 @@ export function LiveMedicines() {
         <label className="sr-only" htmlFor="live-medicine-q">
           Medicine
         </label>
+
         <input
           id="live-medicine-q"
           name="q"
@@ -83,6 +96,7 @@ export function LiveMedicines() {
           maxLength={100}
           placeholder="Medicine name and strength"
         />
+
         <button disabled={busy}>
           {busy ? "Checking sellers..." : "Compare sellers"}
         </button>
@@ -99,8 +113,12 @@ export function LiveMedicines() {
 
                 {offer.found ? (
                   <>
-                    <h3>{offer.title}</h3>
-                    <p className={styles.description}>{offer.description}</p>
+                    <h3>{offer.title || "Medicine listing"}</h3>
+                    {offer.description && (
+                      <p className={styles.description}>
+                        {offer.description}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p className={styles.description}>
@@ -112,13 +130,18 @@ export function LiveMedicines() {
               {offer.found && (
                 <div className={styles.offerAction}>
                   <strong>
-                    {offer.price !== null && offer.price !== undefined
-                      ? `${offer.currency} ${offer.price}`
+                    {typeof offer.price === "number"
+                      ? `${offer.currency || "BDT"} ${offer.price}`
                       : "Price unavailable"}
                   </strong>
-                  <a href={offer.url} target="_blank" rel="noreferrer">
-                    Buy on {offer.platform} ↗
-                  </a>
+
+                  {offer.url ? (
+                    <a href={offer.url} target="_blank" rel="noreferrer">
+                      Buy on {offer.platform} ↗
+                    </a>
+                  ) : (
+                    <span>Seller link unavailable</span>
+                  )}
                 </div>
               )}
             </article>
