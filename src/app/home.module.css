@@ -1,245 +1,386 @@
 .page {
-  --teal: #0d948d;
-  --deep: #0b625f;
-  --ink: #103938;
-  --muted: #627c79;
-  --line: #d8e9e6;
-  --soft: #eef9f7;
-  --red: #c8162d;
-  --red-dark: #920c1c;
+  --teal: #119a93;
+  --deep: #0b6560;
+  --ink: #123b38;
+  --muted: #667d7a;
+  --line: #d9e8e6;
+  --soft: #f3f9f8;
+  --red: #c9162d;
+  --red-dark: #94101f;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 90% 5%, rgba(200, 239, 234, 0.48), transparent 28%),
-    #f8fcfb;
+  background: #f8fbfa;
 }
+
 .hero {
   border-bottom: 1px solid var(--line);
   background:
-    radial-gradient(circle at 85% 30%, rgba(155, 226, 217, 0.22), transparent 28%),
-    linear-gradient(120deg, #fbfefd, #eef9f7);
+    linear-gradient(90deg, rgba(242, 249, 248, 0.95), rgba(236, 248, 246, 0.85)),
+    #f2f8f7;
 }
+
 .heroInner {
-  width: min(1240px, 92%);
-  min-height: 510px;
-  margin: auto;
+  width: min(1180px, 92%);
+  min-height: 430px;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 0.82fr;
+  grid-template-columns: minmax(0, 1fr) 430px;
   gap: 70px;
   align-items: center;
 }
-.heroCopy { padding: 65px 0; }
-.kicker {
-  margin: 0 0 12px;
-  color: var(--teal);
-  font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.16em;
+
+.heroCopy {
+  padding: 60px 0;
 }
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 .heroCopy h1 {
+  max-width: 650px;
   margin: 0;
   color: var(--ink);
-  font-size: clamp(48px, 5vw, 72px);
-  line-height: 1;
-  letter-spacing: -0.052em;
+  font-size: clamp(40px, 4.5vw, 62px);
+  line-height: 1.03;
+  letter-spacing: -0.045em;
 }
-.heroCopy h1 span { color: var(--teal); }
+
 .heroText {
   max-width: 650px;
-  margin: 24px 0 28px;
+  margin: 20px 0 26px;
   color: var(--muted);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.55;
 }
-.heroActions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.heroActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .primaryButton,
-.secondaryButton {
-  min-height: 48px;
-  padding: 11px 20px;
+.secondaryButton,
+.emergencyButton {
+  min-height: 46px;
+  padding: 10px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
+  border-radius: 9px;
   text-decoration: none;
+  font-size: 13px;
   font-weight: 800;
 }
-.primaryButton { background: var(--teal); color: #fff; }
-.primaryButton:hover { background: var(--deep); }
+
+.primaryButton {
+  color: #ffffff;
+  background: var(--teal);
+}
+
+.primaryButton:hover {
+  background: var(--deep);
+}
+
 .secondaryButton {
-  background: #fff;
   color: var(--deep);
-  border: 1px solid #bfdad6;
+  background: #ffffff;
+  border: 1px solid #c6dcda;
 }
-.assistantPreview {
-  padding: 34px;
-  border: 1px solid #cae3df;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 20px 60px rgba(24, 75, 70, 0.08);
+
+.emergencyButton {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
 }
-.previewLabel {
-  margin: 0 0 8px;
-  color: var(--teal);
+
+.quickPanel {
+  padding: 26px;
+  border: 1px solid #d1e4e1;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 40px rgba(24, 69, 65, 0.06);
+}
+
+.quickHeading {
+  margin-bottom: 18px;
+}
+
+.quickHeading span,
+.quickHeading strong {
+  display: block;
+}
+
+.quickHeading span {
+  margin-bottom: 4px;
+  color: #718783;
   font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.14em;
 }
-.assistantPreview h2 {
-  margin: 0 0 10px;
+
+.quickHeading strong {
   color: var(--ink);
-  font-size: clamp(28px, 3vw, 40px);
+  font-size: 20px;
 }
-.assistantPreview > p:not(.previewLabel) { color: var(--muted); }
-.previewServices {
-  display: flex;
-  flex-wrap: wrap;
+
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: 22px 0;
 }
-.previewServices span {
-  padding: 7px 10px;
-  border: 1px solid #d5e8e5;
-  border-radius: 999px;
-  color: var(--deep);
-  background: #f7fcfb;
+
+.quickGrid a {
+  min-height: 44px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #d9e8e6;
+  border-radius: 9px;
+  color: #214643;
+  background: #ffffff;
+  text-decoration: none;
   font-size: 12px;
   font-weight: 700;
 }
-.assistantPreview > a { color: var(--deep); font-weight: 800; }
-.servicesSection {
-  width: min(1240px, 92%);
-  margin: auto;
-  padding: 44px 0 22px;
+
+.quickGrid a:hover {
+  border-color: #a7cfcb;
+  background: #f7fbfa;
 }
-.sectionHeading { margin-bottom: 20px; }
+
+.quickGrid .quickEmergency {
+  border-color: #efc9cf;
+  color: #ad1227;
+  background: #fff8f9;
+}
+
+.assistantLink {
+  margin-top: 18px;
+  display: inline-block;
+  color: var(--deep);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.servicesSection {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: 42px 0 20px;
+}
+
+.sectionHeading {
+  margin-bottom: 18px;
+}
+
+.sectionHeading p {
+  margin: 0 0 5px;
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .sectionHeading h2 {
   margin: 0;
   color: var(--ink);
-  font-size: 32px;
+  font-size: clamp(25px, 2.6vw, 32px);
 }
+
 .serviceGrid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 13px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
+
 .serviceCard {
-  min-height: 150px;
-  padding: 20px 18px;
+  min-height: 118px;
+  padding: 18px;
   display: flex;
-  flex-direction: column;
-  position: relative;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
   color: var(--ink);
   text-decoration: none;
   border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #fff;
-  transition: transform 150ms ease, border-color 150ms ease;
+  border-radius: 13px;
+  background: #ffffff;
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
 }
+
 .serviceCard:hover {
-  transform: translateY(-2px);
-  border-color: #89c9c4;
+  border-color: #9acbc6;
+  transform: translateY(-1px);
 }
-.serviceCard h3 { margin: 0 0 8px; font-size: 17px; }
+
+.serviceCard h3 {
+  margin: 0 0 5px;
+  font-size: 17px;
+}
+
 .serviceCard p {
+  max-width: 260px;
   margin: 0;
   color: var(--muted);
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.4;
 }
+
 .serviceCard > span {
-  position: absolute;
-  right: 16px;
-  bottom: 13px;
   color: var(--teal);
+  font-size: 18px;
 }
+
 .emergencyServiceCard {
   border-color: #efcbd0;
-  background: #fff8f9;
+  background: #fff9fa;
 }
+
 .emergencyServiceCard h3,
-.emergencyServiceCard > span { color: var(--red); }
-.lowerGrid {
-  width: min(1240px, 92%);
-  margin: auto;
-  padding: 18px 0 65px;
+.emergencyServiceCard > span {
+  color: var(--red);
+}
+
+.bottomRow {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: 0 0 58px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
 }
+
 .assistantCard,
 .emergencyCard {
-  min-height: 170px;
-  padding: 28px;
+  min-height: 120px;
+  padding: 21px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  border-radius: 20px;
+  gap: 18px;
+  border-radius: 14px;
 }
+
 .assistantCard {
-  border: 1px solid #cde7e3;
-  background: linear-gradient(125deg, #edf9f7, #f9fdfc);
+  border: 1px solid #d4e7e4;
+  background: #f1f8f7;
 }
+
+.emergencyCard {
+  border: 1px solid #efcbd0;
+  background: #fff4f5;
+}
+
+.assistantCard span,
+.emergencyCard span {
+  display: block;
+  margin-bottom: 4px;
+  color: #718783;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.emergencyCard span {
+  color: #b4172b;
+}
+
 .assistantCard h2,
-.emergencyCard h2 { margin: 0 0 8px; font-size: 24px; }
-.assistantCard p:last-child,
-.emergencyCard p:last-child { margin: 0; color: var(--muted); font-size: 13px; }
-.assistantCard > a {
-  min-width: 140px;
-  padding: 11px 15px;
-  border: 1px solid #bddbd7;
-  border-radius: 10px;
-  color: var(--deep);
-  background: #fff;
+.emergencyCard h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 19px;
+}
+
+.assistantCard > a,
+.emergencyCard > a {
+  min-width: 130px;
+  padding: 10px 13px;
+  border-radius: 9px;
   text-align: center;
   text-decoration: none;
+  font-size: 12px;
   font-weight: 800;
 }
-.emergencyCard {
-  border: 1px solid #efc6cc;
-  background: linear-gradient(125deg, #fff8f9, #ffedef);
+
+.assistantCard > a {
+  color: var(--deep);
+  background: #ffffff;
+  border: 1px solid #c8dfdc;
 }
-.emergencyKicker {
-  margin: 0 0 6px;
-  color: var(--red);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.13em;
-}
+
 .emergencyCard > a {
-  min-width: 150px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  color: #fff;
+  color: #ffffff;
   background: linear-gradient(135deg, var(--red), var(--red-dark));
-  text-align: center;
-  text-decoration: none;
-  font-weight: 850;
 }
-@media (max-width: 1000px) {
+
+@media (max-width: 900px) {
   .heroInner {
     grid-template-columns: 1fr;
     gap: 0;
-    padding-bottom: 50px;
+    padding-bottom: 45px;
   }
-  .heroCopy { padding-bottom: 28px; }
-  .serviceGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .heroCopy {
+    padding-bottom: 26px;
+  }
+
+  .quickPanel {
+    max-width: 620px;
+  }
 }
-@media (max-width: 760px) {
+
+@media (max-width: 720px) {
   .heroInner,
   .servicesSection,
-  .lowerGrid { width: min(94%, 680px); }
-  .heroCopy { padding-top: 48px; }
-  .heroCopy h1 { font-size: clamp(42px, 12vw, 60px); }
-  .assistantPreview { padding: 25px; }
-  .lowerGrid { grid-template-columns: 1fr; }
+  .bottomRow {
+    width: min(94%, 650px);
+  }
+
+  .heroCopy {
+    padding-top: 44px;
+  }
+
+  .heroCopy h1 {
+    font-size: clamp(38px, 11vw, 52px);
+  }
+
+  .serviceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .bottomRow {
+    grid-template-columns: 1fr;
+  }
 }
-@media (max-width: 540px) {
-  .serviceGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 480px) {
+  .quickPanel {
+    padding: 18px;
+  }
+
+  .heroActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .emergencyButton {
+    width: 100%;
+  }
+
   .assistantCard,
   .emergencyCard {
     align-items: flex-start;
     flex-direction: column;
   }
+
   .assistantCard > a,
-  .emergencyCard > a { width: 100%; }
+  .emergencyCard > a {
+    width: 100%;
+  }
 }
