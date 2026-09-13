@@ -123,7 +123,26 @@ const doctorAliases: AliasRule[] = [
     phrases: [
       "bone doctor",
       "joint pain doctor",
+      "joint pain",
+      "leg pain",
+      "knee pain",
+      "back pain",
+      "neck pain",
+      "payer betha",
+      "paye betha",
+      "pa betha",
+      "hatur betha",
+      "hatu betha",
+      "komor betha",
+      "ghare betha",
       "haddi doctor",
+      "পায়ে ব্যথা",
+      "পায়ে ব্যথা",
+      "হাঁটু ব্যথা",
+      "হাটু ব্যথা",
+      "কোমর ব্যথা",
+      "ঘাড়ে ব্যথা",
+      "ঘাড়ে ব্যথা",
       "হার ডাক্তার",
       "হাড়ের ডাক্তার",
       "orthopedic",
@@ -264,9 +283,43 @@ function similarity(a: string, b: string) {
   return 1 - levenshtein(left, right) / longest;
 }
 
-function phraseScore(query: string, phrase: string) {
+const genericAliasWords = new Set([
+  "betha",
+  "byatha",
+  "bethaa",
+  "ব্যথা",
+  "pain",
+  "ache",
+  "doctor",
+  "daktar",
+  "ডাক্তার",
+  "dr",
+  "er",
+  "amar",
+  "amr",
+  "ekta",
+  "onek",
+]);
+
+function meaningfulTokens(value: string) {
+  return normalize(value)
+    .split(" ")
+    .filter((token) => token && !genericAliasWords.has(token));
+}
+
+/**
+ * Fuzzy matching must be driven by the meaningful/body-part word,
+ * not by generic words such as "betha", "pain" or "doctor".
+ *
+ * Example:
+ *   "payer betha" vs "dater betha"
+ * should NOT match just because both contain "betha".
+ */
+function safeAliasScore(query: string, phrase: string) {
   const normalizedQuery = normalize(query);
   const normalizedPhrase = normalize(phrase);
+
+  if (!normalizedQuery || !normalizedPhrase) return 0;
 
   if (
     normalizedQuery === normalizedPhrase ||
@@ -275,20 +328,35 @@ function phraseScore(query: string, phrase: string) {
     return 1;
   }
 
-  const queryWords = normalizedQuery.split(" ").filter(Boolean);
-  const phraseWords = normalizedPhrase.split(" ").filter(Boolean);
-  const windowSize = phraseWords.length;
+  const queryAnchors = meaningfulTokens(query);
+  const phraseAnchors = meaningfulTokens(phrase);
 
-  if (!windowSize || !queryWords.length) return 0;
-
-  let best = similarity(normalizedQuery, normalizedPhrase);
-
-  for (let start = 0; start <= queryWords.length - windowSize; start += 1) {
-    const window = queryWords.slice(start, start + windowSize).join(" ");
-    best = Math.max(best, similarity(window, normalizedPhrase));
+  if (!queryAnchors.length || !phraseAnchors.length) {
+    return 0;
   }
 
-  return best;
+  const anchorScores = phraseAnchors.map((phraseToken) =>
+    Math.max(
+      ...queryAnchors.map((queryToken) =>
+        similarity(queryToken, phraseToken),
+      ),
+    ),
+  );
+
+  const weakestAnchor = Math.min(...anchorScores);
+
+  // Require the meaningful word itself to match closely.
+  // This blocks "payer betha" -> "dater betha" (payer/dater are not close enough).
+  if (weakestAnchor < 0.78) {
+    return 0;
+  }
+
+  const averageAnchor =
+    anchorScores.reduce((sum, score) => sum + score, 0) /
+    anchorScores.length;
+
+  // Phrase similarity is only a small tie-breaker.
+  return averageAnchor * 0.9 + similarity(normalizedQuery, normalizedPhrase) * 0.1;
 }
 
 function resolveDoctorAlias(query: string) {
@@ -301,7 +369,7 @@ function resolveDoctorAlias(query: string) {
 
   for (const rule of doctorAliases) {
     for (const phrase of rule.phrases) {
-      const score = phraseScore(query, phrase);
+      const score = safeAliasScore(query, phrase);
 
       if (!best || score > best.score) {
         best = { rule, score };
@@ -309,7 +377,7 @@ function resolveDoctorAlias(query: string) {
     }
   }
 
-  return best && best.score >= 0.72 ? best.rule : null;
+  return best && best.score >= 0.79 ? best.rule : null;
 }
 
 function hasEmergencySignals(value: string) {
