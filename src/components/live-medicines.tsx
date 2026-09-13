@@ -8,11 +8,12 @@ export function LiveMedicines() {
   const [offers, setOffers] = useState<Offer[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [sortLow, setSortLow] = useState(true);
 
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const q = new FormData(event.currentTarget).get("q");
+
+    const form = new FormData(event.currentTarget);
+    const q = String(form.get("q") || "").trim();
 
     setBusy(true);
     setError("");
@@ -28,59 +29,34 @@ export function LiveMedicines() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Search failed");
+        throw new Error(data.error || "Search failed.");
       }
 
       setOffers(Array.isArray(data.offers) ? data.offers : []);
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : "Search unavailable",
+        caught instanceof Error
+          ? caught.message
+          : "Medicine seller search is unavailable.",
       );
     } finally {
       setBusy(false);
     }
   }
 
-  const sorted =
-    offers &&
-    [...offers].sort((a, b) => {
-      if (!sortLow) return 0;
-
-      const left =
-        a.currency === "BDT" && typeof a.price === "number"
-          ? a.price
-          : Infinity;
-
-      const right =
-        b.currency === "BDT" && typeof b.price === "number"
-          ? b.price
-          : Infinity;
-
-      return left - right;
-    });
-
   return (
     <section className={styles.section}>
       <div className={styles.heading}>
         <div>
-          <p className={styles.kicker}>LIVE SELLER SEARCH</p>
-          <h2>Compare pharmacy websites</h2>
+          <p className={styles.kicker}>SELLER COMPARISON</p>
+          <h2>Check the medicine across pharmacy websites</h2>
         </div>
-
-        {offers && (
-          <button
-            className={styles.sortButton}
-            type="button"
-            onClick={() => setSortLow((current) => !current)}
-          >
-            {sortLow ? "Original order" : "Lowest listed price"}
-          </button>
-        )}
       </div>
 
       <p className={styles.intro}>
-        Search participating seller websites. Healthcare Central does not sell
-        the medicine; the purchase is completed on the original seller website.
+        Search once and open several Bangladesh pharmacy websites from the same
+        place. Final price, pack size and availability must be confirmed on the
+        original seller website.
       </p>
 
       <form onSubmit={search} className={styles.search}>
@@ -98,52 +74,37 @@ export function LiveMedicines() {
         />
 
         <button disabled={busy}>
-          {busy ? "Checking sellers..." : "Compare sellers"}
+          {busy ? "Finding sellers..." : "Show seller options"}
         </button>
       </form>
 
       {error && <p className={styles.error}>{error}</p>}
 
-      {sorted && (
+      {offers && (
         <div className={styles.results} aria-live="polite">
-          {sorted.map((offer) => (
+          {offers.map((offer) => (
             <article className={styles.offer} key={offer.platform}>
               <div>
                 <p className={styles.platform}>{offer.platform}</p>
-
-                {offer.found ? (
-                  <>
-                    <h3>{offer.title || "Medicine listing"}</h3>
-                    {offer.description && (
-                      <p className={styles.description}>
-                        {offer.description}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className={styles.description}>
-                    {offer.error || "No matching listing found."}
-                  </p>
-                )}
+                <h3>{offer.title || "Medicine search"}</h3>
+                <p className={styles.description}>
+                  {offer.description || "Open the seller website to continue."}
+                </p>
               </div>
 
-              {offer.found && (
-                <div className={styles.offerAction}>
-                  <strong>
-                    {typeof offer.price === "number"
-                      ? `${offer.currency || "BDT"} ${offer.price}`
-                      : "Price unavailable"}
-                  </strong>
+              <div className={styles.offerAction}>
+                <strong>
+                  {typeof offer.price === "number"
+                    ? `${offer.currency || "BDT"} ${offer.price}`
+                    : "Check live price"}
+                </strong>
 
-                  {offer.url ? (
-                    <a href={offer.url} target="_blank" rel="noreferrer">
-                      Buy on {offer.platform} ↗
-                    </a>
-                  ) : (
-                    <span>Seller link unavailable</span>
-                  )}
-                </div>
-              )}
+                {offer.url && (
+                  <a href={offer.url} target="_blank" rel="noreferrer">
+                    Check price &amp; buy
+                  </a>
+                )}
+              </div>
             </article>
           ))}
         </div>
@@ -151,8 +112,9 @@ export function LiveMedicines() {
 
       {offers && (
         <p className={styles.disclaimer}>
-          Prices may refer to different pack sizes. Confirm product, pack size,
-          availability, delivery charge and final price on the seller website.
+          Healthcare Central does not sell medicine. Confirm the exact medicine,
+          strength, pack size, prescription requirements, availability and final
+          price with the seller before purchase.
         </p>
       )}
     </section>
