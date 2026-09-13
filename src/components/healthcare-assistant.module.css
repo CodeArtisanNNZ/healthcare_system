@@ -1,0 +1,196 @@
+.shell {
+  border: 1px solid #d3e8e5;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(198, 239, 234, 0.35), transparent 30%),
+    #fff;
+  box-shadow: 0 18px 60px rgba(16, 72, 68, 0.07);
+  overflow: hidden;
+}
+.heading { padding: 30px 32px 18px; }
+.kicker {
+  margin: 0 0 8px;
+  color: #0d948d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+.heading h1 {
+  margin: 0 0 8px;
+  color: #103938;
+  font-size: clamp(30px, 4vw, 46px);
+}
+.heading > p:not(.kicker) {
+  max-width: 760px;
+  margin: 0;
+  color: #607a77;
+  font-size: 14px;
+}
+.searchPanel {
+  margin: 0 32px 28px;
+  padding: 22px;
+  border: 1px solid #d5e8e5;
+  border-radius: 18px;
+  background: #fbfefd;
+}
+.categoryRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.category,
+.activeCategory {
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid #d1e5e2;
+  border-radius: 999px;
+  background: #fff;
+  color: #183f3d;
+  font-size: 12px;
+  font-weight: 750;
+}
+.category:hover { background: #eff9f7; }
+.activeCategory,
+.activeCategory:hover {
+  border-color: #0d948d;
+  background: #edf9f7;
+  color: #086b68;
+}
+.queryLabel > span,
+.locationField > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #315754;
+  font-size: 12px;
+  font-weight: 800;
+}
+.queryLabel input {
+  min-height: 52px;
+  border-radius: 11px;
+  border-color: #c7ddda;
+}
+.searchFooter {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 14px;
+  align-items: end;
+}
+.locationField select {
+  min-height: 48px;
+  margin: 0;
+  border-radius: 11px;
+}
+.searchButton {
+  min-height: 48px;
+  border-radius: 11px;
+  background: #0d948d;
+}
+.searchButton:hover { background: #0b625f; }
+.error {
+  margin: 0 32px 24px;
+  padding: 13px 15px;
+  border: 1px solid #efc6cc;
+  border-radius: 11px;
+  background: #fff5f6;
+  color: #8e1b2b;
+}
+.response { padding: 0 32px 30px; }
+.urgent {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid #efc6cc;
+  border-radius: 12px;
+  background: #fff2f4;
+  color: #851626;
+}
+.urgent a { color: #a41024; font-weight: 850; }
+.responseHeading {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.responseHeading h2 { margin: 0 0 5px; font-size: 21px; }
+.responseHeading p { margin: 0; color: #637d7a; font-size: 13px; }
+.responseHeading > a { color: #0b7772; font-size: 12px; font-weight: 800; }
+.results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.resultCard {
+  padding: 18px;
+  border: 1px solid #d8e9e6;
+  border-radius: 15px;
+  background: #fff;
+}
+.resultMain h3 { margin: 0 0 4px; font-size: 17px; }
+.subtitle {
+  margin: 0 0 12px;
+  color: #0d8a83;
+  font-size: 12px;
+  font-weight: 750;
+}
+.resultCard dl { margin: 12px 0 0; }
+.resultCard dl > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 11px;
+}
+.resultCard dt { color: #78908d; }
+.resultCard dd { min-width: 0; margin: 0; overflow-wrap: break-word; }
+.resultActions {
+  margin-top: 15px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.resultActions a {
+  min-height: 35px;
+  padding: 7px 11px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #c7dfdb;
+  border-radius: 9px;
+  color: #0b706b;
+  background: #fff;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 800;
+}
+.empty {
+  padding: 24px;
+  border: 1px dashed #d2e3e0;
+  border-radius: 13px;
+  color: #617b78;
+  background: #fbfefd;
+}
+.disclaimer {
+  margin: 0;
+  padding: 16px 32px 20px;
+  border-top: 1px solid #edf4f3;
+  color: #718986;
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  .heading { padding: 24px 20px 16px; }
+  .searchPanel,
+  .error { margin-left: 20px; margin-right: 20px; }
+  .searchPanel { padding: 16px; }
+  .response { padding-left: 20px; padding-right: 20px; }
+  .searchFooter,
+  .results { grid-template-columns: 1fr; }
+  .searchButton { width: 100%; }
+  .responseHeading,
+  .urgent { align-items: flex-start; flex-direction: column; }
+  .disclaimer { padding-left: 20px; padding-right: 20px; }
+}

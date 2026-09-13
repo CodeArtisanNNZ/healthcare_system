@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { entities } from "@/lib/entities";
+
 export function PortalNav({ admin = false }: { admin?: boolean }) {
   const links = admin
     ? [
+        ["/", "View website"],
+        ["/patient", "Preview patient UI"],
         ["/admin", "Overview"],
         ["/admin/users", "Users"],
-        ...Object.entries(entities).map(([k, v]) => ["/admin/" + k, v.title]),
+        ...Object.entries(entities).map(([key, value]) => [
+          `/admin/${key}`,
+          value.title,
+        ]),
       ]
     : [
-        ["/patient", "Overview"],
+        ["/", "Home"],
+        ["/patient", "Dashboard"],
         ["/patient/search", "Find a doctor"],
         ["/patient/profile", "My profile"],
         ["/patient/prescriptions", "Prescriptions"],
@@ -18,6 +25,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/patient/caregivers", "Caregivers"],
         ["/patient/ambulances", "Ambulances"],
       ];
+
   return (
     <nav
       className="portal-nav"

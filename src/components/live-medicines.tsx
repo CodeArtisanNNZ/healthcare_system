@@ -1,17 +1,22 @@
 "use client";
+
 import { useState, type FormEvent } from "react";
 import type { Offer } from "@/lib/medicine-utils";
+import styles from "./live-medicines.module.css";
+
 export function LiveMedicines() {
   const [offers, setOffers] = useState<Offer[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [sort, setSort] = useState(false);
-  async function search(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const q = new FormData(e.currentTarget).get("q");
+  const [sortLow, setSortLow] = useState(true);
+
+  async function search(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const q = new FormData(event.currentTarget).get("q");
     setBusy(true);
     setError("");
     setOffers(null);
+
     try {
       const response = await fetch("/api/medicines/search", {
         method: "POST",
@@ -19,95 +24,114 @@ export function LiveMedicines() {
         body: JSON.stringify({ q }),
       });
       const data = await response.json();
+
       if (!response.ok) throw new Error(data.error || "Search failed");
       setOffers(data.offers);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Search unavailable");
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "Search unavailable",
+      );
     } finally {
       setBusy(false);
     }
   }
+
   const sorted =
     offers &&
-    [...offers].sort((a, b) =>
-      sort
-        ? ((a.currency === "BDT" ? a.price : null) ?? Infinity) -
-          ((b.currency === "BDT" ? b.price : null) ?? Infinity)
-        : 0,
-    );
+    [...offers].sort((a, b) => {
+      if (!sortLow) return 0;
+      const left =
+        a.currency === "BDT" && a.price !== null ? a.price : Infinity;
+      const right =
+        b.currency === "BDT" && b.price !== null ? b.price : Infinity;
+      return left - right;
+    });
+
   return (
-    <section className="section">
-      <h2>Compare pharmacy listings</h2>
-      <p className="muted">
-        Sign in to search the four pharmacy sources from the original
-        application. Confirm the exact product, strength, pack size and final
-        price on the seller’s website.
+    <section className={styles.section}>
+      <div className={styles.heading}>
+        <div>
+          <p className={styles.kicker}>LIVE SELLER SEARCH</p>
+          <h2>Compare pharmacy websites</h2>
+        </div>
+
+        {offers && (
+          <button
+            className={styles.sortButton}
+            type="button"
+            onClick={() => setSortLow(!sortLow)}
+          >
+            {sortLow ? "Original order" : "Lowest listed price"}
+          </button>
+        )}
+      </div>
+
+      <p className={styles.intro}>
+        Search participating seller websites. Healthcare Central does not sell
+        the medicine; the purchase is completed on the original seller website.
       </p>
-      <form onSubmit={search} className="search">
-        <label className="sr-only" htmlFor="live-q">
-          Medicine name
+
+      <form onSubmit={search} className={styles.search}>
+        <label className="sr-only" htmlFor="live-medicine-q">
+          Medicine
         </label>
         <input
+          id="live-medicine-q"
           name="q"
-          id="live-q"
           required
           minLength={2}
           maxLength={100}
           placeholder="Medicine name and strength"
         />
         <button disabled={busy}>
-          {busy ? "Checking pharmacies…" : "Compare listings"}
+          {busy ? "Checking sellers..." : "Compare sellers"}
         </button>
       </form>
-      {error && (
-        <p className="notice error" role="alert">
-          {error}
-        </p>
-      )}
-      {offers && (
-        <>
-          <button className="secondary" onClick={() => setSort(!sort)}>
-            {sort
-              ? "Show original order"
-              : "Sort listed BDT prices: low to high"}
-          </button>
-          <p className="muted">
-            Listed prices may refer to different pack sizes and are not
-            equivalent per-unit comparisons.
-          </p>
-        </>
-      )}
-      <div className="cards" aria-live="polite">
-        {sorted?.map((o) => (
-          <article className="card" key={o.platform}>
-            <p className="eyebrow">{o.platform}</p>
-            {o.found ? (
-              <>
-                <h3>{o.title}</h3>
-                <p>{o.description}</p>
-                <p>
+
+      {error && <p className={styles.error}>{error}</p>}
+
+      {sorted && (
+        <div className={styles.results} aria-live="polite">
+          {sorted.map((offer) => (
+            <article className={styles.offer} key={offer.platform}>
+              <div>
+                <p className={styles.platform}>{offer.platform}</p>
+
+                {offer.found ? (
+                  <>
+                    <h3>{offer.title}</h3>
+                    <p className={styles.description}>{offer.description}</p>
+                  </>
+                ) : (
+                  <p className={styles.description}>
+                    {offer.error || "No matching listing found."}
+                  </p>
+                )}
+              </div>
+
+              {offer.found && (
+                <div className={styles.offerAction}>
                   <strong>
-                    {o.price !== null && o.price !== undefined
-                      ? `${o.currency} ${o.price}`
+                    {offer.price !== null && offer.price !== undefined
+                      ? `${offer.currency} ${offer.price}`
                       : "Price unavailable"}
                   </strong>
-                </p>
-                <p className="muted">{o.source}</p>
-                <a
-                  className="button secondary"
-                  href={o.url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View seller ↗
-                </a>
-              </>
-            ) : (
-              <p>{o.error || "No matching listing found."}</p>
-            )}
-          </article>
-        ))}
-      </div>
+                  <a href={offer.url} target="_blank" rel="noreferrer">
+                    Buy on {offer.platform} ↗
+                  </a>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+
+      {offers && (
+        <p className={styles.disclaimer}>
+          Prices may refer to different pack sizes. Confirm product, pack size,
+          availability, delivery charge and final price on the seller website.
+        </p>
+      )}
     </section>
   );
 }

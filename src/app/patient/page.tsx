@@ -1,57 +1,89 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { AwareMinds } from "@/components/aware-minds";
-import { services } from "@/lib/services";
+import { redirect } from "next/navigation";
+import { HealthcareAssistant } from "@/components/healthcare-assistant";
+import styles from "./patient.module.css";
 
-export default async function Patient() {
-  const user = await requireUser("patient");
+export default async function Patient({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const user = await requireUser();
+  if (!["patient", "admin"].includes(user.role)) redirect("/dashboard");
+  const { lang } = await searchParams;
+  const language = lang === "bn" ? "bn" : "en";
+  const bn = language === "bn";
 
   return (
-    <>
-      <section className="patient-welcome">
+    <div className={styles.page}>
+      <section className={styles.top}>
         <div>
-          <p className="eyebrow">PATIENT PORTAL</p>
-          <h1>Welcome, {user.full_name}.</h1>
-          <p className="muted">
-            Start with Aware Minds AI or open a Healthcare Central service directly.
+          <p className={styles.kicker}>
+            {bn ? "রোগীর ড্যাশবোর্ড" : "PATIENT DASHBOARD"}
+          </p>
+          <h1>
+            {bn ? `স্বাগতম, ${user.full_name}` : `Welcome, ${user.full_name}.`}
+          </h1>
+          <p>
+            {bn
+              ? "প্রয়োজনীয় স্বাস্থ্যসেবা খুঁজুন এবং আপনার অ্যাকাউন্ট পরিচালনা করুন।"
+              : "Find the healthcare service you need and manage your account."}
           </p>
         </div>
+
+        <Link className={styles.homeLink} href="/">
+          {bn ? "হোমপেজে ফিরুন" : "Back to homepage"}
+        </Link>
       </section>
 
-      <AwareMinds />
+      <section className={styles.dashboardGrid}>
+        <HealthcareAssistant language={language} />
 
-      <section className="section">
-        <div className="section-head">
-          <div>
-            <p className="eyebrow">QUICK ACCESS</p>
-            <h2>Healthcare services</h2>
-          </div>
-          <p className="muted">These directories are available only while you are signed in.</p>
-        </div>
+        <aside className={styles.accountPanel}>
+          <p className={styles.kicker}>{bn ? "আমার অ্যাকাউন্ট" : "MY ACCOUNT"}</p>
+          <h2>{bn ? "দ্রুত অ্যাক্সেস" : "Quick access"}</h2>
 
-        <div className="cards service-grid">
-          {services.map((service) => (
-            <Link className="card service-card" key={service.href} href={service.href}>
-              <span className="icon">{service.icon}</span>
-              <h3>{service.title}</h3>
-              <p>{service.text}</p>
-              <span className="text-link">Open →</span>
+          <nav>
+            <Link href="/patient/prescriptions">
+              <strong>{bn ? "প্রেসক্রিপশন" : "Prescriptions"}</strong>
+              <span>
+                {bn
+                  ? "সংরক্ষিত প্রেসক্রিপশন দেখুন"
+                  : "View saved prescriptions"}
+              </span>
             </Link>
-          ))}
-        </div>
+            <Link href="/patient/reports">
+              <strong>{bn ? "ল্যাব রিপোর্ট" : "Lab reports"}</strong>
+              <span>
+                {bn ? "সংরক্ষিত রিপোর্ট দেখুন" : "View saved reports"}
+              </span>
+            </Link>
+            <Link href="/patient/profile">
+              <strong>{bn ? "প্রোফাইল" : "Profile"}</strong>
+              <span>
+                {bn
+                  ? "অ্যাকাউন্টের তথ্য পরিবর্তন করুন"
+                  : "Update account information"}
+              </span>
+            </Link>
+          </nav>
+        </aside>
       </section>
 
-      <section className="account-strip">
+      <section className={styles.emergencyStrip}>
         <div>
-          <p className="eyebrow">MY HEALTH INFORMATION</p>
-          <h2>Keep your account organized.</h2>
+          <p>{bn ? "জরুরি সহায়তা" : "Emergency"}</p>
+          <h2>
+            {bn
+              ? "দ্রুত অ্যাম্বুলেন্স ও জরুরি যোগাযোগ খুঁজুন।"
+              : "Find ambulance and emergency contacts quickly."}
+          </h2>
         </div>
-        <div className="actions">
-          <Link className="button secondary" href="/patient/prescriptions">Prescriptions</Link>
-          <Link className="button secondary" href="/patient/reports">Lab reports</Link>
-          <Link className="button secondary" href="/patient/profile">My profile</Link>
-        </div>
+        <Link href="/emergency">
+          {bn ? "জরুরি সহায়তা" : "Emergency Help"}
+        </Link>
       </section>
-    </>
+    </div>
   );
 }

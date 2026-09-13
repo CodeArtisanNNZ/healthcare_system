@@ -28,7 +28,13 @@ export default async function Service({
     const { q, location, page } = queryParams(await searchParams);
     const rows = await directory(key, q, page, location);
     const specialties = key === "doctors" ? await lookups("specialties") : [];
-    const locationEnabled = ["doctors", "hospitals", "caregivers", "ambulances", "lab_tests"].includes(key);
+    const locationEnabled = [
+      "doctors",
+      "hospitals",
+      "caregivers",
+      "ambulances",
+      "lab_tests",
+    ].includes(key);
 
     let notices: string[] = [];
 
@@ -57,36 +63,63 @@ export default async function Service({
 
     return (
       <div className="container section">
-        <Heading title={service === "emergency" ? "Find ambulance support" : entities[key].title}>
+        <p>
+          <Link href="/patient">← Back to dashboard</Link>
+        </p>
+
+        <Heading
+          title={
+            service === "emergency"
+              ? "Find ambulance support"
+              : entities[key].title
+          }
+        >
           {entities[key].description}
         </Heading>
 
         {key === "doctors" && (
           <p className="notice">
-            Aware Minds and symptom matching are navigation aids, not a diagnosis. Contact a qualified healthcare professional for medical advice.
+            Symptom matching is a healthcare navigation aid, not a diagnosis.
+            Contact a qualified healthcare professional for medical advice.
           </p>
         )}
 
         {notices.map((notice) => (
-          <p className="notice error" key={notice}>{notice}</p>
+          <p className="notice error" key={notice}>
+            {notice}
+          </p>
         ))}
 
         <Search
           q={q}
-          placeholder={key === "doctors" ? "Describe a symptom, specialty or doctor name" : entities[key].description}
+          placeholder={
+            key === "doctors"
+              ? "Symptom, specialty or doctor name"
+              : entities[key].description
+          }
           extras={
             locationEnabled ? (
-              <select name="location" defaultValue={location} aria-label="Filter by location">
+              <select
+                name="location"
+                defaultValue={location}
+                aria-label="Filter by location"
+              >
                 <option value="">All locations</option>
                 {healthcareLocations.map((item) => (
-                  <option value={item} key={item}>{item}</option>
+                  <option value={item} key={item}>
+                    {item}
+                  </option>
                 ))}
               </select>
             ) : null
           }
         />
 
-        {location && <p className="filter-summary">Location filter: <strong>{location}</strong></p>}
+        {location && (
+          <p className="filter-summary">
+            Location filter: <strong>{location}</strong>
+          </p>
+        )}
 
         {rows.length ? (
           <div className="cards directory">
@@ -96,7 +129,9 @@ export default async function Service({
                 row={row}
                 kind={key}
                 specialty={String(
-                  specialties.find((specialty) => specialty.id === row.specialty_id)?.name || "",
+                  specialties.find(
+                    (specialty) => specialty.id === row.specialty_id,
+                  )?.name || "",
                 )}
               />
             ))}
@@ -105,7 +140,12 @@ export default async function Service({
           <Empty />
         )}
 
-        <Pager q={q} location={location} page={page} hasNext={rows.length === 24} />
+        <Pager
+          q={q}
+          location={location}
+          page={page}
+          hasNext={rows.length === 24}
+        />
       </div>
     );
   }
@@ -115,15 +155,15 @@ export default async function Service({
     { title: string; text: string; href: string; cta: string; image?: string }
   > = {
     about: {
-      title: "Healthcare, easier to navigate.",
-      text: "Healthcare Central connects patients with healthcare directories, medicine search and private health records through one account.",
+      title: "Healthcare Central",
+      text: "Healthcare Central connects patients with healthcare directories, medicine comparison and private health records through one account.",
       href: "/register",
       cta: "Get started",
       image: "logo.png",
     },
     appointments: {
-      title: "Your care, your schedule.",
-      text: "Sign in to find doctors, review their consultation information and contact them directly.",
+      title: "Find the right doctor.",
+      text: "Search doctors and review their consultation information.",
       href: "/doctors",
       cta: "Find a doctor",
       image: "doc.png",
@@ -135,8 +175,8 @@ export default async function Service({
       cta: "Open my records",
     },
     "doctor-portal": {
-      title: "A dedicated space for doctors.",
-      text: "Sign in with an administrator-approved doctor account to view your linked professional listing.",
+      title: "Doctor portal",
+      text: "Approved doctor accounts can view their linked professional listing.",
       href: "/doctor",
       cta: "Open doctor portal",
       image: "doc.png",
@@ -150,10 +190,12 @@ export default async function Service({
     <section className="container hero">
       <div>
         <Heading title={item.title}>{item.text}</Heading>
-        <Link className="button" href={item.href}>{item.cta} →</Link>
+        <Link className="button" href={item.href}>
+          {item.cta} →
+        </Link>
       </div>
       <div className="feature-art">
-        {item.image ? <img src={"/images/" + item.image} alt="" /> : <span>▤</span>}
+        {item.image ? <img src={`/images/${item.image}`} alt="" /> : null}
       </div>
     </section>
   );

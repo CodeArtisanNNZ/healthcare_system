@@ -1,0 +1,39 @@
+.page {
+  max-width: 1180px;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 22px;
+  color: #0b7772;
+  font-size: 12px;
+  font-weight: 800;
+}
+.catalog {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.medicineCard {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 135px;
+  color: #153f3d;
+  text-decoration: none;
+  border: 1px solid #d7e8e5;
+  border-radius: 14px;
+  background: #fff;
+}
+.medicineCard h2 { margin: 0 0 6px; font-size: 18px; }
+.medicineCard p { margin: 0; color: #6c8380; font-size: 12px; }
+.medicineCard span {
+  margin-top: 18px;
+  color: #0b7772;
+  font-size: 12px;
+  font-weight: 800;
+}
+@media (max-width: 760px) {
+  .catalog { grid-template-columns: 1fr; }
+}

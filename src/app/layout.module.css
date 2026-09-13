@@ -1,217 +1,114 @@
 .header {
-  min-height: 82px;
-  padding: 12px 5%;
+  min-height: 78px;
+  padding: 10px 4.5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
+  gap: 24px;
   position: sticky;
   top: 0;
-  z-index: 50;
-  background: rgba(255, 255, 255, 0.96);
+  z-index: 60;
+  background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid #d9e9e6;
   backdrop-filter: blur(14px);
 }
-
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   color: #103938;
   text-decoration: none;
   white-space: nowrap;
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 500;
 }
-
-.brand img {
-  width: 58px;
-  height: 58px;
-  object-fit: contain;
-}
-
-.brand strong {
-  color: #0d948d;
-  font-weight: 800;
-}
-
+.brand img { width: 54px; height: 54px; object-fit: contain; }
+.brand strong { color: #0d948d; font-weight: 800; }
 .nav {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 20px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
-
-.nav > a:not(.loginLink):not(.createButton):not(.emergencyButton) {
+.desktopLink {
   color: #123b3a;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
-
-.nav > a:not(.loginLink):not(.createButton):not(.emergencyButton):hover {
-  color: #0d948d;
-}
-
-.nav form {
-  margin: 0;
-}
-
-.loginLink,
-.createButton,
-.emergencyButton,
-.signOutButton {
-  min-height: 46px;
-  padding: 10px 18px;
-  border-radius: 11px;
+.desktopLink:hover { color: #0d948d; }
+.nav form { margin: 0; }
+.accountButton,
+.emergencyButton {
+  min-height: 42px;
+  padding: 9px 15px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 8px;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
 }
-
-.loginLink {
+.accountButton {
   color: #0b625f;
   background: #fff;
-  border: 1px solid #b9d8d4;
-}
-
-.loginLink:hover {
-  background: #eef9f7;
-}
-
-.createButton {
-  color: #fff;
-  background: #0d948d;
-  border: 1px solid #0d948d;
-}
-
-.createButton:hover {
-  background: #0b625f;
-}
-
-.emergencyButton {
-  color: #fff;
-  background: linear-gradient(135deg, #d71930 0%, #ac0e21 100%);
-  border: 2px solid #fff;
-  outline: 1px solid #c51429;
-  box-shadow:
-    0 0 0 4px rgba(212, 18, 43, 0.08),
-    0 10px 24px rgba(154, 10, 29, 0.18);
-}
-
-.emergencyButton:hover {
-  color: #fff;
-  background: linear-gradient(135deg, #bf1027 0%, #8f0e1e 100%);
-  transform: translateY(-1px);
-}
-
-.signOutButton {
-  margin: 0;
-  color: #0b625f;
-  background: #fff;
-  border: 1px solid #b9d8d4;
+  border: 1px solid #c3dcd8;
   cursor: pointer;
 }
-
-.signOutButton:hover {
-  background: #eef9f7;
+.accountButton:hover { background: #eef9f7; }
+.emergencyButton {
+  color: #fff;
+  background: linear-gradient(135deg, #c8162d, #9b0d1d);
+  border: 1px solid #a90f20;
+  box-shadow: 0 8px 20px rgba(151, 9, 27, 0.16);
 }
-
+.emergencyButton:hover {
+  color: #fff;
+  background: linear-gradient(135deg, #ae1126, #7e0a17);
+}
+.emergencyShort { display: none; }
 .footer {
-  padding: 30px 5%;
+  padding: 28px 5%;
   border-top: 1px solid #d9e9e6;
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
+  gap: 26px;
 }
-
 .footerBrand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   color: #103938;
 }
-
-.footerBrand strong {
-  font-size: 15px;
-}
-
-.footerBrand p {
-  margin: 1px 0 0;
-  color: #68817e;
-  font-size: 12px;
-}
-
-.footer nav {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
+.footerBrand strong { font-size: 14px; }
+.footerBrand p { margin: 0; color: #6b8380; font-size: 11px; }
+.footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
 .footer nav a {
-  color: #56706e;
+  color: #5f7875;
   text-decoration: none;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: 11px;
 }
-
-.footer nav a:hover {
-  color: #0d948d;
-}
-
 @media (max-width: 980px) {
-  .header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .nav {
-    width: 100%;
-    justify-content: flex-start;
-  }
+  .desktopLink { display: none; }
+  .header { gap: 12px; }
+  .nav { gap: 9px; }
 }
-
 @media (max-width: 650px) {
-  .header {
-    padding: 10px 4%;
-  }
-
-  .brand {
-    font-size: 18px;
-  }
-
-  .brand img {
-    width: 48px;
-    height: 48px;
-  }
-
-  .nav {
-    gap: 9px;
-  }
-
-  .nav > a:not(.loginLink):not(.createButton):not(.emergencyButton) {
-    display: none;
-  }
-
-  .loginLink,
-  .createButton,
-  .emergencyButton,
-  .signOutButton {
-    min-height: 42px;
-    padding: 8px 13px;
+  .header { min-height: 66px; padding: 8px 12px; }
+  .brand { font-size: 16px; }
+  .brand img { width: 43px; height: 43px; }
+  .brand span { display: none; }
+  .accountButton { display: none; }
+  .emergencyButton {
+    min-height: 40px;
+    padding: 8px 11px;
     font-size: 12px;
   }
-
-  .footer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  .emergencyFull { display: none; }
+  .emergencyShort { display: inline; }
+  .footer { align-items: flex-start; flex-direction: column; }
 }
