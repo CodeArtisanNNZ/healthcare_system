@@ -30,12 +30,8 @@ type AssistantResponse = {
   category: Category;
   location: string;
   urgent: boolean;
-  message: string;
-  matched: {
-    canonical: string;
-    specialty: string | null;
-    language: string;
-  };
+  title: string;
+  context: string;
   results: SearchResult[];
   directoryUrl: string;
   directoryLabel: string;
@@ -60,11 +56,13 @@ export function HealthcareAssistant({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (busy) return;
 
     const message = query.trim();
+
     if (!message) {
-      setError(bn ? "কী খুঁজছেন তা লিখুন।" : "Enter what you are looking for.");
+      setError(bn ? "কী খুঁজছেন তা লিখুন।" : "Enter a search.");
       return;
     }
 
@@ -73,25 +71,37 @@ export function HealthcareAssistant({
     setResponse(null);
 
     try {
-      const result = await fetch("/api/assistant", {
+      const request = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, category, location }),
+        body: JSON.stringify({
+          message,
+          category,
+          location,
+        }),
       });
 
-      const data = (await result.json()) as AssistantResponse & { error?: string };
-      if (!result.ok) throw new Error(data.error || "Search failed.");
+      const data = (await request.json()) as AssistantResponse & {
+        error?: string;
+      };
+
+      if (!request.ok) {
+        throw new Error(data.error || "Search failed.");
+      }
 
       setResponse(data);
       setCategory(data.category);
-      if (!location && data.location) setLocation(data.location);
+
+      if (!location && data.location) {
+        setLocation(data.location);
+      }
     } catch (caught) {
       setError(
         caught instanceof Error
           ? caught.message
           : bn
-            ? "সার্চ এখন পাওয়া যাচ্ছে না।"
-            : "Search is temporarily unavailable.",
+            ? "সার্চ করা যাচ্ছে না। আবার চেষ্টা করুন।"
+            : "Search is unavailable. Please try again.",
       );
     } finally {
       setBusy(false);
@@ -101,25 +111,28 @@ export function HealthcareAssistant({
   return (
     <section className={styles.shell} aria-labelledby="assistant-title">
       <div className={styles.heading}>
-        <p className={styles.kicker}>HEALTHCARE CENTRAL ASSISTANT</p>
-        <h1 id="assistant-title">
-          {bn ? "সঠিক স্বাস্থ্যসেবা খুঁজুন।" : "Find the right care."}
-        </h1>
-        <p>
-          {bn
-            ? "English, বাংলা বা Banglish লিখুন। ফলাফল Healthcare Central-এর নিজস্ব ডেটাবেস থেকে আসে।"
-            : "Search in English, বাংলা or Banglish. Results come directly from Healthcare Central’s database."}
-        </p>
+        <span className={styles.label}>
+          {bn ? "সহকারী" : "Assistant"}
+        </span>
+        <h2 id="assistant-title">
+          {bn ? "স্বাস্থ্যসেবা খুঁজুন" : "Search healthcare services"}
+        </h2>
       </div>
 
       <form className={styles.searchPanel} onSubmit={submit}>
-        <div className={styles.categoryRow} aria-label="Service">
+        <div className={styles.categoryRow} aria-label="Service type">
           {categories.map(([id, label]) => (
             <button
               key={id}
               type="button"
-              className={id === category ? styles.activeCategory : styles.category}
-              onClick={() => setCategory(id)}
+              className={
+                id === category ? styles.activeCategory : styles.category
+              }
+              onClick={() => {
+                setCategory(id);
+                setResponse(null);
+                setError("");
+              }}
               aria-pressed={id === category}
             >
               {label}
@@ -128,15 +141,15 @@ export function HealthcareAssistant({
         </div>
 
         <label className={styles.queryLabel}>
-          <span>{bn ? "কী খুঁজছেন?" : "What are you looking for?"}</span>
+          <span>{bn ? "সার্চ" : "Search"}</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             maxLength={160}
             placeholder={
               bn
-                ? "ডাক্তার, হাসপাতাল, ওষুধ বা সেবা লিখুন"
-                : "Search doctors, medicines, hospitals or services"
+                ? "নাম, বিশেষত্ব বা সেবা লিখুন"
+                : "Name, specialty or service"
             }
           />
         </label>
@@ -152,12 +165,13 @@ export function HealthcareAssistant({
               <option value="">
                 {category === "medicine"
                   ? bn
-                    ? "প্রয়োজন নেই"
+                    ? "প্রযোজ্য নয়"
                     : "Not required"
                   : bn
                     ? "সব এলাকা"
                     : "All locations"}
               </option>
+
               {healthcareLocations.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -166,11 +180,15 @@ export function HealthcareAssistant({
             </select>
           </label>
 
-          <button className={styles.searchButton} type="submit" disabled={busy}>
+          <button
+            className={styles.searchButton}
+            type="submit"
+            disabled={busy}
+          >
             {busy
               ? bn
-                ? "খোঁজা হচ্ছে..."
-                : "Searching..."
+                ? "খোঁজা হচ্ছে"
+                : "Searching"
               : bn
                 ? "সার্চ করুন"
                 : "Search"}
@@ -188,28 +206,37 @@ export function HealthcareAssistant({
         <div className={styles.response} aria-live="polite">
           {response.urgent && (
             <div className={styles.urgent}>
-              <strong>
-                {bn
-                  ? "জরুরি চিকিৎসা প্রয়োজন হতে পারে।"
-                  : "Urgent care may be needed."}
-              </strong>
+              <div>
+                <strong>
+                  {bn ? "জরুরি সহায়তা প্রয়োজন হতে পারে" : "Urgent help may be needed"}
+                </strong>
+                <span>
+                  {bn
+                    ? "জরুরি যোগাযোগ ও অ্যাম্বুলেন্স সেবা দেখুন।"
+                    : "Open emergency contacts and ambulance support."}
+                </span>
+              </div>
               <Link href="/emergency">
-                {bn ? "জরুরি সহায়তা খুলুন" : "Open Emergency Help"}
+                {bn ? "জরুরি সহায়তা" : "Emergency Help"}
               </Link>
             </div>
           )}
 
           <div className={styles.responseHeading}>
             <div>
-              <h2>{response.message}</h2>
-              {(response.matched.specialty || response.matched.canonical) && (
+              <h3>{response.title}</h3>
+              {(response.context || response.location) && (
                 <p>
-                  {response.matched.specialty || response.matched.canonical}
-                  {response.location ? ` · ${response.location}` : ""}
+                  {[response.context, response.location]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               )}
             </div>
-            <Link href={response.directoryUrl}>{response.directoryLabel}</Link>
+
+            <Link href={response.directoryUrl}>
+              {response.directoryLabel}
+            </Link>
           </div>
 
           {response.results.length ? (
@@ -217,12 +244,11 @@ export function HealthcareAssistant({
               {response.results.map((result) => (
                 <article className={styles.resultCard} key={result.id}>
                   <div className={styles.resultMain}>
-                    <div>
-                      <h3>{result.title}</h3>
-                      {result.subtitle && (
-                        <p className={styles.subtitle}>{result.subtitle}</p>
-                      )}
-                    </div>
+                    <h4>{result.title}</h4>
+
+                    {result.subtitle && (
+                      <p className={styles.subtitle}>{result.subtitle}</p>
+                    )}
 
                     {result.details.length > 0 && (
                       <dl>
@@ -237,11 +263,19 @@ export function HealthcareAssistant({
                   </div>
 
                   <div className={styles.resultActions}>
-                    {result.phone && <a href={callHref(result.phone)}>Call</a>}
-                    {result.secondaryPhone && (
-                      <a href={callHref(result.secondaryPhone)}>Emergency call</a>
+                    {result.phone && (
+                      <a href={callHref(result.phone)}>Call</a>
                     )}
-                    {result.href && <Link href={result.href}>View</Link>}
+
+                    {result.secondaryPhone && (
+                      <a href={callHref(result.secondaryPhone)}>
+                        Emergency call
+                      </a>
+                    )}
+
+                    {result.href && (
+                      <Link href={result.href}>View details</Link>
+                    )}
                   </div>
                 </article>
               ))}
@@ -249,8 +283,8 @@ export function HealthcareAssistant({
           ) : (
             <div className={styles.empty}>
               {bn
-                ? "এই সার্চের জন্য Healthcare Central-এ কোনো মিল পাওয়া যায়নি।"
-                : "No matching Healthcare Central entries were found for this search."}
+                ? "এই সার্চের জন্য কোনো ফলাফল পাওয়া যায়নি।"
+                : "No matching results were found."}
             </div>
           )}
         </div>
@@ -258,8 +292,8 @@ export function HealthcareAssistant({
 
       <p className={styles.disclaimer}>
         {bn
-          ? "Assistant সেবা খুঁজতে সাহায্য করে; এটি রোগ নির্ণয় বা চিকিৎসা দেয় না।"
-          : "The Assistant helps you find healthcare services. It does not diagnose or provide treatment."}
+          ? "এই সেবা চিকিৎসা নির্ণয় করে না।"
+          : "Search assistance only. This service does not provide a diagnosis."}
       </p>
     </section>
   );
