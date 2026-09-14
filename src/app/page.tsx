@@ -56,7 +56,37 @@ export default async function Home({
       </section>
 
       <section className={styles.servicesSection} id="services">
-        {/* 3D HUMAN ANATOMY */}
+      
+</section>
+        <div className={styles.sectionHeading}>
+          <p>{bn ? "সেবা" : "Services"}</p>
+          <h2>{bn ? "একটি সেবা বেছে নিন" : "Start with a service"}</h2>
+          <span>
+            {bn
+              ? "প্রথমে সেবাটি সম্পর্কে জানুন। ব্যবহার করতে চাইলে পরে লগ ইন করুন।"
+              : "See what each service offers first. Sign in only when you want to use it."}
+          </span>
+        </div>
+
+        <div className={styles.serviceGrid}>
+          {services.map(([slug, title, titleBn, description, descriptionBn]) => (
+            <Link
+              key={slug}
+              href={`/services/${slug}`}
+              className={`${styles.serviceCard} ${
+                slug === "ambulance" ? styles.emergencyServiceCard : ""
+              }`}
+            >
+              <div>
+                <h3>{bn ? titleBn : title}</h3>
+                <p>{bn ? descriptionBn : description}</p>
+              </div>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+  {/* 3D HUMAN ANATOMY */}
 <section className={styles.anatomySection}>
   <div className={styles.anatomyHeading}>
     <p>
@@ -89,36 +119,6 @@ export default async function Home({
       allow="fullscreen"
     />
   </div>
-</section>
-        <div className={styles.sectionHeading}>
-          <p>{bn ? "সেবা" : "Services"}</p>
-          <h2>{bn ? "একটি সেবা বেছে নিন" : "Start with a service"}</h2>
-          <span>
-            {bn
-              ? "প্রথমে সেবাটি সম্পর্কে জানুন। ব্যবহার করতে চাইলে পরে লগ ইন করুন।"
-              : "See what each service offers first. Sign in only when you want to use it."}
-          </span>
-        </div>
-
-        <div className={styles.serviceGrid}>
-          {services.map(([slug, title, titleBn, description, descriptionBn]) => (
-            <Link
-              key={slug}
-              href={`/services/${slug}`}
-              className={`${styles.serviceCard} ${
-                slug === "ambulance" ? styles.emergencyServiceCard : ""
-              }`}
-            >
-              <div>
-                <h3>{bn ? titleBn : title}</h3>
-                <p>{bn ? descriptionBn : description}</p>
-              </div>
-              <span aria-hidden="true">→</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <section className={styles.bottomRow}>
         <article className={styles.assistantCard}>
           <div>
@@ -146,6 +146,7 @@ export default async function Home({
           </Link>
         </article>
       </section>
+    
     </div>
   );
 }
