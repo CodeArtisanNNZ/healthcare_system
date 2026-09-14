@@ -282,3 +282,99 @@
     width: 100%;
   }
 }
+/* ============================
+   3D ANATOMY EXPLORER
+   ============================ */
+
+.anatomySection {
+  width: min(1500px, 100%);
+  margin: 72px auto;
+  padding: 0 24px;
+}
+
+.anatomyHeading {
+  max-width: 680px;
+  margin-bottom: 24px;
+}
+
+.anatomyHeading > p {
+  margin: 0 0 8px;
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.anatomyHeading h2 {
+  margin: 0;
+  color: #102a2a;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.anatomyHeading span {
+  display: block;
+  max-width: 590px;
+  margin-top: 12px;
+  color: #58706e;
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+.anatomyFrameWrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #041c1c;
+
+  box-shadow:
+    0 28px 80px rgba(5, 62, 60, 0.13),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.anatomyFrame {
+  display: block;
+  width: 100%;
+  height: min(850px, 88vh);
+  min-height: 680px;
+  border: 0;
+  background: #041c1c;
+}
+
+@media (max-width: 768px) {
+  .anatomySection {
+    margin: 48px auto;
+    padding: 0 14px;
+  }
+
+  .anatomyFrameWrap {
+    border-radius: 20px;
+  }
+
+  .anatomyFrame {
+    height: 760px;
+    min-height: 650px;
+  }
+}
+
+@media (max-width: 480px) {
+  .anatomySection {
+    padding: 0;
+  }
+
+  .anatomyHeading {
+    padding: 0 16px;
+  }
+
+  .anatomyFrameWrap {
+    border-radius: 0;
+  }
+
+  .anatomyFrame {
+    height: 720px;
+    min-height: 620px;
+  }
+}
