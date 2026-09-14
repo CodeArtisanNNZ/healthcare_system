@@ -163,15 +163,15 @@ export default async function Home({
 
           <span>
             {bn
-              ? "মানবদেহ ঘোরান, জুম করুন এবং প্রধান অঙ্গগুলোতে চাপ দিয়ে তাদের কাজ সম্পর্কে জানুন।"
-              : "Rotate the body, zoom in, and select major organs to understand what they do."}
+              ? "মানবদেহ ঘোরান, জুম করুন এবং চোখ, মস্তিষ্ক, থাইরয়েডসহ প্রধান অঙ্গগুলোতে চাপ দিয়ে তাদের কাজ সম্পর্কে জানুন।"
+              : "Rotate the body, zoom in, and explore the eyes, brain, thyroid and other major organs."}
           </span>
         </div>
 
         <div className={styles.anatomyFrameWrap}>
           <iframe
             className={styles.anatomyFrame}
-            src={`/anatomy-explorer.html?lang=${language}`}
+            src={`/anatomy-explorer-v2.html?lang=${language}`}
             title={
               bn
                 ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
