@@ -1,16 +1,134 @@
-from pathlib import Path
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#062f2d" />
+  <title>Healthcare Central — 3D Anatomy Explorer</title>
+  <meta
+    name="description"
+    content="Interactive bilingual 3D human anatomy explorer using open anatomical meshes."
+  />
 
-src = Path("/mnt/data/Pasted text(4).txt")
-text = src.read_text(encoding="utf-8")
+  <!--
+    Healthcare Central — 3D Anatomy Explorer
+    =========================================
 
-# 1) Replace the old leftover SVG logo rule with complete logo sizing.
-old = """.mark svg {
-  width: 22px;
-  height: 22px;
-  stroke: var(--teal2);
-}
-"""
-new = """.mark {
+    REAL 3D ASSETS
+    --------------
+    This viewer loads open anatomical meshes from the Anatria3D atlas:
+    https://github.com/Nurkan1/Anatria-3D
+
+    Male atlas assets are adaptations of Z-Anatomy / BodyParts3D and are
+    licensed CC BY-SA 4.0. Attribution is shown in the interface footer.
+    The files are loaded from jsDelivr at a pinned upstream commit so this
+    single HTML file can be dropped into a Next.js /public folder.
+
+    IMPORTANT:
+    - This page needs internet access because the GLB files are loaded remotely.
+    - The models are educational anatomy, not a diagnostic tool.
+  -->
+
+  <style>
+    :root {
+      --bg: #041d1c;
+      --bg2: #072a28;
+      --panel: rgba(5, 42, 40, 0.86);
+      --panel2: rgba(3, 31, 30, 0.93);
+      --line: rgba(94, 234, 212, 0.16);
+      --line-strong: rgba(94, 234, 212, 0.42);
+      --teal: #2dd4bf;
+      --teal2: #5eead4;
+      --teal-dark: #0f766e;
+      --text: #ecfffd;
+      --muted: #9cc5c1;
+      --muted2: #729c98;
+      --danger: #ff8b8b;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 13px;
+      --shadow: 0 26px 80px rgba(0,0,0,.34);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", "Noto Sans Bengali", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(45,212,191,.11), transparent 35%),
+        linear-gradient(180deg, #031918, #062624 55%, #031817);
+      font-family: var(--font);
+    }
+
+    body { overflow-x: hidden; }
+
+    button, input { font: inherit; }
+
+    button { color: inherit; }
+
+    .app {
+      min-height: 100vh;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      opacity: .12;
+      background-image:
+        linear-gradient(rgba(94,234,212,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94,234,212,.08) 1px, transparent 1px);
+      background-size: 46px 46px;
+      mask-image: linear-gradient(to bottom, transparent, #000 16%, #000 82%, transparent);
+    }
+
+    .glow {
+      position: fixed;
+      inset: -35%;
+      z-index: -3;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 48% 32%, rgba(45,212,191,.13), transparent 23%),
+        radial-gradient(circle at 70% 68%, rgba(13,148,136,.08), transparent 24%);
+      filter: blur(40px);
+    }
+
+    .shell {
+      width: min(1580px, 100%);
+      margin: 0 auto;
+      padding: 14px clamp(12px, 1.8vw, 28px) 18px;
+    }
+
+    .topbar {
+      min-height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(3,28,27,.74);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 12px 38px rgba(0,0,0,.18);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+.mark {
   width: 58px;
   height: 48px;
   flex: 0 0 58px;
@@ -34,34 +152,703 @@ new = """.mark {
   object-fit: contain;
   object-position: center;
 }
-"""
-if old not in text:
-    raise RuntimeError("Old .mark svg block not found.")
-text = text.replace(old, new, 1)
 
-# 2) Repair the broken mobile media-query area exactly as found in the pasted file.
-broken = """   .mark {
-  width: 48px;
-  height: 40px;
-  flex-basis: 48px;
-  padding: 3px 4px;
-} {
-      .shell { padding: 0; }
+    .brand h1 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
 
-      .topbar {
-        min-height: 58px;
-        border-width: 0 0 1px;
-        border-radius: 0;
-        padding: 8px 10px;
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(7,54,51,.64);
+      color: #ddfffb;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 760;
+      transition: 180ms ease;
+    }
+
+    .btn:hover {
+      border-color: rgba(94,234,212,.55);
+      background: rgba(10,77,72,.75);
+      transform: translateY(-1px);
+    }
+
+    .btn.active {
+      border-color: rgba(94,234,212,.58);
+      background: rgba(15,118,110,.48);
+    }
+
+    .btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+    }
+
+    .workspace {
+      position: relative;
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr) 330px;
+      gap: 12px;
+      height: min(820px, calc(100vh - 104px));
+      min-height: 650px;
+      margin-top: 12px;
+    }
+
+    .panel {
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(180deg, rgba(6,49,46,.79), rgba(3,28,27,.91));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      padding: 17px;
+    }
+
+    .kicker {
+      margin: 0 0 7px;
+      color: var(--teal2);
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .side-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 820;
+      letter-spacing: -.02em;
+    }
+
+    .side-copy {
+      margin: 6px 0 13px;
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.55;
+    }
+
+    .search-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      transform: translateY(-50%);
+      stroke: #91bbb7;
+      pointer-events: none;
+    }
+
+    .search {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px 0 38px;
+      border: 1px solid rgba(94,234,212,.12);
+      border-radius: 13px;
+      outline: none;
+      background: rgba(1,21,20,.69);
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .search::placeholder { color: #6f9995; }
+
+    .search:focus {
+      border-color: rgba(94,234,212,.48);
+      box-shadow: 0 0 0 4px rgba(45,212,191,.07);
+    }
+
+    .organ-list {
+      flex: 1;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 3px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(94,234,212,.22) transparent;
+    }
+
+    .organ-list::-webkit-scrollbar { width: 6px; }
+    .organ-list::-webkit-scrollbar-thumb {
+      background: rgba(94,234,212,.22);
+      border-radius: 999px;
+    }
+
+    .organ-card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 35px minmax(0,1fr) 18px;
+      align-items: center;
+      gap: 9px;
+      padding: 9px;
+      margin: 0 0 7px;
+      border: 1px solid transparent;
+      border-radius: 13px;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: 160ms ease;
+    }
+
+    .organ-card:hover {
+      border-color: rgba(94,234,212,.12);
+      background: rgba(45,212,191,.055);
+      transform: translateX(2px);
+    }
+
+    .organ-card.active {
+      border-color: rgba(94,234,212,.45);
+      background: linear-gradient(90deg, rgba(13,148,136,.22), rgba(45,212,191,.035));
+      box-shadow: inset 3px 0 0 var(--teal);
+    }
+
+    .swatch {
+      width: 35px;
+      height: 35px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.25), transparent 23%),
+        var(--organ-color);
+      box-shadow:
+        inset -7px -8px 13px rgba(0,0,0,.18),
+        0 7px 16px rgba(0,0,0,.12);
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .organ-card strong {
+      display: block;
+      color: #effffd;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .organ-card small {
+      display: block;
+      margin-top: 3px;
+      color: #7fa8a4;
+      font-size: 9px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chev {
+      color: #7ca6a2;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .viewer {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background:
+        radial-gradient(circle at 50% 42%, rgba(45,212,191,.10), transparent 32%),
+        linear-gradient(180deg, rgba(2,28,27,.73), rgba(1,18,18,.95));
+      box-shadow: var(--shadow);
+    }
+
+    #scene {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .viewer-top {
+      position: absolute;
+      z-index: 6;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .viewer-info,
+    .viewer-legend {
+      padding: 8px 10px;
+      border: 1px solid rgba(94,234,212,.14);
+      border-radius: 12px;
+      background: rgba(2,25,24,.64);
+      backdrop-filter: blur(13px);
+      box-shadow: 0 9px 25px rgba(0,0,0,.16);
+    }
+
+    .viewer-info strong {
+      display: block;
+      font-size: 10.5px;
+      font-weight: 780;
+    }
+
+    .viewer-info span {
+      display: block;
+      margin-top: 3px;
+      color: #84aaa7;
+      font-size: 9px;
+    }
+
+    .viewer-legend {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #9bc2be;
+      font-size: 9px;
+    }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal2);
+      box-shadow: 0 0 10px rgba(94,234,212,.65);
+    }
+
+    .toolbar {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      bottom: 13px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid rgba(94,234,212,.17);
+      border-radius: 15px;
+      background: rgba(2,22,21,.76);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 36px rgba(0,0,0,.28);
+    }
+
+    .icon-btn {
+      width: 39px;
+      height: 39px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(7,52,49,.62);
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .icon-btn:hover,
+    .icon-btn.active {
+      border-color: rgba(94,234,212,.52);
+      background: rgba(13,116,108,.45);
+    }
+
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: #e4fffc;
+      pointer-events: none;
+    }
+
+    .loader {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at center, rgba(45,212,191,.10), transparent 38%),
+        #031e1d;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+
+    .loader.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-inner {
+      width: min(330px, 80%);
+      text-align: center;
+    }
+
+    .loader-orb {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 15px;
+      border: 1px solid rgba(94,234,212,.3);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 31%, rgba(214,255,249,.72), transparent 10%),
+        radial-gradient(circle, rgba(45,212,191,.19), rgba(2,32,31,.9) 67%);
+      box-shadow:
+        0 0 0 8px rgba(45,212,191,.02),
+        0 0 44px rgba(45,212,191,.24);
+      animation: breathe 1.7s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%,100% { transform: scale(.94); opacity: .75; }
+      50% { transform: scale(1); opacity: 1; }
+    }
+
+    .loader strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: .03em;
+    }
+
+    .loader p {
+      margin: 7px 0 0;
+      color: #84aaa6;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .progress-track {
+      height: 4px;
+      margin: 14px auto 0;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(94,234,212,.08);
+    }
+
+    .progress-bar {
+      width: 4%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #0f766e, #5eead4);
+      transition: width .28s ease;
+    }
+
+    .error-card {
+      display: none;
+      position: absolute;
+      inset: 18px;
+      z-index: 30;
+      place-items: center;
+      padding: 24px;
+      border: 1px solid rgba(255,139,139,.28);
+      border-radius: 18px;
+      background: rgba(35,12,12,.95);
+      color: #ffe8e8;
+      text-align: center;
+    }
+
+    .error-card.show { display: grid; }
+
+    .error-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .error-card p {
+      max-width: 480px;
+      margin: 0;
+      color: #ddbaba;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 12;
+      display: none;
+      max-width: 190px;
+      padding: 7px 9px;
+      border: 1px solid rgba(94,234,212,.25);
+      border-radius: 10px;
+      background: rgba(2,24,23,.88);
+      backdrop-filter: blur(12px);
+      color: #eafffc;
+      font-size: 10px;
+      font-weight: 700;
+      pointer-events: none;
+      transform: translate(12px, 12px);
+      box-shadow: 0 8px 20px rgba(0,0,0,.26);
+    }
+
+    .tooltip.show { display: block; }
+
+    .details {
+      display: flex;
+      flex-direction: column;
+      padding: 19px;
+    }
+
+    .system {
+      margin: 0 0 7px;
+      color: var(--teal2);
+      font-size: 9px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .detail-title {
+      margin: 0;
+      font-size: clamp(27px, 2.5vw, 38px);
+      line-height: .98;
+      font-weight: 860;
+      letter-spacing: -.04em;
+    }
+
+    .location {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      align-self: flex-start;
+      margin-top: 11px;
+      padding: 6px 9px;
+      border: 1px solid rgba(94,234,212,.13);
+      border-radius: 999px;
+      background: rgba(45,212,191,.05);
+      color: #b4d8d5;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .location svg {
+      width: 12px;
+      height: 12px;
+      stroke: var(--teal2);
+    }
+
+    .real-mesh-badge {
+      margin: 18px 0 14px;
+      padding: 12px;
+      border: 1px solid rgba(94,234,212,.12);
+      border-radius: 15px;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(45,212,191,.08), transparent 45%),
+        rgba(2,22,21,.5);
+    }
+
+    .real-mesh-badge strong {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .real-mesh-badge strong::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--teal2);
+      box-shadow: 0 0 10px rgba(94,234,212,.6);
+    }
+
+    .real-mesh-badge span {
+      display: block;
+      margin-top: 6px;
+      color: #749c98;
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .description {
+      margin: 0;
+      color: #c3dfdc;
+      font-size: 12.5px;
+      line-height: 1.68;
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .fact {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(94,234,212,.095);
+      border-radius: 12px;
+      background: rgba(1,20,19,.46);
+    }
+
+    .fact span {
+      display: block;
+      color: #6d9994;
+      font-size: 8px;
+      font-weight: 820;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .fact strong {
+      display: block;
+      margin-top: 5px;
+      color: #effffd;
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .detail-actions .btn {
+      flex: 1;
+      border-radius: 11px;
+      min-height: 40px;
+    }
+
+    .detail-actions .btn.primary {
+      border-color: rgba(94,234,212,.42);
+      background: rgba(13,148,136,.35);
+    }
+
+    .footnote {
+      margin-top: auto;
+      padding-top: 15px;
+    }
+
+    .notice {
+      margin: 0;
+      padding: 10px 11px;
+      border-left: 2px solid rgba(94,234,212,.35);
+      border-radius: 0 9px 9px 0;
+      background: rgba(45,212,191,.035);
+      color: #6f9894;
+      font-size: 8.5px;
+      line-height: 1.55;
+    }
+
+    .credit {
+      margin: 8px 0 0;
+      color: #5f8581;
+      font-size: 7.5px;
+      line-height: 1.45;
+    }
+
+    .credit a {
+      color: #78aaa5;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .empty {
+      display: none;
+      padding: 12px;
+      color: var(--muted2);
+      font-size: 10px;
+      text-align: center;
+    }
+    .empty.show { display: block; }
+
+    .mobile-organs { display: none; }
+
+    @media (max-width: 1100px) {
+      .workspace {
+        grid-template-columns: 235px minmax(0,1fr) 295px;
+      }
+      .facts { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .shell { padding: 8px; }
+
+      .brand p { display: none; }
+
+      .workspace {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 0;
+        gap: 10px;
       }
 
-      .mark {
-        width: 34px;
-        height: 34px;
-        flex-basis: 34px;
+      /* Keep the anatomy viewer fully visible on phones.
+         The information card now sits BELOW it instead of covering it. */
+      .viewer {
+        order: 1;
+        height: min(72svh, 680px);
+        min-height: 500px;
       }
-"""
-fixed = """    @media (max-width: 520px) {
+
+      .details {
+        order: 2;
+        position: static;
+        z-index: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+        transform: none !important;
+        transition: none;
+      }
+
+      .sidebar {
+        position: absolute;
+        z-index: 40;
+        top: 8px;
+        left: 8px;
+        width: min(290px, calc(100% - 16px));
+        max-height: calc(72svh - 16px);
+        transform: translateX(calc(-100% - 16px));
+        transition: transform .22s cubic-bezier(.2,.8,.2,1);
+      }
+
+      .sidebar.open { transform: translateX(0); }
+
+      .mobile-organs { display: inline-flex; }
+
+      .facts { grid-template-columns: 1fr 1fr; }
+
+      .viewer-legend { display: none; }
+    }
+
+    @media (max-width: 520px) {
       .shell { padding: 0; }
 
       .topbar {
@@ -84,20 +871,73 @@ fixed = """    @media (max-width: 520px) {
         max-width: 44px !important;
         max-height: 36px !important;
       }
-"""
-if broken not in text:
-    raise RuntimeError("Broken mobile CSS block not found.")
-text = text.replace(broken, fixed, 1)
 
-# 3) Make logo markup compact and give dimensions to prevent layout jumps.
-old_logo = """         <div class="mark">
-  <img
-    src="/images/logo.png"
-    alt="Healthcare Central logo"
-  />
-</div>
-"""
-new_logo = """          <div class="mark">
+      .brand h1 { font-size: 13px; }
+
+      .btn {
+        min-height: 35px;
+        padding: 0 9px;
+        font-size: 9.5px;
+      }
+
+      .workspace { margin-top: 0; }
+
+      .viewer {
+        height: 68svh;
+        min-height: 500px;
+        border-width: 0 0 1px;
+        border-radius: 0;
+      }
+
+      .details {
+        border-radius: 22px 22px 0 0;
+        padding: 18px 16px 24px;
+      }
+
+      .viewer-info span { display: none; }
+
+      .toolbar {
+        width: calc(100% - 20px);
+        justify-content: center;
+        bottom: 9px;
+      }
+
+      .icon-btn {
+        flex: 1;
+        max-width: 54px;
+      }
+
+      .facts { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <main class="app">
+    <div class="grid" aria-hidden="true"></div>
+    <div class="glow" aria-hidden="true"></div>
+
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark">
             <img
               src="/images/logo.png"
               alt="Healthcare Central logo"
@@ -105,20 +945,1265 @@ new_logo = """          <div class="mark">
               height="44"
             />
           </div>
-"""
-if old_logo not in text:
-    raise RuntimeError("Logo markup not found.")
-text = text.replace(old_logo, new_logo, 1)
+          <div>
+            <h1 data-i18n="title">3D Anatomy Explorer</h1>
+            <p data-i18n="subtitle">Healthcare Central · real anatomical meshes</p>
+          </div>
+        </div>
 
-out = Path("/mnt/data/anatomy-explorer.html")
-out.write_text(text, encoding="utf-8")
+        <div class="top-actions">
+          <button class="btn mobile-organs" id="mobileOrgansBtn" type="button">
+            <span data-i18n="organs">Organs</span>
+          </button>
 
-# Basic sanity checks.
-assert "@media (max-width: 520px)" in text
-assert ".mark svg" not in text
-assert 'src="/images/logo.png"' in text
-assert "sanitizeNodeName" in text
+          <button class="btn" id="languageBtn" type="button" aria-label="Change language">
+            <span id="languageLabel">বাংলা</span>
+          </button>
+        </div>
+      </header>
 
-print(f"Created: {out}")
-print(f"Lines: {len(text.splitlines())}")
-print(f"Size: {out.stat().st_size:,} bytes")
+      <section class="workspace">
+        <aside class="panel sidebar" id="sidebar">
+          <p class="kicker" data-i18n="realAtlas">Real anatomy atlas</p>
+          <h2 class="side-title" data-i18n="exploreOrgans">Explore major organs</h2>
+          <p class="side-copy" data-i18n="chooseOrgan">
+            Click an organ to move the camera to its real 3D anatomy.
+          </p>
+
+          <label class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.4"></circle>
+              <path d="m16 16 4 4"></path>
+            </svg>
+            <input
+              id="search"
+              class="search"
+              type="search"
+              autocomplete="off"
+              placeholder="Search organ"
+              data-i18n-placeholder="searchPlaceholder"
+            />
+          </label>
+
+          <div class="organ-list" id="organList"></div>
+          <div class="empty" id="empty" data-i18n="noResults">No matching organ found.</div>
+        </aside>
+
+        <section class="viewer" id="viewer">
+          <canvas id="scene" aria-label="Interactive realistic 3D human anatomy"></canvas>
+
+          <div class="loader" id="loader">
+            <div class="loader-inner">
+              <div class="loader-orb"></div>
+              <strong id="loaderTitle" data-i18n="loadingTitle">Loading real anatomy</strong>
+              <p id="loaderText" data-i18n="loadingBody">
+                Downloading the anatomical meshes. The first load can take a little longer.
+              </p>
+              <div class="progress-track">
+                <div class="progress-bar" id="progressBar"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="error-card" id="errorCard">
+            <div>
+              <strong data-i18n="errorTitle">The 3D atlas could not load.</strong>
+              <p id="errorMessage" data-i18n="errorBody">
+                Check your internet connection, then refresh the page.
+              </p>
+            </div>
+          </div>
+
+          <div class="viewer-top">
+            <div class="viewer-info">
+              <strong data-i18n="viewerTitle">Real anatomical model</strong>
+              <span data-i18n="viewerHelp">Drag to rotate · scroll/pinch to zoom · click an organ</span>
+            </div>
+            <div class="viewer-legend">
+              <span class="legend-dot"></span>
+              <span data-i18n="atlasCreditShort">Z-Anatomy / BodyParts3D based</span>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <button class="icon-btn" id="zoomInBtn" type="button" aria-label="Zoom in">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+                <circle cx="10.5" cy="10.5" r="6"></circle>
+                <path d="M10.5 7.5v6M7.5 10.5h6M15 15l5 5"></path>
+              </svg>
+            </button>
+
+            <button class="icon-btn" id="zoomOutBtn" type="button" aria-label="Zoom out">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+                <circle cx="10.5" cy="10.5" r="6"></circle>
+                <path d="M7.5 10.5h6M15 15l5 5"></path>
+              </svg>
+            </button>
+
+            <button class="icon-btn active" id="rotateBtn" type="button" aria-label="Auto rotate" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+                <path d="M20 7v5h-5M4 17v-5h5"></path>
+                <path d="M18.5 9.4A7 7 0 0 0 6.1 6.2L4 9M5.5 14.6A7 7 0 0 0 17.9 17.8L20 15"></path>
+              </svg>
+            </button>
+
+            <button class="icon-btn active" id="skeletonBtn" type="button" aria-label="Skeleton context" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7">
+                <circle cx="12" cy="5" r="2.2"></circle>
+                <path d="M12 7.2v8.2M8 9.7l4 1.9 4-1.9M9 13.7l3 1.7 3-1.7M10.2 15.4 9 21M13.8 15.4 15 21"></path>
+              </svg>
+            </button>
+
+            <button class="icon-btn" id="resetBtn" type="button" aria-label="Reset view">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8">
+                <path d="M4 11a8 8 0 1 1 2.2 5.5"></path>
+                <path d="M4 5v6h6"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="tooltip" id="tooltip"></div>
+        </section>
+
+        <aside class="panel details" id="details">
+          <p class="system" id="detailSystem">Circulatory system</p>
+          <h2 class="detail-title" id="detailTitle">Heart</h2>
+
+          <div class="location">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" aria-hidden="true">
+              <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"></path>
+              <circle cx="12" cy="10" r="2"></circle>
+            </svg>
+            <span id="detailLocation">Chest</span>
+          </div>
+
+          <div class="real-mesh-badge">
+            <strong data-i18n="realMesh">Real atlas mesh</strong>
+            <span data-i18n="realMeshBody">
+              This is no longer a sphere or cartoon placeholder. It is rendered from anatomical GLB geometry.
+            </span>
+          </div>
+
+          <p class="description" id="detailDescription"></p>
+
+          <div class="facts">
+            <div class="fact">
+              <span data-i18n="primaryRole">Primary role</span>
+              <strong id="detailRole"></strong>
+            </div>
+            <div class="fact">
+              <span data-i18n="bodySystem">Body system</span>
+              <strong id="detailSystemFact"></strong>
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <button class="btn primary" id="focusBtn" type="button">
+              <span data-i18n="focus">Focus organ</span>
+            </button>
+            <button class="btn" id="showAllBtn" type="button">
+              <span data-i18n="showAll">Show whole body</span>
+            </button>
+          </div>
+
+          <div class="footnote">
+            <p class="notice" data-i18n="educationNote">
+              Educational visualisation only. Do not use this model for diagnosis or clinical planning.
+            </p>
+            <p class="credit">
+              3D assets: BodyParts3D / Z-Anatomy / Anatria3D adaptations,
+              CC BY-SA 4.0.
+              <a href="https://github.com/Nurkan1/Anatria-3D" target="_blank" rel="noreferrer">Source & licence</a>
+            </p>
+          </div>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+
+    const ATLAS_COMMIT = "4211d717b0b624604a8bda174ffcae31a76f4581";
+    const ATLAS_BASE =
+      `https://cdn.jsdelivr.net/gh/Nurkan1/Anatria-3D@${ATLAS_COMMIT}/public/anatomy/`;
+
+    const params = new URLSearchParams(location.search);
+    let language = params.get("lang") === "bn" ? "bn" : "en";
+
+    const I18N = {
+      en: {
+        title: "3D Anatomy Explorer",
+        subtitle: "Healthcare Central · real anatomical meshes",
+        organs: "Organs",
+        realAtlas: "Real anatomy atlas",
+        exploreOrgans: "Explore major organs",
+        chooseOrgan: "Click an organ to move the camera to its real 3D anatomy.",
+        searchPlaceholder: "Search organ",
+        noResults: "No matching organ found.",
+        loadingTitle: "Loading real anatomy",
+        loadingBody: "Downloading the anatomical meshes. The first load can take a little longer.",
+        errorTitle: "The 3D atlas could not load.",
+        errorBody: "Check your internet connection, then refresh the page.",
+        viewerTitle: "Real anatomical model",
+        viewerHelp: "Drag to rotate · scroll/pinch to zoom · click an organ",
+        atlasCreditShort: "Z-Anatomy / BodyParts3D based",
+        realMesh: "Real atlas mesh",
+        realMeshBody: "This is no longer a sphere or cartoon placeholder. It is rendered from anatomical GLB geometry.",
+        primaryRole: "Primary role",
+        bodySystem: "Body system",
+        focus: "Focus organ",
+        showAll: "Show whole body",
+        educationNote: "Educational visualisation only. Do not use this model for diagnosis or clinical planning.",
+        loadingManifest: "Reading atlas structure…",
+        loadingModel: "Loading",
+        finishing: "Preparing realistic materials…",
+        languageNext: "বাংলা",
+        systems: {
+          nervous: "Nervous system",
+          respiratory: "Respiratory system",
+          cardiovascular: "Circulatory system",
+          digestive: "Digestive system",
+          renal: "Urinary system"
+        },
+        regions: {
+          head: "Head",
+          chest: "Chest",
+          upperAbdomen: "Upper abdomen",
+          abdomen: "Abdomen",
+          posteriorAbdomen: "Posterior abdomen",
+          pelvis: "Pelvis"
+        }
+      },
+      bn: {
+        title: "৩ডি অ্যানাটমি এক্সপ্লোরার",
+        subtitle: "হেলথকেয়ার সেন্ট্রাল · বাস্তব অ্যানাটমিক্যাল মেশ",
+        organs: "অঙ্গসমূহ",
+        realAtlas: "বাস্তব অ্যানাটমি অ্যাটলাস",
+        exploreOrgans: "প্রধান অঙ্গসমূহ দেখুন",
+        chooseOrgan: "কোনো অঙ্গে চাপ দিলে ক্যামেরা তার বাস্তব ৩ডি অ্যানাটমিতে ফোকাস করবে।",
+        searchPlaceholder: "অঙ্গ খুঁজুন",
+        noResults: "মিল পাওয়া যায়নি।",
+        loadingTitle: "বাস্তব অ্যানাটমি লোড হচ্ছে",
+        loadingBody: "অ্যানাটমি মডেল ডাউনলোড হচ্ছে। প্রথমবার একটু বেশি সময় লাগতে পারে।",
+        errorTitle: "৩ডি অ্যাটলাস লোড করা যায়নি।",
+        errorBody: "ইন্টারনেট সংযোগ পরীক্ষা করে পেজটি রিফ্রেশ করুন।",
+        viewerTitle: "বাস্তব অ্যানাটমিক্যাল মডেল",
+        viewerHelp: "ঘোরাতে ড্র্যাগ করুন · জুম করতে স্ক্রল/পিঞ্চ করুন · অঙ্গে ক্লিক করুন",
+        atlasCreditShort: "Z-Anatomy / BodyParts3D ভিত্তিক",
+        realMesh: "বাস্তব অ্যাটলাস মেশ",
+        realMeshBody: "এটি আর গোলক বা কার্টুন প্লেসহোল্ডার নয়। বাস্তব অ্যানাটমিক্যাল GLB জ্যামিতি দিয়ে রেন্ডার করা হয়েছে।",
+        primaryRole: "প্রধান কাজ",
+        bodySystem: "দেহতন্ত্র",
+        focus: "অঙ্গে ফোকাস করুন",
+        showAll: "পুরো দেহ দেখুন",
+        educationNote: "শুধু শিক্ষামূলক ভিজ্যুয়ালাইজেশন। রোগ নির্ণয় বা ক্লিনিক্যাল পরিকল্পনায় ব্যবহার করবেন না।",
+        loadingManifest: "অ্যাটলাসের গঠন পড়া হচ্ছে…",
+        loadingModel: "লোড হচ্ছে",
+        finishing: "বাস্তবসম্মত উপকরণ প্রস্তুত হচ্ছে…",
+        languageNext: "English",
+        systems: {
+          nervous: "স্নায়ুতন্ত্র",
+          respiratory: "শ্বাসতন্ত্র",
+          cardiovascular: "রক্তসঞ্চালনতন্ত্র",
+          digestive: "পরিপাকতন্ত্র",
+          renal: "মূত্রতন্ত্র"
+        },
+        regions: {
+          head: "মাথা",
+          chest: "বক্ষদেশ",
+          upperAbdomen: "উপরের পেট",
+          abdomen: "পেট",
+          posteriorAbdomen: "পেটের পেছনের অংশ",
+          pelvis: "পেলভিস"
+        }
+      }
+    };
+
+    const ORGANS = {
+      brain: {
+        color: "#a89098",
+        system: "nervous",
+        region: "head",
+        file: "nervous_male.glb",
+        en: {
+          name: "Brain",
+          short: "Control & coordination",
+          description:
+            "The brain processes sensory information, supports thought and memory, coordinates movement, and regulates many automatic body functions.",
+          role: "Control, sensation, movement and cognition"
+        },
+        bn: {
+          name: "মস্তিষ্ক",
+          short: "নিয়ন্ত্রণ ও সমন্বয়",
+          description:
+            "মস্তিষ্ক ইন্দ্রিয়ের তথ্য বিশ্লেষণ করে, চিন্তা ও স্মৃতিতে সহায়তা করে, নড়াচড়া সমন্বয় করে এবং বহু স্বয়ংক্রিয় শারীরিক কাজ নিয়ন্ত্রণে ভূমিকা রাখে।",
+          role: "নিয়ন্ত্রণ, অনুভূতি, নড়াচড়া ও চিন্তা"
+        }
+      },
+      lungs: {
+        color: "#cf9ba0",
+        system: "respiratory",
+        region: "chest",
+        file: "respiratory_male.glb",
+        en: {
+          name: "Lungs",
+          short: "Gas exchange",
+          description:
+            "The lungs bring oxygen into the body and remove carbon dioxide. Their branching airways lead to microscopic air sacs where gas exchange occurs.",
+          role: "Exchange oxygen and carbon dioxide"
+        },
+        bn: {
+          name: "ফুসফুস",
+          short: "গ্যাস বিনিময়",
+          description:
+            "ফুসফুস শরীরে অক্সিজেন প্রবেশ করায় এবং কার্বন ডাই-অক্সাইড বের করে। শ্বাসনালির শাখাগুলো ক্ষুদ্র বায়ুথলিতে গিয়ে গ্যাস বিনিময়ে সাহায্য করে।",
+          role: "অক্সিজেন ও কার্বন ডাই-অক্সাইডের বিনিময়"
+        }
+      },
+      heart: {
+        color: "#a63f42",
+        system: "cardiovascular",
+        region: "chest",
+        file: "cardiovascular_male.glb",
+        en: {
+          name: "Heart",
+          short: "Blood pump",
+          description:
+            "The heart is a muscular four-chambered pump. Its contractions send blood to the lungs and through the rest of the body.",
+          role: "Pump blood through the circulation"
+        },
+        bn: {
+          name: "হৃদ্‌যন্ত্র",
+          short: "রক্ত পাম্প",
+          description:
+            "হৃদ্‌যন্ত্র চার প্রকোষ্ঠবিশিষ্ট পেশিবহুল একটি পাম্প। এর সংকোচন রক্তকে ফুসফুস এবং সারা শরীরে প্রবাহিত করে।",
+          role: "সারা দেহে রক্ত সঞ্চালন করা"
+        }
+      },
+      liver: {
+        color: "#7d4234",
+        system: "digestive",
+        region: "upperAbdomen",
+        file: "digestive_male.glb",
+        en: {
+          name: "Liver",
+          short: "Metabolism & bile",
+          description:
+            "The liver processes nutrients, performs many metabolic and detoxification functions, and produces bile that helps digest fats.",
+          role: "Process nutrients and produce bile"
+        },
+        bn: {
+          name: "যকৃত",
+          short: "বিপাক ও পিত্ত",
+          description:
+            "যকৃত পুষ্টি উপাদান প্রক্রিয়াজাত করে, বহু বিপাকীয় ও ডিটক্সিফিকেশন কাজ করে এবং চর্বি হজমে সহায়ক পিত্ত তৈরি করে।",
+          role: "পুষ্টি প্রক্রিয়াজাত ও পিত্ত তৈরি"
+        }
+      },
+      stomach: {
+        color: "#c98f7a",
+        system: "digestive",
+        region: "upperAbdomen",
+        file: "digestive_male.glb",
+        en: {
+          name: "Stomach",
+          short: "Mix & digest food",
+          description:
+            "The stomach receives food, mixes it with acid and digestive enzymes, and passes partially digested contents into the small intestine.",
+          role: "Mix food and begin major protein digestion"
+        },
+        bn: {
+          name: "পাকস্থলী",
+          short: "খাদ্য মেশানো ও হজম",
+          description:
+            "পাকস্থলী খাবার গ্রহণ করে, অ্যাসিড ও পরিপাক এনজাইমের সঙ্গে মেশায় এবং আংশিক হজম হওয়া খাবার ক্ষুদ্রান্ত্রে পাঠায়।",
+          role: "খাবার মেশানো ও প্রোটিন হজম শুরু"
+        }
+      },
+      pancreas: {
+        color: "#d8bf8b",
+        system: "digestive",
+        region: "upperAbdomen",
+        file: "digestive_male.glb",
+        en: {
+          name: "Pancreas",
+          short: "Enzymes & hormones",
+          description:
+            "The pancreas releases digestive enzymes into the small intestine and produces hormones that are important for blood-glucose regulation.",
+          role: "Support digestion and blood-glucose control"
+        },
+        bn: {
+          name: "অগ্ন্যাশয়",
+          short: "এনজাইম ও হরমোন",
+          description:
+            "অগ্ন্যাশয় ক্ষুদ্রান্ত্রে পরিপাক এনজাইম ছাড়ে এবং রক্তের গ্লুকোজ নিয়ন্ত্রণে গুরুত্বপূর্ণ হরমোন তৈরি করে।",
+          role: "হজম ও রক্তের গ্লুকোজ নিয়ন্ত্রণে সহায়তা"
+        }
+      },
+      intestines: {
+        color: "#c08a63",
+        system: "digestive",
+        region: "abdomen",
+        file: "digestive_male.glb",
+        en: {
+          name: "Intestines",
+          short: "Absorption & waste",
+          description:
+            "The small intestine absorbs most nutrients. The large intestine absorbs additional water and helps form and move stool.",
+          role: "Absorb nutrients and water; form waste"
+        },
+        bn: {
+          name: "অন্ত্র",
+          short: "শোষণ ও বর্জ্য",
+          description:
+            "ক্ষুদ্রান্ত্র অধিকাংশ পুষ্টি শোষণ করে। বৃহদান্ত্র আরও পানি শোষণ করে এবং মল তৈরি ও পরিবহনে সাহায্য করে।",
+          role: "পুষ্টি ও পানি শোষণ এবং বর্জ্য তৈরি"
+        }
+      },
+      kidneys: {
+        color: "#8f4a3a",
+        system: "renal",
+        region: "posteriorAbdomen",
+        file: "renal_male.glb",
+        en: {
+          name: "Kidneys",
+          short: "Filter blood",
+          description:
+            "The kidneys filter blood, remove wastes and excess water, help regulate fluid and mineral balance, and produce urine.",
+          role: "Filter blood and regulate fluid balance"
+        },
+        bn: {
+          name: "কিডনি",
+          short: "রক্ত পরিশোধন",
+          description:
+            "কিডনি রক্ত ছেঁকে বর্জ্য ও অতিরিক্ত পানি বের করে, তরল ও খনিজের ভারসাম্য বজায় রাখতে সাহায্য করে এবং প্রস্রাব তৈরি করে।",
+          role: "রক্ত পরিশোধন ও তরলের ভারসাম্য রক্ষা"
+        }
+      },
+      bladder: {
+        color: "#b98777",
+        system: "renal",
+        region: "pelvis",
+        file: "renal_male.glb",
+        en: {
+          name: "Bladder",
+          short: "Store urine",
+          description:
+            "The urinary bladder is a hollow muscular organ in the pelvis that expands to store urine until urination.",
+          role: "Temporarily store urine"
+        },
+        bn: {
+          name: "মূত্রথলি",
+          short: "প্রস্রাব সংরক্ষণ",
+          description:
+            "মূত্রথলি পেলভিসে থাকা ফাঁপা পেশিবহুল অঙ্গ। প্রস্রাবত্যাগের আগে এটি প্রসারিত হয়ে প্রস্রাব জমা রাখে।",
+          role: "সাময়িকভাবে প্রস্রাব সংরক্ষণ"
+        }
+      }
+    };
+
+    const els = {
+      viewer: document.getElementById("viewer"),
+      canvas: document.getElementById("scene"),
+      loader: document.getElementById("loader"),
+      loaderText: document.getElementById("loaderText"),
+      progressBar: document.getElementById("progressBar"),
+      errorCard: document.getElementById("errorCard"),
+      errorMessage: document.getElementById("errorMessage"),
+      organList: document.getElementById("organList"),
+      search: document.getElementById("search"),
+      empty: document.getElementById("empty"),
+      languageBtn: document.getElementById("languageBtn"),
+      languageLabel: document.getElementById("languageLabel"),
+      mobileOrgansBtn: document.getElementById("mobileOrgansBtn"),
+      sidebar: document.getElementById("sidebar"),
+      details: document.getElementById("details"),
+      tooltip: document.getElementById("tooltip"),
+      detailSystem: document.getElementById("detailSystem"),
+      detailTitle: document.getElementById("detailTitle"),
+      detailLocation: document.getElementById("detailLocation"),
+      detailDescription: document.getElementById("detailDescription"),
+      detailRole: document.getElementById("detailRole"),
+      detailSystemFact: document.getElementById("detailSystemFact")
+    };
+
+    function t(key) {
+      return I18N[language][key] ?? I18N.en[key] ?? key;
+    }
+
+    function organText(key) {
+      return ORGANS[key][language];
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = language === "bn" ? "bn" : "en";
+
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        const key = node.dataset.i18n;
+        if (t(key)) node.textContent = t(key);
+      });
+
+      document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+        node.placeholder = t(node.dataset.i18nPlaceholder);
+      });
+
+      els.languageLabel.textContent = t("languageNext");
+      renderOrganList(els.search.value);
+      updateDetails(selectedKey);
+      if (hoveredKey) {
+        els.tooltip.textContent = organText(hoveredKey).name;
+      }
+
+      const url = new URL(location.href);
+      url.searchParams.set("lang", language);
+      history.replaceState(null, "", url);
+    }
+
+    function renderOrganList(query = "") {
+      const q = query.trim().toLowerCase();
+      els.organList.innerHTML = "";
+      let count = 0;
+
+      for (const [key, organ] of Object.entries(ORGANS)) {
+        const info = organText(key);
+        const hay = `${info.name} ${info.short} ${organ.en.name} ${organ.en.short}`.toLowerCase();
+        if (q && !hay.includes(q)) continue;
+
+        count++;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `organ-card${key === selectedKey ? " active" : ""}`;
+        btn.dataset.organ = key;
+        btn.innerHTML = `
+          <span class="swatch" style="--organ-color:${organ.color}">${info.name.slice(0,1)}</span>
+          <span>
+            <strong>${escapeHtml(info.name)}</strong>
+            <small>${escapeHtml(info.short)}</small>
+          </span>
+          <span class="chev" aria-hidden="true">›</span>
+        `;
+        btn.addEventListener("click", () => selectOrgan(key, true));
+        els.organList.appendChild(btn);
+      }
+
+      els.empty.classList.toggle("show", count === 0);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updateDetails(key) {
+      const organ = ORGANS[key];
+      const info = organText(key);
+      els.detailSystem.textContent = I18N[language].systems[organ.system];
+      els.detailTitle.textContent = info.name;
+      els.detailLocation.textContent = I18N[language].regions[organ.region];
+      els.detailDescription.textContent = info.description;
+      els.detailRole.textContent = info.role;
+      els.detailSystemFact.textContent = I18N[language].systems[organ.system];
+      renderOrganList(els.search.value);
+    }
+
+    // -----------------------------------------------------------------------
+    // REAL 3D ATLAS
+    // -----------------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: els.canvas,
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x061f1e, 0.075);
+
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.001, 100);
+    camera.position.set(0, 1.25, 4.5);
+
+    const controls = new OrbitControls(camera, els.canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.autoRotate = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    controls.autoRotateSpeed = 0.7;
+    controls.enablePan = false;
+    controls.minPolarAngle = 0.12;
+    controls.maxPolarAngle = Math.PI - 0.12;
+
+    const atlasRoot = new THREE.Group();
+    scene.add(atlasRoot);
+
+    // Studio lighting. High-contrast enough to reveal anatomical contours.
+    scene.add(new THREE.AmbientLight(0xd6fff8, 0.32));
+
+    const hemi = new THREE.HemisphereLight(0xe7fffb, 0x2a1916, 0.50);
+    scene.add(hemi);
+
+    const keyLight = new THREE.DirectionalLight(0xfff5ec, 2.05);
+    keyLight.position.set(3.8, 5.2, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x9fdad6, 0.72);
+    fillLight.position.set(-4.5, 2.2, 3.5);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0x7cd9d0, 1.0);
+    rimLight.position.set(1.5, 4.5, -5);
+    scene.add(rimLight);
+
+    const bounce = new THREE.DirectionalLight(0xffc9aa, 0.24);
+    bounce.position.set(0, -4, 1);
+    scene.add(bounce);
+
+    // Soft ground reference.
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(1, 96),
+      new THREE.MeshBasicMaterial({
+        color: 0x1b6d66,
+        transparent: true,
+        opacity: 0.12,
+        depthWrite: false
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    const loadingManager = new THREE.LoadingManager();
+    const draco = new DRACOLoader(loadingManager);
+    draco.setDecoderPath(
+      "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/libs/draco/gltf/"
+    );
+    draco.setDecoderConfig({ type: "wasm" });
+
+    const gltfLoader = new GLTFLoader(loadingManager);
+    gltfLoader.setDRACOLoader(draco);
+
+    const skeletonMaterial = new THREE.MeshStandardMaterial({
+      color: "#e2d8c3",
+      roughness: 0.68,
+      metalness: 0.0,
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false
+    });
+
+    const organMaterials = {};
+    for (const [key, organ] of Object.entries(ORGANS)) {
+      const color = new THREE.Color(organ.color);
+      organMaterials[key] = new THREE.MeshStandardMaterial({
+        color,
+        roughness: key === "brain" ? 0.72 : 0.62,
+        metalness: 0.0,
+        emissive: color.clone().multiplyScalar(0.10),
+        emissiveIntensity: 0.08
+      });
+    }
+
+    const organMeshes = Object.fromEntries(
+      Object.keys(ORGANS).map((key) => [key, []])
+    );
+
+    const organBoxes = Object.fromEntries(
+      Object.keys(ORGANS).map((key) => [key, new THREE.Box3()])
+    );
+
+    const objectMeta = new Map();
+    const interactiveMeshes = [];
+    let skeletonRoot = null;
+    let fullBodyBox = new THREE.Box3();
+    let selectedKey = "heart";
+    let hoveredKey = null;
+    let skeletonVisible = true;
+    let isolateMode = false;
+    let cameraTween = null;
+    let manifest = null;
+
+    function pathText(meta) {
+      return `${meta.name_en || ""} ${(meta.path || []).join(" ")}`.toLowerCase();
+    }
+
+    const MATCHERS = {
+      brain(meta) {
+        const text = pathText(meta);
+        return (meta.path || []).some((p) => p.toLowerCase() === "brain") ||
+          /\b(brain|cerebrum|cerebellum|brainstem|brain stem|diencephalon|mesencephalon|pons|medulla oblongata)\b/i.test(text);
+      },
+      heart(meta) {
+        return (meta.path || []).some((p) => p.toLowerCase() === "heart") ||
+          /\bheart\b/i.test(meta.name_en || "");
+      },
+      lungs(meta) {
+        const text = pathText(meta);
+        return (meta.path || []).some((p) => /\blungs?\b/i.test(p)) ||
+          /\b(left lung|right lung|lobe of left lung|lobe of right lung)\b/i.test(text);
+      },
+      liver(meta) {
+        return (meta.path || []).some((p) => p.toLowerCase() === "liver") ||
+          /\bliver\b/i.test(meta.name_en || "");
+      },
+      stomach(meta) {
+        return (meta.path || []).some((p) => p.toLowerCase() === "stomach") ||
+          /\bstomach\b/i.test(meta.name_en || "");
+      },
+      pancreas(meta) {
+        return (meta.path || []).some((p) => p.toLowerCase() === "pancreas") ||
+          /\bpancreas\b/i.test(meta.name_en || "");
+      },
+      intestines(meta) {
+        const text = pathText(meta);
+        return (meta.path || []).some((p) => /\b(small intestine|large intestine)\b/i.test(p)) ||
+          /\b(duodenum|jejunum|ileum|ascending colon|transverse colon|descending colon|sigmoid colon|caecum|cecum|rectum)\b/i.test(text);
+      },
+      kidneys(meta) {
+        return (meta.path || []).some((p) => /\bkidneys?\b/i.test(p)) ||
+          /\bkidney\b/i.test(meta.name_en || "");
+      },
+      bladder(meta) {
+        return (meta.path || []).some((p) => /\bbladder\b/i.test(p)) ||
+          /\bbladder\b/i.test(meta.name_en || "");
+      }
+    };
+
+    // Important ordering: avoid a named surface like "gastric impression of liver"
+    // being assigned to the stomach instead of the liver.
+    const MATCH_ORDER = [
+      "brain",
+      "heart",
+      "lungs",
+      "liver",
+      "pancreas",
+      "stomach",
+      "kidneys",
+      "bladder",
+      "intestines"
+    ];
+
+    function majorOrganForMeta(meta) {
+      for (const key of MATCH_ORDER) {
+        if (MATCHERS[key](meta)) return key;
+      }
+      return null;
+    }
+
+    function setMeshMaterial(mesh, material) {
+      if (!mesh.isMesh) return;
+      mesh.material = material;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+    }
+
+    function loadGLB(file) {
+      return new Promise((resolve, reject) => {
+        gltfLoader.load(
+          ATLAS_BASE + file,
+          resolve,
+          undefined,
+          reject
+        );
+      });
+    }
+
+    function indexScene(root) {
+      const map = new Map();
+      root.traverse((object) => {
+        if (object.name) map.set(object.name, object);
+      });
+      return map;
+    }
+
+    function revealObject(object, key) {
+      if (!object) return;
+      object.traverse((child) => {
+        if (!child.isMesh) return;
+        child.visible = true;
+        child.userData.organKey = key;
+        setMeshMaterial(child, organMaterials[key]);
+        interactiveMeshes.push(child);
+        organMeshes[key].push(child);
+      });
+    }
+
+    function hideAllMeshes(root) {
+      root.traverse((child) => {
+        if (child.isMesh) child.visible = false;
+      });
+    }
+
+    function updateOrganBoxes() {
+      for (const key of Object.keys(ORGANS)) {
+        const box = new THREE.Box3();
+        for (const mesh of organMeshes[key]) {
+          if (mesh.visible) box.expandByObject(mesh);
+        }
+        organBoxes[key] = box;
+      }
+    }
+
+    function updateSelectionMaterials() {
+      for (const [key, material] of Object.entries(organMaterials)) {
+        material.emissiveIntensity =
+          key === selectedKey ? 0.28 :
+          key === hoveredKey ? 0.17 :
+          0.06;
+      }
+
+      for (const [key, meshes] of Object.entries(organMeshes)) {
+        const visible = !isolateMode || key === selectedKey;
+        for (const mesh of meshes) mesh.visible = visible;
+      }
+
+      if (skeletonRoot) {
+        skeletonRoot.visible = skeletonVisible && !isolateMode;
+      }
+    }
+
+    async function buildAtlas() {
+      try {
+        els.loaderText.textContent = t("loadingManifest");
+        els.progressBar.style.width = "5%";
+
+        const response = await fetch(ATLAS_BASE + "manifest.json");
+        if (!response.ok) throw new Error(`Manifest request failed (${response.status})`);
+        manifest = await response.json();
+
+        const requiredFiles = [
+          "skeletal_male.glb",
+          "digestive_male.glb",
+          "respiratory_male.glb",
+          "renal_male.glb",
+          "cardiovascular_male.glb",
+          "nervous_male.glb"
+        ];
+
+        const fileScenes = {};
+
+        for (let i = 0; i < requiredFiles.length; i++) {
+          const file = requiredFiles[i];
+          const label = file
+            .replace("_male.glb", "")
+            .replaceAll("_", " ");
+          els.loaderText.textContent = `${t("loadingModel")} ${label}…`;
+          els.progressBar.style.width = `${12 + (i / requiredFiles.length) * 70}%`;
+
+          const gltf = await loadGLB(file);
+          fileScenes[file] = gltf.scene;
+          atlasRoot.add(gltf.scene);
+        }
+
+        els.loaderText.textContent = t("finishing");
+        els.progressBar.style.width = "86%";
+
+        // Skeleton context: realistic whole-body reference, ghosted so the
+        // organs remain readable.
+        skeletonRoot = fileScenes["skeletal_male.glb"];
+        skeletonRoot.traverse((child) => {
+          if (!child.isMesh) return;
+          child.material = skeletonMaterial;
+          child.visible = true;
+        });
+
+        // Hide every mesh in the anatomy system files, then reveal only the
+        // major organs selected for this first version.
+        for (const file of [
+          "digestive_male.glb",
+          "respiratory_male.glb",
+          "renal_male.glb",
+          "cardiovascular_male.glb",
+          "nervous_male.glb"
+        ]) {
+          hideAllMeshes(fileScenes[file]);
+          const nodeMap = indexScene(fileScenes[file]);
+
+          const metas = manifest.organs.filter(
+            (meta) => meta.mesh_file === file
+          );
+
+          for (const meta of metas) {
+            const key = majorOrganForMeta(meta);
+            if (!key) continue;
+
+            // GLTFLoader sanitizes node names (for example "Left ventricle"
+            // becomes a Three.js-safe node key). The atlas manifest stores the
+            // original anatomical name, so check both forms. Without this,
+            // multi-word structures such as most of the heart and brain are
+            // silently skipped.
+            const object =
+              nodeMap.get(meta.node) ??
+              nodeMap.get(THREE.PropertyBinding.sanitizeNodeName(meta.node));
+
+            if (!object) continue;
+
+            objectMeta.set(object, meta);
+            revealObject(object, key);
+          }
+        }
+
+        // Remove duplicated mesh references that can happen when a parent node
+        // and one of its children are both represented in the manifest.
+        for (const key of Object.keys(organMeshes)) {
+          organMeshes[key] = [...new Set(organMeshes[key])];
+        }
+
+        updateOrganBoxes();
+
+        const missingMajorOrgans = Object.keys(ORGANS).filter(
+          (key) => organMeshes[key].length === 0
+        );
+
+        if (missingMajorOrgans.length) {
+          console.warn(
+            "Some major organs could not be resolved from the atlas:",
+            missingMajorOrgans
+          );
+        }
+
+        fullBodyBox = new THREE.Box3();
+
+        if (skeletonRoot) fullBodyBox.expandByObject(skeletonRoot);
+
+        for (const meshes of Object.values(organMeshes)) {
+          for (const mesh of meshes) {
+            if (mesh.visible) fullBodyBox.expandByObject(mesh);
+          }
+        }
+
+        if (fullBodyBox.isEmpty()) {
+          throw new Error("Atlas loaded, but no visible anatomical geometry was found.");
+        }
+
+        positionGround();
+        fitWholeBody(false);
+        updateSelectionMaterials();
+
+        els.progressBar.style.width = "100%";
+
+        setTimeout(() => {
+          els.loader.classList.add("hide");
+        }, 280);
+
+        // If one target failed to resolve, keep the viewer working and simply
+        // omit that target from raycasting. The sidebar remains useful because
+        // focus uses its measured box only when it exists.
+        selectOrgan(selectedKey, false);
+
+      } catch (error) {
+        console.error(error);
+        els.loader.classList.add("hide");
+        els.errorCard.classList.add("show");
+        els.errorMessage.textContent =
+          language === "bn"
+            ? `৩ডি অ্যাটলাস লোড করা যায়নি। ${error?.message || ""}`
+            : `The 3D atlas could not load. ${error?.message || ""}`;
+      }
+    }
+
+    function positionGround() {
+      const size = fullBodyBox.getSize(new THREE.Vector3());
+      const center = fullBodyBox.getCenter(new THREE.Vector3());
+      ground.scale.setScalar(Math.max(size.x, size.z) * 1.2);
+      ground.position.set(center.x, fullBodyBox.min.y - size.y * 0.015, center.z);
+    }
+
+    function fitWholeBody(animate = true) {
+      if (!fullBodyBox || fullBodyBox.isEmpty()) return;
+      flyToBox(fullBodyBox, 1.12, animate);
+    }
+
+    function focusSelected(animate = true) {
+      const box = organBoxes[selectedKey];
+      if (!box || box.isEmpty()) return;
+
+      // Phones need more anatomical context around the selected organ.
+      // A wider frame keeps the skeleton/torso visible instead of zooming
+      // so close that the selected organ fills the entire screen.
+      const padding = innerWidth <= 860 ? 2.65 : 1.75;
+      flyToBox(box, padding, animate);
+    }
+
+    function flyToBox(box, padding = 1.25, animate = true) {
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const radius = Math.max(size.x, size.y, size.z, 0.025) * 0.5;
+      const fov = THREE.MathUtils.degToRad(camera.fov);
+      const distance = Math.max((radius * padding * 2.15) / Math.tan(fov / 2), 0.22);
+
+      let direction = camera.position.clone().sub(controls.target);
+      if (direction.lengthSq() < 1e-6) direction.set(0, 0.15, 1);
+      direction.normalize();
+
+      const desiredPosition = center.clone().add(direction.multiplyScalar(distance));
+
+      camera.near = Math.max(radius / 200, 0.0005);
+      camera.far = Math.max(distance * 30, 20);
+      camera.updateProjectionMatrix();
+
+      controls.minDistance = Math.max(radius * 0.55, 0.018);
+      controls.maxDistance = Math.max(distance * 8, 7);
+
+      if (!animate || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        camera.position.copy(desiredPosition);
+        controls.target.copy(center);
+        controls.update();
+        return;
+      }
+
+      cameraTween = {
+        start: performance.now(),
+        duration: 720,
+        fromPosition: camera.position.clone(),
+        toPosition: desiredPosition,
+        fromTarget: controls.target.clone(),
+        toTarget: center
+      };
+    }
+
+    function selectOrgan(key, focus = true) {
+      if (!ORGANS[key]) return;
+      selectedKey = key;
+      updateDetails(key);
+      updateSelectionMaterials();
+
+      if (focus) focusSelected(true);
+
+      if (innerWidth <= 860) {
+        // Close the organ drawer after selection. Details remain in normal
+        // document flow below the 3D viewer, so they never cover the skeleton.
+        els.sidebar.classList.remove("open");
+      }
+    }
+
+    function setIsolate(next) {
+      isolateMode = next;
+      updateSelectionMaterials();
+      if (isolateMode) focusSelected(true);
+      else fitWholeBody(true);
+    }
+
+    // -----------------------------------------------------------------------
+    // CLICK / HOVER
+    // -----------------------------------------------------------------------
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerDown = null;
+
+    function raycastAt(event) {
+      const rect = els.canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+
+      const hits = raycaster.intersectObjects(
+        interactiveMeshes.filter((mesh) => mesh.visible),
+        false
+      );
+
+      return hits.find((hit) => hit.object.userData.organKey) || null;
+    }
+
+    els.canvas.addEventListener("pointerdown", (event) => {
+      pointerDown = { x: event.clientX, y: event.clientY };
+    });
+
+    els.canvas.addEventListener("pointerup", (event) => {
+      if (!pointerDown) return;
+      const movement = Math.hypot(
+        event.clientX - pointerDown.x,
+        event.clientY - pointerDown.y
+      );
+      pointerDown = null;
+
+      if (movement > 6) return;
+
+      const hit = raycastAt(event);
+      if (hit) selectOrgan(hit.object.userData.organKey, true);
+    });
+
+    els.canvas.addEventListener("pointermove", (event) => {
+      const hit = raycastAt(event);
+      const next = hit?.object?.userData?.organKey || null;
+
+      if (next !== hoveredKey) {
+        hoveredKey = next;
+        updateSelectionMaterials();
+      }
+
+      if (next) {
+        els.tooltip.textContent = organText(next).name;
+        els.tooltip.style.left = `${event.offsetX}px`;
+        els.tooltip.style.top = `${event.offsetY}px`;
+        els.tooltip.classList.add("show");
+        els.canvas.style.cursor = "pointer";
+      } else {
+        els.tooltip.classList.remove("show");
+        els.canvas.style.cursor = "grab";
+      }
+    });
+
+    els.canvas.addEventListener("pointerleave", () => {
+      hoveredKey = null;
+      els.tooltip.classList.remove("show");
+      els.canvas.style.cursor = "grab";
+      updateSelectionMaterials();
+    });
+
+    // -----------------------------------------------------------------------
+    // UI CONTROLS
+    // -----------------------------------------------------------------------
+
+    els.search.addEventListener("input", (event) => {
+      renderOrganList(event.target.value);
+    });
+
+    els.languageBtn.addEventListener("click", () => {
+      language = language === "en" ? "bn" : "en";
+      applyLanguage();
+    });
+
+    els.mobileOrgansBtn.addEventListener("click", () => {
+      els.sidebar.classList.toggle("open");
+    });
+
+    document.getElementById("zoomInBtn").addEventListener("click", () => {
+      const direction = camera.position.clone().sub(controls.target);
+      direction.multiplyScalar(0.78);
+      camera.position.copy(controls.target).add(direction);
+      controls.update();
+    });
+
+    document.getElementById("zoomOutBtn").addEventListener("click", () => {
+      const direction = camera.position.clone().sub(controls.target);
+      direction.multiplyScalar(1.28);
+      camera.position.copy(controls.target).add(direction);
+      controls.update();
+    });
+
+    const rotateBtn = document.getElementById("rotateBtn");
+    rotateBtn.addEventListener("click", () => {
+      controls.autoRotate = !controls.autoRotate;
+      rotateBtn.classList.toggle("active", controls.autoRotate);
+      rotateBtn.setAttribute("aria-pressed", String(controls.autoRotate));
+    });
+
+    const skeletonBtn = document.getElementById("skeletonBtn");
+    skeletonBtn.addEventListener("click", () => {
+      skeletonVisible = !skeletonVisible;
+      skeletonBtn.classList.toggle("active", skeletonVisible);
+      skeletonBtn.setAttribute("aria-pressed", String(skeletonVisible));
+      updateSelectionMaterials();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      setIsolate(false);
+      fitWholeBody(true);
+    });
+
+    document.getElementById("focusBtn").addEventListener("click", () => {
+      focusSelected(true);
+    });
+
+    document.getElementById("showAllBtn").addEventListener("click", () => {
+      setIsolate(false);
+      fitWholeBody(true);
+    });
+
+    // Double-clicking the selected organ isolates it.
+    els.canvas.addEventListener("dblclick", (event) => {
+      const hit = raycastAt(event);
+      if (!hit) return;
+      selectOrgan(hit.object.userData.organKey, false);
+      setIsolate(true);
+    });
+
+    // -----------------------------------------------------------------------
+    // RENDER LOOP
+    // -----------------------------------------------------------------------
+
+    function resize() {
+      const rect = els.viewer.getBoundingClientRect();
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    new ResizeObserver(resize).observe(els.viewer);
+    addEventListener("resize", resize);
+    resize();
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+
+      if (cameraTween) {
+        const progress = Math.min(
+          1,
+          (now - cameraTween.start) / cameraTween.duration
+        );
+
+        const eased =
+          progress < 0.5
+            ? 4 * progress * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+        camera.position.lerpVectors(
+          cameraTween.fromPosition,
+          cameraTween.toPosition,
+          eased
+        );
+
+        controls.target.lerpVectors(
+          cameraTween.fromTarget,
+          cameraTween.toTarget,
+          eased
+        );
+
+        if (progress >= 1) cameraTween = null;
+      }
+
+      controls.update();
+
+      // Keep the studio rig useful as the user orbits.
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+      keyLight.position.copy(camera.position)
+        .add(right.clone().multiplyScalar(-2.2))
+        .add(camera.up.clone().multiplyScalar(2.0));
+      fillLight.position.copy(camera.position)
+        .add(right.clone().multiplyScalar(2.2))
+        .add(camera.up.clone().multiplyScalar(.5));
+      rimLight.position.copy(controls.target)
+        .sub(forward.clone().multiplyScalar(4))
+        .add(camera.up.clone().multiplyScalar(2.5));
+
+      renderer.render(scene, camera);
+    }
+
+    renderOrganList();
+    applyLanguage();
+    buildAtlas();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
