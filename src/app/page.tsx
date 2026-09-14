@@ -62,10 +62,6 @@ export default async function Home({
 
   return (
     <div className={styles.page}>
-      {/* =========================
-          HERO
-         ========================= */}
-
       <section className={styles.hero}>
         <div className={styles.heroInner}>
           <div className={styles.heroCopy}>
@@ -99,10 +95,6 @@ export default async function Home({
           </div>
         </div>
       </section>
-
-      {/* =========================
-          SERVICES
-         ========================= */}
 
       <section className={styles.servicesSection} id="services">
         <div className={styles.sectionHeading}>
@@ -143,10 +135,6 @@ export default async function Home({
         </div>
       </section>
 
-      {/* =========================
-          3D HUMAN ANATOMY
-         ========================= */}
-
       <section className={styles.anatomySection}>
         <div className={styles.anatomyHeading}>
           <p>
@@ -163,15 +151,15 @@ export default async function Home({
 
           <span>
             {bn
-              ? "মানবদেহ ঘোরান, জুম করুন এবং চোখ, মস্তিষ্ক, থাইরয়েডসহ প্রধান অঙ্গগুলোতে চাপ দিয়ে তাদের কাজ সম্পর্কে জানুন।"
-              : "Rotate the body, zoom in, and explore the eyes, brain, thyroid and other major organs."}
+              ? "স্পর্শ বা ড্র্যাগ করে মানবদেহ ঘোরান, জুম করুন এবং চোখ, মস্তিষ্ক, থাইরয়েড, ফুসফুস, হৃদ্‌যন্ত্রসহ বহু প্রধান অঙ্গ দেখুন।"
+              : "Touch or drag to rotate the body, zoom in, and explore the eyes, brain, thyroid, lungs, heart and many other major structures."}
           </span>
         </div>
 
         <div className={styles.anatomyFrameWrap}>
           <iframe
             className={styles.anatomyFrame}
-            src={`/anatomy-explorer-v2.html?lang=${language}`}
+            src={`/anatomy-explorer-v3.html?lang=${language}`}
             title={
               bn
                 ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
@@ -182,10 +170,6 @@ export default async function Home({
           />
         </div>
       </section>
-
-      {/* =========================
-          ASSISTANT + EMERGENCY
-         ========================= */}
 
       <section className={styles.bottomRow}>
         <article className={styles.assistantCard}>
