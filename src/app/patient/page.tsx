@@ -37,10 +37,6 @@ export default async function Patient({
               : "Find the healthcare service you need and manage your account."}
           </p>
         </div>
-
-        <Link className={styles.homeLink} href="/">
-          {bn ? "হোমপেজে ফিরুন" : "Back to homepage"}
-        </Link>
       </section>
 
       <section className={styles.dashboardGrid}>
