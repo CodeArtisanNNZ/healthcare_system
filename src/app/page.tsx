@@ -56,6 +56,40 @@ export default async function Home({
       </section>
 
       <section className={styles.servicesSection} id="services">
+        {/* 3D HUMAN ANATOMY */}
+<section className={styles.anatomySection}>
+  <div className={styles.anatomyHeading}>
+    <p>
+      {bn ? "মানবদেহ অন্বেষণ করুন" : "Explore the human body"}
+    </p>
+
+    <h2>
+      {bn
+        ? "শরীরকে ভেতর থেকে দেখুন"
+        : "See the body from the inside"}
+    </h2>
+
+    <span>
+      {bn
+        ? "মানবদেহ ঘোরান, জুম করুন এবং প্রধান অঙ্গগুলোতে চাপ দিয়ে তাদের কাজ সম্পর্কে জানুন।"
+        : "Rotate the body, zoom in, and select major organs to understand what they do."}
+    </span>
+  </div>
+
+  <div className={styles.anatomyFrameWrap}>
+    <iframe
+      className={styles.anatomyFrame}
+      src={`/anatomy-explorer.html?lang=${language}`}
+      title={
+        bn
+          ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
+          : "Interactive 3D human anatomy"
+      }
+      loading="lazy"
+      allow="fullscreen"
+    />
+  </div>
+</section>
         <div className={styles.sectionHeading}>
           <p>{bn ? "সেবা" : "Services"}</p>
           <h2>{bn ? "একটি সেবা বেছে নিন" : "Start with a service"}</h2>
