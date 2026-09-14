@@ -1815,7 +1815,15 @@
             const key = majorOrganForMeta(meta);
             if (!key) continue;
 
-            const object = nodeMap.get(meta.node);
+            // GLTFLoader sanitizes node names (for example "Left ventricle"
+            // becomes a Three.js-safe node key). The atlas manifest stores the
+            // original anatomical name, so check both forms. Without this,
+            // multi-word structures such as most of the heart and brain are
+            // silently skipped.
+            const object =
+              nodeMap.get(meta.node) ??
+              nodeMap.get(THREE.PropertyBinding.sanitizeNodeName(meta.node));
+
             if (!object) continue;
 
             objectMeta.set(object, meta);
@@ -1830,6 +1838,18 @@
         }
 
         updateOrganBoxes();
+
+        const missingMajorOrgans = Object.keys(ORGANS).filter(
+          (key) => organMeshes[key].length === 0
+        );
+
+        if (missingMajorOrgans.length) {
+          console.warn(
+            "Some major organs could not be resolved from the atlas:",
+            missingMajorOrgans
+          );
+        }
+
         fullBodyBox = new THREE.Box3();
 
         if (skeletonRoot) fullBodyBox.expandByObject(skeletonRoot);
