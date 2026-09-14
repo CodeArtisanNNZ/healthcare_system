@@ -21,7 +21,7 @@ const servicePath: Record<ServiceKey, string> = {
   ambulance: "/emergency",
 };
 
-const content: Record<
+const serviceContent: Record<
   ServiceKey,
   {
     name: { en: string; bn: string };
@@ -32,17 +32,17 @@ const content: Record<
   doctor: {
     name: { en: "Doctor", bn: "ডাক্তার" },
     intro: {
-      en: "Find doctors by specialty, name and location without searching through a long directory.",
-      bn: "দীর্ঘ ডিরেক্টরি ঘাঁটা ছাড়াই বিশেষত্ব, নাম ও এলাকা অনুযায়ী ডাক্তার খুঁজুন।",
+      en: "Find the right doctor without going through a long, confusing directory.",
+      bn: "দীর্ঘ ও জটিল ডিরেক্টরি না ঘেঁটে প্রয়োজন অনুযায়ী ডাক্তার খুঁজুন।",
     },
     points: [
       {
-        en: "Search by specialty, doctor name or the type of care you need.",
+        en: "Search by specialty, doctor name or the kind of care you need.",
         bn: "বিশেষত্ব, ডাক্তারের নাম বা প্রয়োজনীয় সেবার ধরন দিয়ে সার্চ করুন।",
       },
       {
-        en: "Use location filtering to keep results relevant.",
-        bn: "প্রাসঙ্গিক ফলাফলের জন্য এলাকা ফিল্টার ব্যবহার করুন।",
+        en: "Choose a location to keep results relevant.",
+        bn: "প্রাসঙ্গিক ফলাফলের জন্য এলাকা নির্বাচন করুন।",
       },
       {
         en: "Review available doctor information before choosing.",
@@ -50,11 +50,12 @@ const content: Record<
       },
     ],
   },
+
   medicine: {
     name: { en: "Medicine", bn: "ওষুধ" },
     intro: {
-      en: "Search once and open several Bangladesh pharmacy websites from the same place.",
-      bn: "একবার সার্চ করে একই জায়গা থেকে বাংলাদেশের একাধিক অনলাইন ফার্মেসি খুলুন।",
+      en: "Search once and compare pharmacy website options from one place.",
+      bn: "একবার সার্চ করে এক জায়গা থেকে একাধিক অনলাইন ফার্মেসির অপশন দেখুন।",
     },
     points: [
       {
@@ -62,70 +63,110 @@ const content: Record<
         bn: "ওষুধের নাম বা strength দিয়ে সার্চ করুন।",
       },
       {
-        en: "See several pharmacy options together.",
-        bn: "একসাথে একাধিক ফার্মেসির অপশন দেখুন।",
+        en: "See several online pharmacy options together.",
+        bn: "একসাথে একাধিক অনলাইন ফার্মেসির অপশন দেখুন।",
       },
       {
-        en: "Continue to the original seller website to confirm live details.",
-        bn: "বর্তমান তথ্য নিশ্চিত করতে মূল বিক্রেতার ওয়েবসাইটে যান।",
+        en: "Continue to the original seller website to confirm price and availability.",
+        bn: "মূল্য ও প্রাপ্যতা নিশ্চিত করতে মূল বিক্রেতার ওয়েবসাইটে যান।",
       },
     ],
   },
+
   hospital: {
     name: { en: "Hospital", bn: "হাসপাতাল" },
     intro: {
-      en: "Find hospital information by name, department and location.",
-      bn: "নাম, বিভাগ ও এলাকা অনুযায়ী হাসপাতালের তথ্য খুঁজুন।",
+      en: "Explore hospitals, departments and locations from one place.",
+      bn: "এক জায়গা থেকে হাসপাতাল, বিভাগ ও লোকেশন দেখুন।",
     },
     points: [
-      { en: "Search hospitals and departments.", bn: "হাসপাতাল ও বিভাগ দিয়ে সার্চ করুন।" },
-      { en: "Review available contact information.", bn: "উপলব্ধ যোগাযোগের তথ্য দেখুন।" },
-      { en: "Filter by location.", bn: "এলাকা অনুযায়ী ফিল্টার করুন।" },
+      {
+        en: "Search hospitals by name, department or location.",
+        bn: "নাম, বিভাগ বা এলাকা দিয়ে হাসপাতাল সার্চ করুন।",
+      },
+      {
+        en: "Review available hospital information.",
+        bn: "উপলব্ধ হাসপাতালের তথ্য দেখুন।",
+      },
+      {
+        en: "Use location filters to narrow the results.",
+        bn: "ফলাফল সীমিত করতে লোকেশন ফিল্টার ব্যবহার করুন।",
+      },
     ],
   },
+
   "lab-test": {
     name: { en: "Lab Test", bn: "ল্যাব টেস্ট" },
     intro: {
-      en: "Find diagnostic tests and laboratories in one searchable place.",
-      bn: "এক জায়গা থেকে ডায়াগনস্টিক টেস্ট ও ল্যাব খুঁজুন।",
+      en: "Find diagnostic tests and laboratories more easily.",
+      bn: "ডায়াগনস্টিক টেস্ট ও ল্যাব সহজে খুঁজুন।",
     },
     points: [
-      { en: "Search by test name.", bn: "টেস্টের নাম দিয়ে সার্চ করুন।" },
-      { en: "Review laboratory and location details.", bn: "ল্যাব ও এলাকার তথ্য দেখুন।" },
-      { en: "See listed prices when available.", bn: "উপলব্ধ থাকলে তালিকাভুক্ত মূল্য দেখুন।" },
+      {
+        en: "Search by test name.",
+        bn: "টেস্টের নাম দিয়ে সার্চ করুন।",
+      },
+      {
+        en: "Review laboratories and locations.",
+        bn: "ল্যাব ও লোকেশন দেখুন।",
+      },
+      {
+        en: "See listed prices when available.",
+        bn: "উপলব্ধ থাকলে তালিকাভুক্ত মূল্য দেখুন।",
+      },
     ],
   },
+
   caregiver: {
     name: { en: "Caregiver", bn: "কেয়ারগিভার" },
     intro: {
-      en: "Explore caregiver and nursing-support listings for home and everyday care.",
-      bn: "বাসা ও দৈনন্দিন যত্নের জন্য caregiver ও nursing support-এর তালিকা দেখুন।",
+      en: "Explore caregiver and nursing-support options for everyday care.",
+      bn: "দৈনন্দিন যত্নের জন্য caregiver ও nursing support-এর অপশন দেখুন।",
     },
     points: [
-      { en: "Search caregiver profiles and services.", bn: "কেয়ারগিভার প্রোফাইল ও সেবা খুঁজুন।" },
-      { en: "Review experience and location.", bn: "অভিজ্ঞতা ও এলাকা দেখুন।" },
-      { en: "See listed fees when available.", bn: "উপলব্ধ থাকলে তালিকাভুক্ত ফি দেখুন।" },
+      {
+        en: "Search caregiver profiles and services.",
+        bn: "কেয়ারগিভার প্রোফাইল ও সেবা সার্চ করুন।",
+      },
+      {
+        en: "Review experience and location.",
+        bn: "অভিজ্ঞতা ও লোকেশন দেখুন।",
+      },
+      {
+        en: "See listed fees when available.",
+        bn: "উপলব্ধ থাকলে তালিকাভুক্ত ফি দেখুন।",
+      },
     ],
   },
+
   ambulance: {
     name: { en: "Ambulance", bn: "অ্যাম্বুলেন্স" },
     intro: {
-      en: "Emergency ambulance contacts remain available without an account.",
-      bn: "জরুরি অ্যাম্বুলেন্স যোগাযোগ অ্যাকাউন্ট ছাড়াই পাওয়া যাবে।",
+      en: "Emergency ambulance contacts remain available without login.",
+      bn: "জরুরি অ্যাম্বুলেন্স যোগাযোগ লগ ইন ছাড়াই পাওয়া যাবে।",
     },
     points: [
-      { en: "Open Emergency Help without signing in.", bn: "লগ ইন ছাড়াই Emergency Help খুলুন।" },
-      { en: "Choose your area.", bn: "আপনার এলাকা নির্বাচন করুন।" },
-      { en: "Call a listed ambulance or emergency number.", bn: "তালিকাভুক্ত অ্যাম্বুলেন্স বা জরুরি নম্বরে কল করুন।" },
+      {
+        en: "Open Emergency Help without signing in.",
+        bn: "লগ ইন ছাড়াই Emergency Help খুলুন।",
+      },
+      {
+        en: "Choose your area.",
+        bn: "আপনার এলাকা নির্বাচন করুন।",
+      },
+      {
+        en: "Use the listed ambulance or emergency contact.",
+        bn: "তালিকাভুক্ত অ্যাম্বুলেন্স বা জরুরি যোগাযোগ ব্যবহার করুন।",
+      },
     ],
   },
 };
 
 function isService(value: string): value is ServiceKey {
-  return value in content;
+  return value in serviceContent;
 }
 
-export default async function ServicePage({
+export default async function ServiceDetails({
   params,
   searchParams,
 }: {
@@ -133,7 +174,10 @@ export default async function ServicePage({
   searchParams: Promise<{ lang?: string }>;
 }) {
   const { service } = await params;
-  if (!isService(service)) notFound();
+
+  if (!isService(service)) {
+    notFound();
+  }
 
   const [user, language] = await Promise.all([
     currentUser(),
@@ -142,7 +186,7 @@ export default async function ServicePage({
 
   const bn = language === "bn";
   const key = bn ? "bn" : "en";
-  const item = content[service];
+  const item = serviceContent[service];
   const emergency = service === "ambulance";
 
   return (
@@ -161,8 +205,16 @@ export default async function ServicePage({
 
         <div className={styles.actions}>
           <Link
-            className={emergency ? styles.emergencyButton : styles.primaryButton}
-            href={emergency ? "/emergency" : user ? servicePath[service] : "/login"}
+            className={
+              emergency ? styles.emergencyButton : styles.primaryButton
+            }
+            href={
+              emergency
+                ? "/emergency"
+                : user
+                  ? servicePath[service]
+                  : "/login"
+            }
           >
             {emergency
               ? bn
@@ -183,6 +235,7 @@ export default async function ServicePage({
         <p className={styles.blockLabel}>
           {bn ? "আমরা কী দিচ্ছি" : "What we offer"}
         </p>
+
         <h2>{bn ? "সহজভাবে শুরু করুন" : "A simpler way to start"}</h2>
 
         <div className={styles.grid}>
