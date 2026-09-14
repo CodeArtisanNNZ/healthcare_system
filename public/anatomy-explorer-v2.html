@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#062f2d" />
+  <title>Healthcare Central — 3D Anatomy Explorer</title>
+  <style>
+    :root {
+      --bg:#041d1c;
+      --bg2:#082a28;
+      --panel:rgba(5,42,40,.9);
+      --line:rgba(94,234,212,.18);
+      --teal:#2dd4bf;
+      --teal2:#5eead4;
+      --text:#ecfffd;
+      --muted:#9cc5c1;
+      --danger:#ff8b8b;
+      --shadow:0 24px 70px rgba(0,0,0,.34);
+      --font:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Bengali",sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--text);background:radial-gradient(circle at 50% 22%,rgba(45,212,191,.11),transparent 35%),linear-gradient(180deg,#031918,#062624 55%,#031817)}
+    body{overflow-x:hidden}
+    button,input{font:inherit}
+    button{color:inherit}
+    .shell{width:min(1580px,100%);margin:0 auto;padding:14px clamp(10px,1.8vw,28px) 18px}
+    .topbar{min-height:62px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:18px;background:rgba(3,28,27,.76);backdrop-filter:blur(18px);box-shadow:0 12px 38px rgba(0,0,0,.18)}
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}.logo{width:58px;height:48px;display:grid;place-items:center;border-radius:10px;background:#fff;padding:4px}.logo img{width:50px;height:40px;object-fit:contain}.brand h1{margin:0;font-size:15px}.brand p{margin:3px 0 0;color:var(--muted);font-size:10px}.top-actions{display:flex;gap:8px}.btn{min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:rgba(7,54,51,.7);cursor:pointer;font-size:11px;font-weight:760}.btn:hover{border-color:rgba(94,234,212,.55);background:rgba(10,77,72,.8)}
+    .workspace{display:grid;grid-template-columns:285px minmax(0,1fr) 330px;gap:12px;height:min(820px,calc(100vh - 104px));min-height:650px;margin-top:12px}
+    .panel,.viewer{border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(6,49,46,.82),rgba(3,28,27,.93));box-shadow:var(--shadow);overflow:hidden;min-width:0;min-height:0}
+    .sidebar{display:flex;flex-direction:column;padding:17px}.kicker{margin:0 0 7px;color:var(--teal2);font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.sidebar h2,.details h2{margin:0}.side-copy{margin:6px 0 13px;color:var(--muted);font-size:11.5px;line-height:1.55}.search{width:100%;height:42px;padding:0 12px;border:1px solid rgba(94,234,212,.13);border-radius:13px;outline:none;background:rgba(1,21,20,.7);color:var(--text);font-size:12px}.search:focus{border-color:rgba(94,234,212,.48);box-shadow:0 0 0 4px rgba(45,212,191,.07)}
+    .organ-list{flex:1;overflow-y:auto;margin-top:12px;padding-right:3px;scrollbar-width:thin;scrollbar-color:rgba(94,234,212,.22) transparent}.organ-card{width:100%;display:grid;grid-template-columns:36px minmax(0,1fr) 16px;gap:9px;align-items:center;padding:9px;margin:0 0 6px;border:1px solid transparent;border-radius:13px;background:transparent;cursor:pointer;text-align:left}.organ-card:hover{background:rgba(45,212,191,.055);border-color:rgba(94,234,212,.13)}.organ-card.active{border-color:rgba(94,234,212,.45);background:linear-gradient(90deg,rgba(13,148,136,.24),rgba(45,212,191,.035));box-shadow:inset 3px 0 0 var(--teal)}.swatch{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--organ-color);box-shadow:inset -7px -8px 13px rgba(0,0,0,.2);font-size:10px;font-weight:850}.organ-card strong{display:block;font-size:12px}.organ-card small{display:block;margin-top:3px;color:#82aaa6;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chev{color:#7ca6a2;font-size:18px}.empty{display:none;color:var(--muted);font-size:11px;padding:12px}.empty.show{display:block}
+    .viewer{position:relative;background:radial-gradient(circle at 50% 42%,rgba(45,212,191,.10),transparent 32%),linear-gradient(180deg,rgba(2,28,27,.75),rgba(1,18,18,.96))}#scene{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.viewer-top{position:absolute;z-index:5;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none}.badge{padding:8px 10px;border:1px solid rgba(94,234,212,.14);border-radius:12px;background:rgba(2,25,24,.66);backdrop-filter:blur(12px);font-size:9px;color:#9bc2be}.badge strong{display:block;color:#eafffd;font-size:10px;margin-bottom:2px}.toolbar{position:absolute;z-index:7;left:50%;bottom:13px;transform:translateX(-50%);display:flex;gap:6px;padding:6px;border:1px solid rgba(94,234,212,.17);border-radius:15px;background:rgba(2,22,21,.78);backdrop-filter:blur(15px)}.icon-btn{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:rgba(7,52,49,.65);cursor:pointer}.icon-btn:hover,.icon-btn.active{border-color:rgba(94,234,212,.52);background:rgba(13,116,108,.48)}
+    .loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(2,22,21,.92);transition:opacity .25s ease}.loader.hide{opacity:0;pointer-events:none}.loader-card{width:min(360px,80%);text-align:center}.loader-orb{width:45px;height:45px;margin:0 auto 14px;border:2px solid rgba(94,234,212,.17);border-top-color:var(--teal2);border-radius:50%;animation:spin .8s linear infinite}.loader p{color:var(--muted);font-size:11px;line-height:1.5}.progress{height:4px;border-radius:99px;background:rgba(94,234,212,.1);overflow:hidden;margin-top:12px}.progress span{display:block;height:100%;width:4%;background:linear-gradient(90deg,#0d9488,#5eead4);transition:width .2s ease}@keyframes spin{to{transform:rotate(360deg)}}.error{display:none;position:absolute;z-index:25;inset:20px;margin:auto;width:min(460px,calc(100% - 40px));height:max-content;padding:16px;border:1px solid rgba(255,139,139,.28);border-radius:16px;background:rgba(70,18,24,.9);color:#ffe8eb}.error.show{display:block}.error p{font-size:11px;line-height:1.5;color:#ffc8cf}
+    .details{padding:18px;overflow-y:auto}.system{margin:0 0 8px;color:var(--teal2);font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.detail-title{font-size:28px;letter-spacing:-.03em}.location{margin-top:9px;color:#a4c8c4;font-size:11px}.mesh-note{margin:16px 0;padding:12px;border:1px solid rgba(94,234,212,.12);border-radius:13px;background:rgba(45,212,191,.05)}.mesh-note strong{font-size:10px}.mesh-note p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.45}.description{color:#bdd8d5;font-size:12px;line-height:1.65}.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}.fact{padding:12px;border:1px solid rgba(94,234,212,.11);border-radius:12px;background:rgba(2,25,24,.45)}.fact span{display:block;color:#719c98;font-size:8.5px;text-transform:uppercase;letter-spacing:.08em}.fact strong{display:block;margin-top:5px;font-size:10.5px}.detail-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}.primary{background:rgba(13,148,136,.5);border-color:rgba(94,234,212,.42)}.credit{margin-top:18px;color:#6f9995;font-size:8.5px;line-height:1.5}.credit a{color:#8bded5}
+    .mobile-organs{display:none}
+    @media(max-width:1060px){.workspace{grid-template-columns:250px minmax(0,1fr);height:auto;min-height:0}.viewer{height:650px}.details{grid-column:1/-1}.facts{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:820px){.mobile-organs{display:inline-flex}.workspace{display:block}.viewer{height:68svh;min-height:520px}.sidebar{display:none;position:fixed;z-index:40;top:74px;left:12px;right:12px;bottom:12px;background:#052d2b}.sidebar.open{display:flex}.details{margin-top:12px}.brand p{display:none}.toolbar{width:calc(100% - 20px);justify-content:center}.icon-btn{flex:1;max-width:55px}}
+    @media(max-width:520px){.shell{padding:0}.topbar{border-radius:0;border-width:0 0 1px}.logo{width:48px;height:40px}.logo img{width:42px;height:34px}.brand h1{font-size:13px}.viewer{border-radius:0;border-width:0 0 1px}.details{border-radius:22px 22px 0 0}.facts{grid-template-columns:1fr}.badge:nth-child(2){display:none}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  </style>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"}}</script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo"><img src="/images/logo.png" alt="Healthcare Central logo" /></div>
+        <div><h1 id="title">3D Anatomy Explorer</h1><p id="subtitle">Healthcare Central · real anatomical meshes</p></div>
+      </div>
+      <div class="top-actions">
+        <button class="btn mobile-organs" id="mobileOrgans">Organs</button>
+        <button class="btn" id="languageBtn">বাংলা</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="panel sidebar" id="sidebar">
+        <p class="kicker" id="kicker">Real anatomy atlas</p>
+        <h2 id="exploreTitle">Explore organs</h2>
+        <p class="side-copy" id="exploreCopy">Choose an organ to focus the camera on real 3D anatomy.</p>
+        <input class="search" id="search" type="search" autocomplete="off" placeholder="Search organ" />
+        <div class="organ-list" id="organList"></div>
+        <div class="empty" id="empty">No matching organ found.</div>
+      </aside>
+
+      <section class="viewer" id="viewer">
+        <canvas id="scene" aria-label="Interactive realistic 3D human anatomy"></canvas>
+        <div class="loader" id="loader"><div class="loader-card"><div class="loader-orb"></div><strong id="loaderTitle">Loading real anatomy</strong><p id="loaderText">Downloading anatomical meshes. The first load can take a little longer.</p><div class="progress"><span id="progress"></span></div></div></div>
+        <div class="error" id="error"><strong id="errorTitle">The 3D atlas could not load.</strong><p id="errorText">Check your internet connection and refresh.</p></div>
+        <div class="viewer-top"><div class="badge"><strong id="viewerTitle">Real anatomical model</strong><span id="viewerHelp">Drag to rotate · scroll/pinch to zoom · click an organ</span></div><div class="badge">Z-Anatomy / BodyParts3D</div></div>
+        <div class="toolbar">
+          <button class="icon-btn" id="zoomIn" title="Zoom in">+</button>
+          <button class="icon-btn" id="zoomOut" title="Zoom out">−</button>
+          <button class="icon-btn active" id="rotate" title="Auto rotate">↻</button>
+          <button class="icon-btn active" id="skeleton" title="Skeleton context">◇</button>
+          <button class="icon-btn" id="reset" title="Reset view">⌂</button>
+        </div>
+      </section>
+
+      <aside class="panel details">
+        <p class="system" id="detailSystem">Circulatory system</p>
+        <h2 class="detail-title" id="detailTitle">Heart</h2>
+        <div class="location" id="detailLocation">Chest</div>
+        <div class="mesh-note"><strong id="meshTitle">Real atlas mesh</strong><p id="meshCopy">Rendered from anatomical GLB geometry, not a cartoon placeholder.</p></div>
+        <p class="description" id="detailDescription"></p>
+        <div class="facts"><div class="fact"><span id="roleLabel">Primary role</span><strong id="detailRole"></strong></div><div class="fact"><span id="systemLabel">Body system</span><strong id="detailSystemFact"></strong></div></div>
+        <div class="detail-actions"><button class="btn primary" id="focus">Focus organ</button><button class="btn" id="showAll">Show whole body</button></div>
+        <p class="credit">Educational visualisation only. 3D assets: BodyParts3D / Z-Anatomy / Anatria3D adaptations, CC BY-SA 4.0. <a href="https://github.com/Nurkan1/Anatria-3D" target="_blank" rel="noreferrer">Source & licence</a></p>
+      </aside>
+    </section>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
+
+    const ATLAS_COMMIT="4211d717b0b624604a8bda174ffcae31a76f4581";
+    const BASE=`https://cdn.jsdelivr.net/gh/Nurkan1/Anatria-3D@${ATLAS_COMMIT}/public/anatomy/`;
+    const params=new URLSearchParams(location.search);
+    let lang=params.get("lang")==="bn"?"bn":"en";
+
+    const T={
+      en:{title:"3D Anatomy Explorer",subtitle:"Healthcare Central · real anatomical meshes",organs:"Organs",kicker:"Real anatomy atlas",explore:"Explore organs",copy:"Choose an organ to focus the camera on real 3D anatomy.",search:"Search organ",empty:"No matching organ found.",loading:"Loading real anatomy",loadingCopy:"Downloading anatomical meshes. The first load can take a little longer.",error:"The 3D atlas could not load.",errorCopy:"Check your internet connection and refresh.",viewer:"Real anatomical model",help:"Drag to rotate · scroll/pinch to zoom · click an organ",mesh:"Real atlas mesh",meshCopy:"Rendered from anatomical GLB geometry, not a cartoon placeholder.",role:"Primary role",system:"Body system",focus:"Focus organ",all:"Show whole body",next:"বাংলা",systems:{nervous:"Nervous system",respiratory:"Respiratory system",cardiovascular:"Circulatory system",digestive:"Digestive system",renal:"Urinary system",endocrine:"Endocrine system",lymphatic:"Lymphatic system"},regions:{head:"Head",neck:"Neck",spine:"Spine",chest:"Chest",upperAbdomen:"Upper abdomen",abdomen:"Abdomen",posteriorAbdomen:"Posterior abdomen",pelvis:"Pelvis"}},
+      bn:{title:"৩ডি অ্যানাটমি এক্সপ্লোরার",subtitle:"হেলথকেয়ার সেন্ট্রাল · বাস্তব অ্যানাটমিক্যাল মেশ",organs:"অঙ্গসমূহ",kicker:"বাস্তব অ্যানাটমি অ্যাটলাস",explore:"অঙ্গসমূহ দেখুন",copy:"কোনো অঙ্গ বেছে নিলে ক্যামেরা তার বাস্তব ৩ডি অ্যানাটমিতে ফোকাস করবে।",search:"অঙ্গ খুঁজুন",empty:"মিল পাওয়া যায়নি।",loading:"বাস্তব অ্যানাটমি লোড হচ্ছে",loadingCopy:"অ্যানাটমি মডেল ডাউনলোড হচ্ছে। প্রথমবার একটু বেশি সময় লাগতে পারে।",error:"৩ডি অ্যাটলাস লোড করা যায়নি।",errorCopy:"ইন্টারনেট সংযোগ পরীক্ষা করে রিফ্রেশ করুন।",viewer:"বাস্তব অ্যানাটমিক্যাল মডেল",help:"ঘোরাতে ড্র্যাগ করুন · জুম করতে স্ক্রল/পিঞ্চ করুন · অঙ্গে ক্লিক করুন",mesh:"বাস্তব অ্যাটলাস মেশ",meshCopy:"কার্টুন নয়—বাস্তব অ্যানাটমিক্যাল GLB জ্যামিতি দিয়ে রেন্ডার করা।",role:"প্রধান কাজ",system:"দেহতন্ত্র",focus:"অঙ্গে ফোকাস করুন",all:"পুরো দেহ দেখুন",next:"English",systems:{nervous:"স্নায়ুতন্ত্র",respiratory:"শ্বাসতন্ত্র",cardiovascular:"রক্তসঞ্চালনতন্ত্র",digestive:"পরিপাকতন্ত্র",renal:"মূত্রতন্ত্র",endocrine:"অন্তঃস্রাবী তন্ত্র",lymphatic:"লসিকাতন্ত্র"},regions:{head:"মাথা",neck:"ঘাড়",spine:"মেরুদণ্ড",chest:"বক্ষদেশ",upperAbdomen:"উপরের পেট",abdomen:"পেট",posteriorAbdomen:"পেটের পেছনের অংশ",pelvis:"পেলভিস"}}
+    };
+
+    const O={
+      brain:{color:"#a89098",system:"nervous",region:"head",file:"nervous_male.glb",en:{name:"Brain",short:"Control & coordination",description:"The brain processes sensory information, supports thought and memory, coordinates movement and regulates many automatic body functions.",role:"Control, sensation, movement and cognition"},bn:{name:"মস্তিষ্ক",short:"নিয়ন্ত্রণ ও সমন্বয়",description:"মস্তিষ্ক ইন্দ্রিয়ের তথ্য বিশ্লেষণ করে, চিন্তা ও স্মৃতি, নড়াচড়া এবং বহু স্বয়ংক্রিয় শারীরিক কাজ নিয়ন্ত্রণে ভূমিকা রাখে।",role:"নিয়ন্ত্রণ, অনুভূতি, নড়াচড়া ও চিন্তা"}},
+      eyes:{color:"#79b8d8",system:"nervous",region:"head",file:"nervous_male.glb",en:{name:"Eyes",short:"Vision",description:"The eyes receive light and convert it into signals that the brain uses to create vision. The atlas includes the eyeball and its internal structures.",role:"Detect light and support vision"},bn:{name:"চোখ",short:"দৃষ্টি",description:"চোখ আলো গ্রহণ করে এবং তা স্নায়বিক সংকেতে রূপান্তর করে, যা মস্তিষ্ক দৃষ্টিতে পরিণত করে।",role:"আলো শনাক্ত করা ও দৃষ্টিতে সহায়তা"}},
+      spinalCord:{color:"#d7b6c2",system:"nervous",region:"spine",file:"nervous_male.glb",en:{name:"Spinal cord",short:"Signal pathway",description:"The spinal cord carries signals between the brain and much of the body and also coordinates many reflexes.",role:"Carry nerve signals and coordinate reflexes"},bn:{name:"সুষুম্নাকাণ্ড",short:"স্নায়ু সংকেত পথ",description:"সুষুম্নাকাণ্ড মস্তিষ্ক ও শরীরের মধ্যে স্নায়ু সংকেত বহন করে এবং অনেক রিফ্লেক্স সমন্বয় করে।",role:"স্নায়ু সংকেত বহন ও রিফ্লেক্স সমন্বয়"}},
+      thyroid:{color:"#d99ac3",system:"endocrine",region:"neck",file:"endocrine_male.glb",en:{name:"Thyroid",short:"Metabolic hormones",description:"The thyroid gland produces hormones that influence metabolism, growth, temperature regulation and energy use.",role:"Produce thyroid hormones"},bn:{name:"থাইরয়েড",short:"বিপাকীয় হরমোন",description:"থাইরয়েড গ্রন্থি এমন হরমোন তৈরি করে যা বিপাক, বৃদ্ধি, তাপমাত্রা ও শক্তি ব্যবহারে প্রভাব ফেলে।",role:"থাইরয়েড হরমোন তৈরি"}},
+      trachea:{color:"#c7a8a5",system:"respiratory",region:"neck",file:"respiratory_male.glb",en:{name:"Trachea",short:"Main airway",description:"The trachea is the main airway that carries air from the laryngeal region toward the bronchi and lungs.",role:"Conduct air to and from the lungs"},bn:{name:"শ্বাসনালি",short:"প্রধান বায়ুপথ",description:"শ্বাসনালি ফুসফুসের দিকে বায়ু পরিবহনকারী প্রধান পথ।",role:"ফুসফুসে বায়ু আনা-নেওয়া"}},
+      lungs:{color:"#cf9ba0",system:"respiratory",region:"chest",file:"respiratory_male.glb",en:{name:"Lungs",short:"Gas exchange",description:"The lungs bring oxygen into the body and remove carbon dioxide through branching airways and air sacs.",role:"Exchange oxygen and carbon dioxide"},bn:{name:"ফুসফুস",short:"গ্যাস বিনিময়",description:"ফুসফুস শরীরে অক্সিজেন প্রবেশ করায় এবং কার্বন ডাই-অক্সাইড বের করে।",role:"অক্সিজেন ও কার্বন ডাই-অক্সাইডের বিনিময়"}},
+      heart:{color:"#a63f42",system:"cardiovascular",region:"chest",file:"cardiovascular_male.glb",en:{name:"Heart",short:"Blood pump",description:"The heart is a muscular four-chambered pump that sends blood to the lungs and through the rest of the body.",role:"Pump blood through the circulation"},bn:{name:"হৃদ্‌যন্ত্র",short:"রক্ত পাম্প",description:"হৃদ্‌যন্ত্র চার প্রকোষ্ঠবিশিষ্ট পেশিবহুল পাম্প, যা সারা শরীরে রক্ত প্রবাহিত করে।",role:"সারা দেহে রক্ত সঞ্চালন করা"}},
+      esophagus:{color:"#b9867b",system:"digestive",region:"chest",file:"digestive_male.glb",en:{name:"Esophagus",short:"Food passage",description:"The esophagus is a muscular tube that carries swallowed food from the throat to the stomach.",role:"Move swallowed food to the stomach"},bn:{name:"খাদ্যনালি",short:"খাদ্য পরিবহন",description:"খাদ্যনালি গিলে ফেলা খাবার গলা থেকে পাকস্থলীতে পৌঁছে দেয়।",role:"খাবার পাকস্থলীতে পৌঁছে দেওয়া"}},
+      liver:{color:"#7d4234",system:"digestive",region:"upperAbdomen",file:"digestive_male.glb",en:{name:"Liver",short:"Metabolism & bile",description:"The liver processes nutrients, performs many metabolic and detoxification functions and produces bile.",role:"Process nutrients and produce bile"},bn:{name:"যকৃত",short:"বিপাক ও পিত্ত",description:"যকৃত পুষ্টি প্রক্রিয়াজাত করে, বহু বিপাকীয় কাজ করে এবং পিত্ত তৈরি করে।",role:"পুষ্টি প্রক্রিয়াজাত ও পিত্ত তৈরি"}},
+      gallbladder:{color:"#6d8f45",system:"digestive",region:"upperAbdomen",file:"digestive_male.glb",en:{name:"Gallbladder",short:"Stores bile",description:"The gallbladder stores and concentrates bile made by the liver and releases it during digestion.",role:"Store and release bile"},bn:{name:"পিত্তথলি",short:"পিত্ত সংরক্ষণ",description:"পিত্তথলি যকৃতের তৈরি পিত্ত জমা ও ঘনীভূত করে এবং হজমের সময় তা ছাড়ে।",role:"পিত্ত সংরক্ষণ ও নিঃসরণ"}},
+      stomach:{color:"#c98f7a",system:"digestive",region:"upperAbdomen",file:"digestive_male.glb",en:{name:"Stomach",short:"Mix & digest food",description:"The stomach receives food, mixes it with acid and enzymes and passes partially digested contents into the small intestine.",role:"Mix food and begin major protein digestion"},bn:{name:"পাকস্থলী",short:"খাদ্য মেশানো ও হজম",description:"পাকস্থলী খাবার গ্রহণ করে, অ্যাসিড ও এনজাইমের সঙ্গে মিশিয়ে আংশিক হজম করে।",role:"খাবার মেশানো ও প্রোটিন হজম শুরু"}},
+      pancreas:{color:"#d8bf8b",system:"digestive",region:"upperAbdomen",file:"digestive_male.glb",en:{name:"Pancreas",short:"Enzymes & hormones",description:"The pancreas releases digestive enzymes and produces hormones important for blood-glucose regulation.",role:"Support digestion and blood-glucose control"},bn:{name:"অগ্ন্যাশয়",short:"এনজাইম ও হরমোন",description:"অগ্ন্যাশয় পরিপাক এনজাইম ছাড়ে এবং রক্তের গ্লুকোজ নিয়ন্ত্রণে গুরুত্বপূর্ণ হরমোন তৈরি করে।",role:"হজম ও রক্তের গ্লুকোজ নিয়ন্ত্রণ"}},
+      spleen:{color:"#6f3550",system:"lymphatic",region:"upperAbdomen",file:"lymphatic_male.glb",en:{name:"Spleen",short:"Blood & immune filter",description:"The spleen filters blood, removes old blood cells and supports immune responses.",role:"Filter blood and support immunity"},bn:{name:"প্লীহা",short:"রক্ত ও রোগপ্রতিরোধ",description:"প্লীহা রক্ত ফিল্টার করে, পুরনো রক্তকণিকা সরায় এবং রোগপ্রতিরোধে সহায়তা করে।",role:"রক্ত ফিল্টার ও রোগপ্রতিরোধে সহায়তা"}},
+      intestines:{color:"#c08a63",system:"digestive",region:"abdomen",file:"digestive_male.glb",en:{name:"Intestines",short:"Absorption & waste",description:"The intestines absorb nutrients and water and help form and move waste through the digestive tract.",role:"Absorb nutrients and water; form waste"},bn:{name:"অন্ত্র",short:"শোষণ ও বর্জ্য",description:"অন্ত্র পুষ্টি ও পানি শোষণ করে এবং বর্জ্য তৈরি ও পরিবহনে সহায়তা করে।",role:"পুষ্টি ও পানি শোষণ এবং বর্জ্য তৈরি"}},
+      kidneys:{color:"#8f4a3a",system:"renal",region:"posteriorAbdomen",file:"renal_male.glb",en:{name:"Kidneys",short:"Filter blood",description:"The kidneys filter blood, remove wastes and excess water, regulate fluid balance and produce urine.",role:"Filter blood and regulate fluid balance"},bn:{name:"কিডনি",short:"রক্ত পরিশোধন",description:"কিডনি রক্ত ছেঁকে বর্জ্য ও অতিরিক্ত পানি বের করে এবং প্রস্রাব তৈরি করে।",role:"রক্ত পরিশোধন ও তরলের ভারসাম্য"}},
+      bladder:{color:"#b98777",system:"renal",region:"pelvis",file:"renal_male.glb",en:{name:"Bladder",short:"Store urine",description:"The urinary bladder is a hollow muscular organ that expands to store urine until urination.",role:"Temporarily store urine"},bn:{name:"মূত্রথলি",short:"প্রস্রাব সংরক্ষণ",description:"মূত্রথলি প্রস্রাবত্যাগের আগে প্রস্রাব জমা রাখে।",role:"সাময়িকভাবে প্রস্রাব সংরক্ষণ"}}
+    };
+
+    const els={canvas:document.getElementById("scene"),viewer:document.getElementById("viewer"),loader:document.getElementById("loader"),loaderTitle:document.getElementById("loaderTitle"),loaderText:document.getElementById("loaderText"),progress:document.getElementById("progress"),error:document.getElementById("error"),errorTitle:document.getElementById("errorTitle"),errorText:document.getElementById("errorText"),list:document.getElementById("organList"),search:document.getElementById("search"),empty:document.getElementById("empty"),sidebar:document.getElementById("sidebar"),detailSystem:document.getElementById("detailSystem"),detailTitle:document.getElementById("detailTitle"),detailLocation:document.getElementById("detailLocation"),detailDescription:document.getElementById("detailDescription"),detailRole:document.getElementById("detailRole"),detailSystemFact:document.getElementById("detailSystemFact")};
+    const text=(id)=>document.getElementById(id);
+    function info(key){return O[key][lang]}
+    function applyLanguage(){const d=T[lang];document.documentElement.lang=lang;text("title").textContent=d.title;text("subtitle").textContent=d.subtitle;text("mobileOrgans").textContent=d.organs;text("kicker").textContent=d.kicker;text("exploreTitle").textContent=d.explore;text("exploreCopy").textContent=d.copy;els.search.placeholder=d.search;els.empty.textContent=d.empty;els.loaderTitle.textContent=d.loading;els.loaderText.textContent=d.loadingCopy;els.errorTitle.textContent=d.error;els.errorText.textContent=d.errorCopy;text("viewerTitle").textContent=d.viewer;text("viewerHelp").textContent=d.help;text("meshTitle").textContent=d.mesh;text("meshCopy").textContent=d.meshCopy;text("roleLabel").textContent=d.role;text("systemLabel").textContent=d.system;text("focus").textContent=d.focus;text("showAll").textContent=d.all;text("languageBtn").textContent=d.next;renderList(els.search.value);updateDetails(selected);const u=new URL(location.href);u.searchParams.set("lang",lang);history.replaceState(null,"",u)}
+    function renderList(q=""){q=q.trim().toLowerCase();els.list.innerHTML="";let count=0;for(const [key,organ] of Object.entries(O)){const i=info(key),hay=`${i.name} ${i.short} ${organ.en.name} ${organ.en.short}`.toLowerCase();if(q&&!hay.includes(q))continue;count++;const b=document.createElement("button");b.type="button";b.className=`organ-card${key===selected?" active":""}`;b.innerHTML=`<span class="swatch" style="--organ-color:${organ.color}">${i.name.slice(0,1)}</span><span><strong>${i.name}</strong><small>${i.short}</small></span><span class="chev">›</span>`;b.onclick=()=>select(key,true);els.list.appendChild(b)}els.empty.classList.toggle("show",!count)}
+    function updateDetails(key){const organ=O[key],i=info(key),d=T[lang];els.detailSystem.textContent=d.systems[organ.system];els.detailTitle.textContent=i.name;els.detailLocation.textContent=d.regions[organ.region];els.detailDescription.textContent=i.description;els.detailRole.textContent=i.role;els.detailSystemFact.textContent=d.systems[organ.system];renderList(els.search.value)}
+
+    const renderer=new THREE.WebGLRenderer({canvas:els.canvas,antialias:true,alpha:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.setClearColor(0x000000,0);
+    const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x061f1e,.075);const camera=new THREE.PerspectiveCamera(36,1,.001,100);camera.position.set(0,1.25,4.5);const controls=new OrbitControls(camera,els.canvas);controls.enableDamping=true;controls.dampingFactor=.065;controls.enablePan=false;controls.autoRotate=!matchMedia("(prefers-reduced-motion: reduce)").matches;controls.autoRotateSpeed=.7;const root=new THREE.Group();scene.add(root);scene.add(new THREE.AmbientLight(0xd6fff8,.35));const hemi=new THREE.HemisphereLight(0xe7fffb,0x2a1916,.52);scene.add(hemi);const keyLight=new THREE.DirectionalLight(0xfff5ec,2);keyLight.position.set(4,5,5);scene.add(keyLight);const fill=new THREE.DirectionalLight(0x9fdad6,.8);fill.position.set(-4,2,3);scene.add(fill);
+    const manager=new THREE.LoadingManager();const draco=new DRACOLoader(manager);draco.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/libs/draco/gltf/");const loader=new GLTFLoader(manager);loader.setDRACOLoader(draco);const skeletonMaterial=new THREE.MeshStandardMaterial({color:"#e2d8c3",roughness:.7,transparent:true,opacity:.30,depthWrite:false});const materials={};for(const [k,o] of Object.entries(O)){const c=new THREE.Color(o.color);materials[k]=new THREE.MeshStandardMaterial({color:c,roughness:.62,emissive:c.clone().multiplyScalar(.09),emissiveIntensity:.08})}const meshes=Object.fromEntries(Object.keys(O).map(k=>[k,[]]));const boxes=Object.fromEntries(Object.keys(O).map(k=>[k,new THREE.Box3()]));let skeletonRoot=null,fullBox=new THREE.Box3(),selected="heart",hovered=null,isolate=false,skeletonVisible=true,manifest=null;
+    const pathText=m=>`${m.name_en||""} ${(m.path||[]).join(" ")}`.toLowerCase();
+    const M={
+      eyes:m=>/\b(eyeball|cornea|sclera|retina|lens|vitreous body|aqueous humor|iris|ciliary body|choroid)\b/i.test(pathText(m)),
+      spinalCord:m=>/\bspinal cord\b/i.test(pathText(m)),
+      brain:m=>/\b(brain|cerebrum|cerebellum|brainstem|brain stem|diencephalon|mesencephalon|pons|medulla oblongata)\b/i.test(pathText(m)),
+      thyroid:m=>/\bthyroid\b/i.test(pathText(m)),
+      trachea:m=>/\btrachea\b/i.test(pathText(m)),
+      heart:m=>/\bheart\b/i.test(pathText(m)),
+      lungs:m=>/\b(left lung|right lung|lung lobe|lobe of left lung|lobe of right lung)\b/i.test(pathText(m)),
+      esophagus:m=>/\b(esophagus|oesophagus)\b/i.test(pathText(m)),
+      gallbladder:m=>/\b(gallbladder|gall bladder)\b/i.test(pathText(m)),
+      liver:m=>/\bliver\b/i.test(pathText(m)),
+      stomach:m=>/\bstomach\b/i.test(pathText(m)),
+      pancreas:m=>/\bpancreas\b/i.test(pathText(m)),
+      spleen:m=>/\bspleen\b/i.test(pathText(m)),
+      intestines:m=>/\b(duodenum|jejunum|ileum|colon|caecum|cecum|rectum|small intestine|large intestine)\b/i.test(pathText(m)),
+      kidneys:m=>/\bkidneys?\b/i.test(pathText(m)),
+      bladder:m=>/\b(urinary )?bladder\b/i.test(pathText(m))
+    };
+    const ORDER=["eyes","spinalCord","brain","thyroid","trachea","heart","lungs","esophagus","gallbladder","liver","pancreas","stomach","spleen","kidneys","bladder","intestines"];
+    const match=m=>ORDER.find(k=>M[k](m))||null;
+    function load(file){return new Promise((res,rej)=>loader.load(BASE+file,res,undefined,rej))}
+    function hide(r){r.traverse(x=>{if(x.isMesh)x.visible=false})}
+    function mapNodes(r){const m=new Map();r.traverse(x=>{if(x.name)m.set(x.name,x)});return m}
+    function reveal(obj,key){obj.traverse(c=>{if(!c.isMesh)return;c.visible=true;c.material=materials[key];c.userData.organKey=key;meshes[key].push(c)})}
+    function updateBoxes(){for(const k of Object.keys(O)){const b=new THREE.Box3();for(const m of meshes[k])if(m.visible)b.expandByObject(m);boxes[k]=b}}
+    function updateVisibility(){for(const [k,arr] of Object.entries(meshes)){for(const m of arr)m.visible=!isolate||k===selected;materials[k].emissiveIntensity=k===selected?.28:k===hovered?.16:.06}if(skeletonRoot)skeletonRoot.visible=skeletonVisible&&!isolate}
+    async function build(){try{els.progress.style.width="5%";const r=await fetch(BASE+"manifest.json");if(!r.ok)throw new Error(`Manifest request failed (${r.status})`);manifest=await r.json();const files=["skeletal_male.glb","nervous_male.glb","respiratory_male.glb","cardiovascular_male.glb","digestive_male.glb","renal_male.glb","endocrine_male.glb","lymphatic_male.glb"];const scenes={};for(let i=0;i<files.length;i++){els.loaderText.textContent=`${T[lang].loadingCopy} ${Math.round((i/files.length)*100)}%`;els.progress.style.width=`${10+(i/files.length)*72}%`;const g=await load(files[i]);scenes[files[i]]=g.scene;root.add(g.scene)}skeletonRoot=scenes["skeletal_male.glb"];skeletonRoot.traverse(c=>{if(c.isMesh){c.material=skeletonMaterial;c.visible=true}});for(const file of files.filter(f=>f!=="skeletal_male.glb")){hide(scenes[file]);const nodes=mapNodes(scenes[file]);for(const meta of manifest.organs.filter(x=>x.mesh_file===file)){const k=match(meta);if(!k||O[k].file!==file)continue;const obj=nodes.get(meta.node)||nodes.get(THREE.PropertyBinding.sanitizeNodeName(meta.node));if(obj)reveal(obj,k)}}for(const k of Object.keys(meshes))meshes[k]=[...new Set(meshes[k])];updateBoxes();fullBox=new THREE.Box3();fullBox.expandByObject(skeletonRoot);for(const arr of Object.values(meshes))for(const m of arr)if(m.visible)fullBox.expandByObject(m);if(fullBox.isEmpty())throw new Error("No visible anatomical geometry found.");fitAll(false);updateVisibility();els.progress.style.width="100%";setTimeout(()=>els.loader.classList.add("hide"),250);select(selected,false);const missing=Object.keys(O).filter(k=>!meshes[k].length);if(missing.length)console.warn("Some organs were not resolved:",missing)}catch(e){console.error(e);els.loader.classList.add("hide");els.error.classList.add("show");els.errorText.textContent=`${T[lang].errorCopy} ${e?.message||""}`}}
+    function fly(box,pad=1.45){if(!box||box.isEmpty())return;const c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3()),radius=Math.max(s.x,s.y,s.z,.025)*.5,fov=THREE.MathUtils.degToRad(camera.fov),dist=Math.max((radius*pad*2.2)/Math.tan(fov/2),.22);let dir=camera.position.clone().sub(controls.target);if(dir.lengthSq()<1e-6)dir.set(0,.15,1);dir.normalize();camera.position.copy(c.clone().add(dir.multiplyScalar(dist)));controls.target.copy(c);controls.minDistance=Math.max(radius*.5,.018);controls.maxDistance=Math.max(dist*8,7);controls.update()}
+    function fitAll(){fly(fullBox,1.15)}function focusSelected(){fly(boxes[selected],innerWidth<=820?2.5:1.75)}function select(k,focus=true){if(!O[k])return;selected=k;updateDetails(k);updateVisibility();if(focus)focusSelected();if(innerWidth<=820)els.sidebar.classList.remove("open")}
+    const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();function hit(e){const rect=els.canvas.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;ray.setFromCamera(pointer,camera);return ray.intersectObjects(Object.values(meshes).flat().filter(m=>m.visible),false).find(h=>h.object.userData.organKey)||null}
+    els.canvas.addEventListener("click",e=>{const h=hit(e);if(h)select(h.object.userData.organKey,true)});els.canvas.addEventListener("pointermove",e=>{const h=hit(e),k=h?.object?.userData?.organKey||null;if(k!==hovered){hovered=k;updateVisibility()}els.canvas.style.cursor=k?"pointer":"grab"});els.canvas.addEventListener("pointerleave",()=>{hovered=null;updateVisibility()});
+    els.search.addEventListener("input",e=>renderList(e.target.value));text("languageBtn").onclick=()=>{lang=lang==="en"?"bn":"en";applyLanguage()};text("mobileOrgans").onclick=()=>els.sidebar.classList.toggle("open");text("focus").onclick=focusSelected;text("showAll").onclick=()=>{isolate=false;updateVisibility();fitAll()};text("zoomIn").onclick=()=>{const d=camera.position.clone().sub(controls.target).multiplyScalar(.78);camera.position.copy(controls.target).add(d);controls.update()};text("zoomOut").onclick=()=>{const d=camera.position.clone().sub(controls.target).multiplyScalar(1.28);camera.position.copy(controls.target).add(d);controls.update()};text("rotate").onclick=()=>{controls.autoRotate=!controls.autoRotate;text("rotate").classList.toggle("active",controls.autoRotate)};text("skeleton").onclick=()=>{skeletonVisible=!skeletonVisible;text("skeleton").classList.toggle("active",skeletonVisible);updateVisibility()};text("reset").onclick=()=>{isolate=false;updateVisibility();fitAll()};els.canvas.addEventListener("dblclick",e=>{const h=hit(e);if(!h)return;select(h.object.userData.organKey,false);isolate=true;updateVisibility();focusSelected()});
+    function resize(){const r=els.viewer.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(els.viewer);addEventListener("resize",resize);resize();function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}
+    applyLanguage();renderList();updateDetails(selected);build();animate();
+  </script>
+</body>
+</html>
