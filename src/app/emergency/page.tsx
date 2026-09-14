@@ -59,13 +59,7 @@ export default async function EmergencyPage({
                 ? "এলাকা নির্বাচন করে তালিকাভুক্ত অ্যাম্বুলেন্স যোগাযোগ দেখুন। লগ ইন প্রয়োজন নেই।"
                 : "Choose your area to see listed ambulance contacts. No login required."}
             </p>
-          </div>
-
-          <div className={styles.heroAction}>
-            <span>Health advice / স্বাস্থ্য পরামর্শ</span>
-            <a href="tel:16263">Call 16263</a>
-          </div>
-        </div>
+      
       </section>
 
       <section className={styles.content}>
