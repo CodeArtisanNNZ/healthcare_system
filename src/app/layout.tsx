@@ -19,10 +19,35 @@ export const metadata: Metadata = {
 
 function PhoneIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"
-      strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.15 12.8 19.8 19.8 0 0 1 2.08 4.2 2 2 0 0 1 4.07 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.68a16 16 0 0 0 6.3 6.3l1.23-1.23a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92Z" />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );
 }
@@ -45,42 +70,92 @@ export default async function Layout({
         <header className={styles.header}>
           <Link className={styles.brand} href="/" aria-label="Healthcare Central home">
             <img src="/images/logo.png" width={54} height={54} alt="" />
-            <span>Healthcare <strong>Central</strong></span>
+            <span>
+              Healthcare <strong>Central</strong>
+            </span>
           </Link>
 
-          <nav className={styles.nav} aria-label={bn ? "প্রধান নেভিগেশন" : "Main navigation"}>
-            <Link className={styles.desktopLink} href="/">{bn ? "হোম" : "Home"}</Link>
-            <Link className={styles.desktopLink} href="/#services">{bn ? "সেবা" : "Services"}</Link>
-            <Link className={styles.desktopLink} href="/about">{bn ? "আমাদের সম্পর্কে" : "About"}</Link>
-
-            {user && (
-              <Link className={styles.desktopLink} href="/dashboard">
-                {bn ? "আমার ড্যাশবোর্ড" : "My dashboard"}
-              </Link>
-            )}
-
-            <Link className={styles.emergencyButton} href="/emergency">
-              <PhoneIcon />
-              <span className={styles.emergencyFull}>
-                {bn ? "জরুরি সহায়তা" : "Emergency Help"}
-              </span>
-              <span className={styles.emergencyShort}>
-                {bn ? "জরুরি" : "Emergency"}
-              </span>
-            </Link>
-
-            <LanguageToggle />
-
+          <nav
+            className={styles.nav}
+            aria-label={bn ? "প্রধান নেভিগেশন" : "Main navigation"}
+          >
             {user ? (
-              <form action={logout}>
-                <button className={styles.accountButton}>
-                  {bn ? "সাইন আউট" : "Sign out"}
-                </button>
-              </form>
+              <>
+                <Link className={styles.emergencyButton} href="/emergency">
+                  <PhoneIcon />
+                  <span className={styles.emergencyFull}>
+                    {bn ? "জরুরি সহায়তা" : "Emergency Help"}
+                  </span>
+                  <span className={styles.emergencyShort}>
+                    {bn ? "জরুরি" : "Emergency"}
+                  </span>
+                </Link>
+
+                <LanguageToggle />
+
+                <details className={styles.menuDropdown}>
+                  <summary className={styles.menuButton}>
+                    <MenuIcon />
+                    <span>{bn ? "মেনু" : "Menu"}</span>
+                  </summary>
+
+                  <div className={styles.menuPanel}>
+                    <Link href="/">{bn ? "হোম" : "Home"}</Link>
+                    <Link href="/#services">{bn ? "সেবা" : "Services"}</Link>
+                    <Link href="/patient">
+                      {bn ? "আমার ড্যাশবোর্ড" : "My dashboard"}
+                    </Link>
+                    <Link href="/patient/profile">
+                      {bn ? "প্রোফাইল" : "Profile"}
+                    </Link>
+                    <Link href="/patient/prescriptions">
+                      {bn ? "প্রেসক্রিপশন" : "Prescriptions"}
+                    </Link>
+                    <Link href="/patient/reports">
+                      {bn ? "ল্যাব রিপোর্ট" : "Lab reports"}
+                    </Link>
+                    <Link href="/about">
+                      {bn ? "আমাদের সম্পর্কে" : "About"}
+                    </Link>
+
+                    <div className={styles.menuDivider} />
+
+                    <form action={logout}>
+                      <button className={styles.menuLogout}>
+                        {bn ? "সাইন আউট" : "Sign out"}
+                      </button>
+                    </form>
+                  </div>
+                </details>
+              </>
             ) : (
-              <Link className={styles.accountButton} href="/login">
-                {bn ? "লগ ইন" : "Log in"}
-              </Link>
+              <>
+                <Link className={styles.desktopLink} href="/">
+                  {bn ? "হোম" : "Home"}
+                </Link>
+                <Link className={styles.desktopLink} href="/#services">
+                  {bn ? "সেবা" : "Services"}
+                </Link>
+                <Link className={styles.desktopLink} href="/about">
+                  {bn ? "আমাদের সম্পর্কে" : "About"}
+                </Link>
+
+                <Link className={styles.emergencyButton} href="/emergency">
+                  <PhoneIcon />
+                  <span className={styles.emergencyFull}>
+                    {bn ? "জরুরি সহায়তা" : "Emergency Help"}
+                  </span>
+                  <span className={styles.emergencyShort}>
+                    {bn ? "জরুরি" : "Emergency"}
+                  </span>
+                </Link>
+
+                <LanguageToggle />
+
+                <Link className={styles.accountButton} href="/login">
+                  {bn ? "লগ ইন" : "Log in"}
+                </Link>
+              </>
             )}
           </nav>
         </header>
@@ -111,9 +186,13 @@ export default async function Layout({
           <nav aria-label={bn ? "ফুটার নেভিগেশন" : "Footer navigation"}>
             <Link href="/">{bn ? "হোম" : "Home"}</Link>
             <Link href="/about">{bn ? "আমাদের সম্পর্কে" : "About"}</Link>
-            <Link href={user ? "/patient" : "/login"}>{bn ? "সহকারী" : "Assistant"}</Link>
+            <Link href={user ? "/patient" : "/login"}>
+              {bn ? "সহকারী" : "Assistant"}
+            </Link>
             <Link href="/emergency">{bn ? "জরুরি" : "Emergency"}</Link>
-            <Link href="/doctor-portal">{bn ? "ডাক্তার পোর্টাল" : "Doctor portal"}</Link>
+            <Link href="/doctor-portal">
+              {bn ? "ডাক্তার পোর্টাল" : "Doctor portal"}
+            </Link>
           </nav>
         </footer>
       </body>
