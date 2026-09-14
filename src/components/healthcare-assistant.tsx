@@ -52,7 +52,8 @@ export function HealthcareAssistant({
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [response, setResponse] = useState<AssistantResponse | null>(null);
+  const [response, setResponse] =
+    useState<AssistantResponse | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,6 +64,19 @@ export function HealthcareAssistant({
 
     if (!message) {
       setError(bn ? "কী খুঁজছেন তা লিখুন।" : "Enter a search.");
+      return;
+    }
+
+    // Medicine uses the dedicated pharmacy-comparison flow,
+    // not the internal Healthcare Central directory search.
+    if (category === "medicine") {
+      const params = new URLSearchParams({ q: message });
+
+      if (bn) {
+        params.set("lang", "bn");
+      }
+
+      window.location.href = `/medicines?${params.toString()}`;
       return;
     }
 
@@ -114,6 +128,7 @@ export function HealthcareAssistant({
         <span className={styles.label}>
           {bn ? "সহকারী" : "Assistant"}
         </span>
+
         <h2 id="assistant-title">
           {bn ? "স্বাস্থ্যসেবা খুঁজুন" : "Search healthcare services"}
         </h2>
@@ -126,7 +141,9 @@ export function HealthcareAssistant({
               key={id}
               type="button"
               className={
-                id === category ? styles.activeCategory : styles.category
+                id === category
+                  ? styles.activeCategory
+                  : styles.category
               }
               onClick={() => {
                 setCategory(id);
@@ -142,14 +159,19 @@ export function HealthcareAssistant({
 
         <label className={styles.queryLabel}>
           <span>{bn ? "সার্চ" : "Search"}</span>
+
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             maxLength={160}
             placeholder={
-              bn
-                ? "নাম, বিশেষত্ব বা সেবা লিখুন"
-                : "Name, specialty or service"
+              category === "medicine"
+                ? bn
+                  ? "ওষুধের নাম বা strength লিখুন"
+                  : "Medicine name or strength"
+                : bn
+                  ? "নাম, বিশেষত্ব বা সেবা লিখুন"
+                  : "Name, specialty or service"
             }
           />
         </label>
@@ -157,6 +179,7 @@ export function HealthcareAssistant({
         <div className={styles.searchFooter}>
           <label className={styles.locationField}>
             <span>{bn ? "এলাকা" : "Location"}</span>
+
             <select
               value={location}
               onChange={(event) => setLocation(event.target.value)}
@@ -208,14 +231,18 @@ export function HealthcareAssistant({
             <div className={styles.urgent}>
               <div>
                 <strong>
-                  {bn ? "জরুরি সহায়তা প্রয়োজন হতে পারে" : "Urgent help may be needed"}
+                  {bn
+                    ? "জরুরি সহায়তা প্রয়োজন হতে পারে"
+                    : "Urgent help may be needed"}
                 </strong>
+
                 <span>
                   {bn
                     ? "জরুরি যোগাযোগ ও অ্যাম্বুলেন্স সেবা দেখুন।"
                     : "Open emergency contacts and ambulance support."}
                 </span>
               </div>
+
               <Link href="/emergency">
                 {bn ? "জরুরি সহায়তা" : "Emergency Help"}
               </Link>
@@ -225,6 +252,7 @@ export function HealthcareAssistant({
           <div className={styles.responseHeading}>
             <div>
               <h3>{response.title}</h3>
+
               {(response.context || response.location) && (
                 <p>
                   {[response.context, response.location]
@@ -242,22 +270,31 @@ export function HealthcareAssistant({
           {response.results.length ? (
             <div className={styles.results}>
               {response.results.map((result) => (
-                <article className={styles.resultCard} key={result.id}>
+                <article
+                  className={styles.resultCard}
+                  key={result.id}
+                >
                   <div className={styles.resultMain}>
                     <h4>{result.title}</h4>
 
                     {result.subtitle && (
-                      <p className={styles.subtitle}>{result.subtitle}</p>
+                      <p className={styles.subtitle}>
+                        {result.subtitle}
+                      </p>
                     )}
 
                     {result.details.length > 0 && (
                       <dl>
-                        {result.details.slice(0, 4).map((item) => (
-                          <div key={`${result.id}-${item.label}`}>
-                            <dt>{item.label}</dt>
-                            <dd>{item.value}</dd>
-                          </div>
-                        ))}
+                        {result.details
+                          .slice(0, 4)
+                          .map((item) => (
+                            <div
+                              key={`${result.id}-${item.label}`}
+                            >
+                              <dt>{item.label}</dt>
+                              <dd>{item.value}</dd>
+                            </div>
+                          ))}
                       </dl>
                     )}
                   </div>
@@ -274,7 +311,9 @@ export function HealthcareAssistant({
                     )}
 
                     {result.href && (
-                      <Link href={result.href}>View details</Link>
+                      <Link href={result.href}>
+                        View details
+                      </Link>
                     )}
                   </div>
                 </article>
