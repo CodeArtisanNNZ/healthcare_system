@@ -1,28 +1,49 @@
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
-import { register } from "../actions";
-export default function Register() {
+import { getLanguage } from "@/lib/language";
+import { localizedRegister } from "../auth-actions";
+
+export default async function Register({
+  searchParams,
+}: {
+  searchParams: Promise<{ lang?: string }>;
+}) {
+  const language = await getLanguage(searchParams);
+  const bn = language === "bn";
+
   return (
     <section className="auth card">
-      <p className="eyebrow">YOUR HEALTHCARE STARTS HERE</p>
-      <h1>Create your account.</h1>
-      <p className="muted">Register for a patient account.</p>
-      <ActionForm action={register} label="Create account">
+      <p className="eyebrow">
+        {bn ? "আপনার স্বাস্থ্যসেবা এখান থেকে শুরু" : "YOUR HEALTHCARE STARTS HERE"}
+      </p>
+
+      <h1>{bn ? "আপনার অ্যাকাউন্ট তৈরি করুন।" : "Create your account."}</h1>
+
+      <p className="muted">
+        {bn
+          ? "Healthcare Central ব্যবহার করতে একটি রোগী অ্যাকাউন্ট তৈরি করুন।"
+          : "Register for a patient account."}
+      </p>
+
+      <ActionForm
+        action={localizedRegister}
+        label={bn ? "অ্যাকাউন্ট তৈরি করুন" : "Create account"}
+        pendingLabel={bn ? "অপেক্ষা করুন…" : "Please wait…"}
+      >
+        <input type="hidden" name="lang" value={language} />
+
         <label>
-          Full name
-          <input
-            name="full_name"
-            required
-            maxLength={300}
-            autoComplete="name"
-          />
+          {bn ? "পূর্ণ নাম" : "Full name"}
+          <input name="full_name" required maxLength={300} autoComplete="name" />
         </label>
+
         <label>
-          Email
+          {bn ? "ইমেইল" : "Email"}
           <input type="email" name="email" required autoComplete="email" />
         </label>
+
         <label>
-          Password
+          {bn ? "পাসওয়ার্ড" : "Password"}
           <input
             type="password"
             name="password"
@@ -32,12 +53,14 @@ export default function Register() {
             autoComplete="new-password"
           />
         </label>
+
         <label>
-          Phone
+          {bn ? "ফোন" : "Phone"}
           <input name="phone" autoComplete="tel" maxLength={100} />
         </label>
+
         <label>
-          Address
+          {bn ? "ঠিকানা" : "Address"}
           <textarea
             name="address"
             autoComplete="street-address"
@@ -45,8 +68,10 @@ export default function Register() {
           />
         </label>
       </ActionForm>
+
       <p>
-        Already registered? <Link href="/login">Sign in</Link>
+        {bn ? "আগে থেকেই অ্যাকাউন্ট আছে? " : "Already registered? "}
+        <Link href="/login">{bn ? "লগ ইন করুন" : "Sign in"}</Link>
       </p>
     </section>
   );
