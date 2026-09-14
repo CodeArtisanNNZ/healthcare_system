@@ -119,6 +119,7 @@
 .menuButton {
   cursor: pointer;
   user-select: none;
+  padding-inline: 12px;
 }
 
 .menuDropdown[open] .menuButton {
@@ -126,30 +127,88 @@
   border-color: #9fc9c4;
 }
 
-.menuPanel {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: min(270px, calc(100vw - 24px));
-  padding: 8px;
-  display: grid;
-  gap: 3px;
-  background: #fff;
-  border: 1px solid #d4e6e3;
-  border-radius: 14px;
-  box-shadow: 0 18px 42px rgba(16, 57, 56, 0.16);
-  z-index: 100;
+.menuDropdown[open]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+  background: rgba(12, 35, 33, 0.24);
+  backdrop-filter: blur(2px);
 }
 
-.menuPanel a,
+.menuPanel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 90;
+  width: min(320px, 86vw);
+  padding: 18px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-right: 1px solid #d4e6e3;
+  box-shadow: 18px 0 46px rgba(16, 57, 56, 0.17);
+  animation: drawerIn 180ms ease-out;
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.menuHeader {
+  min-height: 64px;
+  padding: 4px 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e4efed;
+}
+
+.menuHeader img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.menuHeader div {
+  display: grid;
+  gap: 2px;
+}
+
+.menuHeader strong {
+  color: #123b3a;
+  font-size: 14px;
+}
+
+.menuHeader span {
+  color: #79918e;
+  font-size: 11px;
+}
+
+.drawerNav {
+  padding: 14px 0;
+  display: grid;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.drawerNav a,
 .menuLogout {
   width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
+  min-height: 44px;
+  padding: 11px 12px;
   display: flex;
   align-items: center;
   border: 0;
-  border-radius: 9px;
+  border-radius: 10px;
   background: transparent;
   color: #173f3d;
   text-decoration: none;
@@ -159,16 +218,15 @@
   text-align: left;
 }
 
-.menuPanel a:hover,
-.menuLogout:hover {
+.drawerNav a:hover {
   background: #eef9f7;
   color: #0b746e;
 }
 
-.menuDivider {
-  height: 1px;
-  margin: 5px 4px;
-  background: #e1ecea;
+.menuFooter {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e4efed;
 }
 
 .menuLogout {
@@ -273,23 +331,21 @@
 
   .menuButton {
     min-height: 40px;
-    padding: 8px 11px;
-  }
-
-  .menuButton span {
-    display: none;
+    padding: 8px 10px;
   }
 
   .menuPanel {
-    position: fixed;
-    top: 72px;
-    right: 12px;
-    left: 12px;
-    width: auto;
+    width: min(300px, 88vw);
   }
 
   .footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuPanel {
+    animation: none;
   }
 }
