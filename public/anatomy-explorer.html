@@ -792,14 +792,33 @@
       .brand p { display: none; }
 
       .workspace {
-        display: block;
+        display: flex;
+        flex-direction: column;
         height: auto;
         min-height: 0;
+        gap: 10px;
       }
 
+      /* Keep the anatomy viewer fully visible on phones.
+         The information card now sits BELOW it instead of covering it. */
       .viewer {
-        height: min(76vh, 720px);
-        min-height: 540px;
+        order: 1;
+        height: min(72svh, 680px);
+        min-height: 500px;
+      }
+
+      .details {
+        order: 2;
+        position: static;
+        z-index: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+        transform: none !important;
+        transition: none;
       }
 
       .sidebar {
@@ -808,26 +827,12 @@
         top: 8px;
         left: 8px;
         width: min(290px, calc(100% - 16px));
-        max-height: calc(100% - 16px);
+        max-height: calc(72svh - 16px);
         transform: translateX(calc(-100% - 16px));
         transition: transform .22s cubic-bezier(.2,.8,.2,1);
       }
 
       .sidebar.open { transform: translateX(0); }
-
-      .details {
-        position: fixed;
-        z-index: 45;
-        left: 8px;
-        right: 8px;
-        bottom: 8px;
-        max-height: 66vh;
-        overflow-y: auto;
-        transform: translateY(calc(100% + 20px));
-        transition: transform .24s cubic-bezier(.2,.85,.2,1);
-      }
-
-      .details.open { transform: translateY(0); }
 
       .mobile-organs { display: inline-flex; }
 
@@ -863,10 +868,15 @@
       .workspace { margin-top: 0; }
 
       .viewer {
-        height: calc(100svh - 58px);
-        min-height: 560px;
-        border-width: 0;
+        height: 68svh;
+        min-height: 500px;
+        border-width: 0 0 1px;
         border-radius: 0;
+      }
+
+      .details {
+        border-radius: 22px 22px 0 0;
+        padding: 18px 16px 24px;
       }
 
       .viewer-info span { display: none; }
@@ -1905,7 +1915,12 @@
     function focusSelected(animate = true) {
       const box = organBoxes[selectedKey];
       if (!box || box.isEmpty()) return;
-      flyToBox(box, 1.75, animate);
+
+      // Phones need more anatomical context around the selected organ.
+      // A wider frame keeps the skeleton/torso visible instead of zooming
+      // so close that the selected organ fills the entire screen.
+      const padding = innerWidth <= 860 ? 2.65 : 1.75;
+      flyToBox(box, padding, animate);
     }
 
     function flyToBox(box, padding = 1.25, animate = true) {
@@ -1954,8 +1969,9 @@
       if (focus) focusSelected(true);
 
       if (innerWidth <= 860) {
+        // Close the organ drawer after selection. Details remain in normal
+        // document flow below the 3D viewer, so they never cover the skeleton.
         els.sidebar.classList.remove("open");
-        els.details.classList.add("open");
       }
     }
 
@@ -2049,7 +2065,6 @@
 
     els.mobileOrgansBtn.addEventListener("click", () => {
       els.sidebar.classList.toggle("open");
-      els.details.classList.remove("open");
     });
 
     document.getElementById("zoomInBtn").addEventListener("click", () => {
@@ -2093,7 +2108,6 @@
     document.getElementById("showAllBtn").addEventListener("click", () => {
       setIsolate(false);
       fitWholeBody(true);
-      if (innerWidth <= 860) els.details.classList.remove("open");
     });
 
     // Double-clicking the selected organ isolates it.
