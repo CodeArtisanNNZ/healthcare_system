@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
+import { getLanguage } from "@/lib/language";
 import styles from "./home.module.css";
 
 const services = [
-  ["doctor", "Doctor", "Find the right type of doctor for your needs."],
-  ["medicine", "Medicine", "Compare medicine sellers before you continue to buy."],
-  ["hospital", "Hospital", "Explore hospital services and departments."],
-  ["lab-test", "Lab Test", "Understand how lab test search and comparison works."],
-  ["caregiver", "Caregiver", "Find support for home and everyday care."],
-  ["ambulance", "Ambulance", "Learn how ambulance and emergency support works."],
+  ["doctor", "Doctor", "ডাক্তার", "Find the right type of doctor for your needs.", "আপনার প্রয়োজন অনুযায়ী উপযুক্ত ধরনের ডাক্তার খোঁজার উপায় জানুন।"],
+  ["medicine", "Medicine", "ওষুধ", "Compare medicine sellers before you continue to buy.", "কেনার আগে বিভিন্ন অনলাইন ফার্মেসির অপশন দেখুন।"],
+  ["hospital", "Hospital", "হাসপাতাল", "Explore hospital services and departments.", "হাসপাতাল, বিভাগ এবং সেবাগুলো কীভাবে খুঁজবেন জানুন।"],
+  ["lab-test", "Lab Test", "ল্যাব টেস্ট", "Understand how lab test search and comparison works.", "ল্যাব টেস্ট ও ডায়াগনস্টিক সেন্টার খোঁজার সুবিধা জানুন।"],
+  ["caregiver", "Caregiver", "কেয়ারগিভার", "Find support for home and everyday care.", "বাসা ও দৈনন্দিন যত্নের জন্য সহায়তা খোঁজার সুবিধা জানুন।"],
+  ["ambulance", "Ambulance", "অ্যাম্বুলেন্স", "Learn how ambulance and emergency support works.", "অ্যাম্বুলেন্স ও জরুরি সহায়তা কীভাবে পাওয়া যায় জানুন।"],
 ] as const;
 
 export default async function Home({
@@ -16,9 +17,11 @@ export default async function Home({
 }: {
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const user = await currentUser();
-  const { lang } = await searchParams;
-  const bn = lang === "bn";
+  const [user, language] = await Promise.all([
+    currentUser(),
+    getLanguage(searchParams),
+  ]);
+  const bn = language === "bn";
 
   return (
     <div className={styles.page}>
@@ -28,11 +31,9 @@ export default async function Home({
             <p className={styles.eyebrow}>
               {bn ? "হেলথকেয়ার সেন্ট্রাল" : "Healthcare Central"}
             </p>
-
             <h1>
               {bn ? "প্রয়োজনীয় স্বাস্থ্যসেবা খুঁজুন।" : "Find the care you need."}
             </h1>
-
             <p className={styles.heroText}>
               {bn
                 ? "ডাক্তার, হাসপাতাল, ওষুধ, ল্যাব টেস্ট, কেয়ারগিভার ও জরুরি সেবা—এক জায়গা থেকে শুরু করুন।"
@@ -66,17 +67,17 @@ export default async function Home({
         </div>
 
         <div className={styles.serviceGrid}>
-          {services.map(([slug, title, description]) => (
+          {services.map(([slug, title, titleBn, description, descriptionBn]) => (
             <Link
               key={slug}
-              href={`/services/${slug}${bn ? "?lang=bn" : ""}`}
+              href={`/services/${slug}`}
               className={`${styles.serviceCard} ${
                 slug === "ambulance" ? styles.emergencyServiceCard : ""
               }`}
             >
               <div>
-                <h3>{title}</h3>
-                <p>{description}</p>
+                <h3>{bn ? titleBn : title}</h3>
+                <p>{bn ? descriptionBn : description}</p>
               </div>
               <span aria-hidden="true">→</span>
             </Link>
@@ -94,15 +95,10 @@ export default async function Home({
                 : "Use Healthcare Central Assistant after you sign in"}
             </h2>
           </div>
-
           <Link href={user ? "/patient" : "/login"}>
             {user
-              ? bn
-                ? "Assistant খুলুন"
-                : "Open Assistant"
-              : bn
-                ? "লগ ইন"
-                : "Log in"}
+              ? bn ? "Assistant খুলুন" : "Open Assistant"
+              : bn ? "লগ ইন" : "Log in"}
           </Link>
         </article>
 
@@ -111,7 +107,6 @@ export default async function Home({
             <span>{bn ? "জরুরি" : "Emergency"}</span>
             <h2>{bn ? "দ্রুত সহায়তা প্রয়োজন?" : "Need urgent help?"}</h2>
           </div>
-
           <Link href="/emergency">
             {bn ? "জরুরি সহায়তা" : "Emergency Help"}
           </Link>
