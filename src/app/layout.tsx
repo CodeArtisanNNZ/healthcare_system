@@ -116,12 +116,14 @@ export default async function Layout({
 
                     <nav className={styles.drawerNav}>
                       <Link href="/">{bn ? "হোম" : "Home"}</Link>
-                      <Link href="/#services">{bn ? "সেবা" : "Services"}</Link>
                       <Link href="/patient">
-                        {bn ? "আমার ড্যাশবোর্ড" : "My dashboard"}
+                        {bn ? "ড্যাশবোর্ড" : "Dashboard"}
+                      </Link>
+                      <Link href="/patient/search">
+                        {bn ? "ডাক্তার খুঁজুন" : "Find a doctor"}
                       </Link>
                       <Link href="/patient/profile">
-                        {bn ? "প্রোফাইল" : "Profile"}
+                        {bn ? "আমার প্রোফাইল" : "My profile"}
                       </Link>
                       <Link href="/patient/prescriptions">
                         {bn ? "প্রেসক্রিপশন" : "Prescriptions"}
@@ -129,6 +131,19 @@ export default async function Layout({
                       <Link href="/patient/reports">
                         {bn ? "ল্যাব রিপোর্ট" : "Lab reports"}
                       </Link>
+                      <Link href="/patient/lab_tests">
+                        {bn ? "ল্যাব টেস্ট" : "Lab tests"}
+                      </Link>
+                      <Link href="/patient/hospitals">
+                        {bn ? "হাসপাতাল" : "Hospitals"}
+                      </Link>
+                      <Link href="/patient/caregivers">
+                        {bn ? "কেয়ারগিভার" : "Caregivers"}
+                      </Link>
+                      <Link href="/patient/ambulances">
+                        {bn ? "অ্যাম্বুলেন্স" : "Ambulances"}
+                      </Link>
+                      <Link href="/#services">{bn ? "সেবা" : "Services"}</Link>
                       <Link href="/about">
                         {bn ? "আমাদের সম্পর্কে" : "About"}
                       </Link>
