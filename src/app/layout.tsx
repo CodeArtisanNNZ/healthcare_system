@@ -38,8 +38,8 @@ function PhoneIcon() {
 function MenuIcon() {
   return (
     <svg
-      width="17"
-      height="17"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -94,38 +94,54 @@ export default async function Layout({
                 <LanguageToggle />
 
                 <details className={styles.menuDropdown}>
-                  <summary className={styles.menuButton}>
+                  <summary
+                    className={styles.menuButton}
+                    aria-label={bn ? "মেনু খুলুন" : "Open menu"}
+                    title={bn ? "মেনু" : "Menu"}
+                  >
                     <MenuIcon />
-                    <span>{bn ? "মেনু" : "Menu"}</span>
                   </summary>
 
-                  <div className={styles.menuPanel}>
-                    <Link href="/">{bn ? "হোম" : "Home"}</Link>
-                    <Link href="/#services">{bn ? "সেবা" : "Services"}</Link>
-                    <Link href="/patient">
-                      {bn ? "আমার ড্যাশবোর্ড" : "My dashboard"}
-                    </Link>
-                    <Link href="/patient/profile">
-                      {bn ? "প্রোফাইল" : "Profile"}
-                    </Link>
-                    <Link href="/patient/prescriptions">
-                      {bn ? "প্রেসক্রিপশন" : "Prescriptions"}
-                    </Link>
-                    <Link href="/patient/reports">
-                      {bn ? "ল্যাব রিপোর্ট" : "Lab reports"}
-                    </Link>
-                    <Link href="/about">
-                      {bn ? "আমাদের সম্পর্কে" : "About"}
-                    </Link>
+                  <aside
+                    className={styles.menuPanel}
+                    aria-label={bn ? "ড্যাশবোর্ড মেনু" : "Dashboard menu"}
+                  >
+                    <div className={styles.menuHeader}>
+                      <img src="/images/logo.png" width={42} height={42} alt="" />
+                      <div>
+                        <strong>Healthcare Central</strong>
+                        <span>{bn ? "নেভিগেশন" : "Navigation"}</span>
+                      </div>
+                    </div>
 
-                    <div className={styles.menuDivider} />
+                    <nav className={styles.drawerNav}>
+                      <Link href="/">{bn ? "হোম" : "Home"}</Link>
+                      <Link href="/#services">{bn ? "সেবা" : "Services"}</Link>
+                      <Link href="/patient">
+                        {bn ? "আমার ড্যাশবোর্ড" : "My dashboard"}
+                      </Link>
+                      <Link href="/patient/profile">
+                        {bn ? "প্রোফাইল" : "Profile"}
+                      </Link>
+                      <Link href="/patient/prescriptions">
+                        {bn ? "প্রেসক্রিপশন" : "Prescriptions"}
+                      </Link>
+                      <Link href="/patient/reports">
+                        {bn ? "ল্যাব রিপোর্ট" : "Lab reports"}
+                      </Link>
+                      <Link href="/about">
+                        {bn ? "আমাদের সম্পর্কে" : "About"}
+                      </Link>
+                    </nav>
 
-                    <form action={logout}>
-                      <button className={styles.menuLogout}>
-                        {bn ? "সাইন আউট" : "Sign out"}
-                      </button>
-                    </form>
-                  </div>
+                    <div className={styles.menuFooter}>
+                      <form action={logout}>
+                        <button className={styles.menuLogout}>
+                          {bn ? "সাইন আউট" : "Sign out"}
+                        </button>
+                      </form>
+                    </div>
+                  </aside>
                 </details>
               </>
             ) : (
