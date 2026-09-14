@@ -4,15 +4,19 @@
   color: #123b38;
 }
 
-.hero {
+.hero,
+.content {
   width: min(980px, 92%);
   margin: 0 auto;
-  padding: 54px 0 46px;
+}
+
+.hero {
+  padding: 54px 0 44px;
 }
 
 .back {
   display: inline-block;
-  margin-bottom: 34px;
+  margin-bottom: 32px;
   color: #0b746e;
   font-size: 12px;
   font-weight: 800;
@@ -25,8 +29,8 @@
   color: #119a93;
   font-size: 11px;
   font-weight: 850;
-  text-transform: uppercase;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .hero h1 {
@@ -37,26 +41,15 @@
 }
 
 .intro {
-  max-width: 720px;
-  margin: 0 0 12px;
-  color: #385b58;
-  font-size: 20px;
-  line-height: 1.5;
-}
-
-.promise {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0;
-  color: #6a807d;
-  font-size: 15px;
-  line-height: 1.65;
+  color: #506e6b;
+  font-size: 18px;
+  line-height: 1.6;
 }
 
 .actions {
   margin-top: 26px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
 .primaryButton,
@@ -65,156 +58,60 @@
   padding: 10px 17px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   border-radius: 9px;
+  color: #fff;
   text-decoration: none;
   font-size: 12px;
   font-weight: 800;
 }
 
 .primaryButton {
-  color: #fff;
   background: #119a93;
 }
 
 .emergencyButton {
-  color: #fff;
   background: #bd1429;
 }
 
 .content {
-  width: min(980px, 92%);
-  margin: 0 auto;
-  padding: 0 0 64px;
-}
-
-.block {
-  padding: 34px 0;
+  padding: 34px 0 64px;
   border-top: 1px solid #d9e8e6;
 }
 
-.block h2 {
+.content h2 {
   margin: 0 0 20px;
   font-size: 27px;
 }
 
-.pointGrid {
+.grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
-.pointGrid article {
-  min-height: 155px;
+.grid article {
+  min-height: 145px;
   padding: 20px;
   border: 1px solid #d9e8e6;
   border-radius: 13px;
   background: #fff;
 }
 
-.pointGrid article span {
+.grid span {
   color: #119a93;
   font-size: 11px;
   font-weight: 850;
 }
 
-.pointGrid article p {
+.grid p {
   margin: 18px 0 0;
   color: #536f6c;
   font-size: 13px;
   line-height: 1.55;
 }
 
-.steps {
-  display: grid;
-  gap: 10px;
-}
-
-.steps > div {
-  padding: 16px 18px;
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 12px;
-  align-items: start;
-  border: 1px solid #dceae8;
-  border-radius: 11px;
-  background: #fff;
-}
-
-.steps strong {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #0b6e69;
-  background: #eaf7f5;
-  font-size: 12px;
-}
-
-.steps p {
-  margin: 5px 0 0;
-  color: #536f6c;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.note {
-  margin: 0 0 28px;
-  padding: 15px 17px;
-  border-left: 3px solid #119a93;
-  background: #f0f8f7;
-  color: #5b7471;
-  font-size: 12px;
-  line-height: 1.55;
-}
-
-.loginPanel {
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border: 1px solid #cfe4e1;
-  border-radius: 14px;
-  background: #eef8f7;
-}
-
-.loginPanel span {
-  display: block;
-  margin-bottom: 4px;
-  color: #66807d;
-  font-size: 11px;
-}
-
-.loginPanel h2 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.loginPanel a {
-  min-width: 110px;
-  padding: 10px 15px;
-  border-radius: 9px;
-  color: #fff;
-  background: #119a93;
-  text-align: center;
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 800;
-}
-
 @media (max-width: 720px) {
-  .pointGrid {
+  .grid {
     grid-template-columns: 1fr;
-  }
-
-  .loginPanel {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .loginPanel a {
-    width: 100%;
   }
 }

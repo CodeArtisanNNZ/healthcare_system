@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
+import { getLanguage } from "@/lib/language";
 import styles from "./service.module.css";
 
 type ServiceKey =
@@ -17,212 +18,181 @@ const servicePath: Record<ServiceKey, string> = {
   hospital: "/hospitals",
   "lab-test": "/lab-tests",
   caregiver: "/caregivers",
-  ambulance: "/patient",
+  ambulance: "/emergency",
 };
 
-const serviceContent: Record<
+const content: Record<
   ServiceKey,
   {
-    name: string;
-    intro: string;
-    promise: string;
-    points: string[];
-    steps: string[];
-    note?: string;
+    name: { en: string; bn: string };
+    intro: { en: string; bn: string };
+    points: Array<{ en: string; bn: string }>;
   }
 > = {
   doctor: {
-    name: "Doctor",
-    intro:
-      "Finding a doctor should not feel like searching through a long, confusing directory.",
-    promise:
-      "Healthcare Central helps you narrow the search using the kind of care you need and the location you choose.",
+    name: { en: "Doctor", bn: "ডাক্তার" },
+    intro: {
+      en: "Find doctors by specialty, name and location without searching through a long directory.",
+      bn: "দীর্ঘ ডিরেক্টরি ঘাঁটা ছাড়াই বিশেষত্ব, নাম ও এলাকা অনুযায়ী ডাক্তার খুঁজুন।",
+    },
     points: [
-      "Search doctors by specialty, name or the kind of problem you are looking for help with.",
-      "Use a location filter to focus on options that are more relevant to you.",
-      "Open a doctor profile to review the information available in Healthcare Central.",
-    ],
-    steps: [
-      "Sign in to your Healthcare Central account.",
-      "Choose Doctor and describe what you are looking for.",
-      "Select a location and review the matching options.",
+      {
+        en: "Search by specialty, doctor name or the type of care you need.",
+        bn: "বিশেষত্ব, ডাক্তারের নাম বা প্রয়োজনীয় সেবার ধরন দিয়ে সার্চ করুন।",
+      },
+      {
+        en: "Use location filtering to keep results relevant.",
+        bn: "প্রাসঙ্গিক ফলাফলের জন্য এলাকা ফিল্টার ব্যবহার করুন।",
+      },
+      {
+        en: "Review available doctor information before choosing.",
+        bn: "বেছে নেওয়ার আগে উপলব্ধ ডাক্তারের তথ্য দেখুন।",
+      },
     ],
   },
   medicine: {
-    name: "Medicine",
-    intro:
-      "Medicine prices and availability can differ from one online pharmacy to another.",
-    promise:
-      "Healthcare Central gives you one place to search a medicine and continue to several pharmacy websites instead of checking them one by one.",
+    name: { en: "Medicine", bn: "ওষুধ" },
+    intro: {
+      en: "Search once and open several Bangladesh pharmacy websites from the same place.",
+      bn: "একবার সার্চ করে একই জায়গা থেকে বাংলাদেশের একাধিক অনলাইন ফার্মেসি খুলুন।",
+    },
     points: [
-      "Search by medicine name or strength.",
-      "See several supported online pharmacy options together.",
-      "Continue to the original seller website to check the current price, pack size and availability before buying.",
+      {
+        en: "Search by medicine name or strength.",
+        bn: "ওষুধের নাম বা strength দিয়ে সার্চ করুন।",
+      },
+      {
+        en: "See several pharmacy options together.",
+        bn: "একসাথে একাধিক ফার্মেসির অপশন দেখুন।",
+      },
+      {
+        en: "Continue to the original seller website to confirm live details.",
+        bn: "বর্তমান তথ্য নিশ্চিত করতে মূল বিক্রেতার ওয়েবসাইটে যান।",
+      },
     ],
-    steps: [
-      "Sign in and open Medicine.",
-      "Enter the medicine name and strength.",
-      "Compare the available seller options and continue to the seller you prefer.",
-    ],
-    note:
-      "Healthcare Central does not sell medicine and does not replace a pharmacist or doctor. Always confirm the exact medicine and strength before purchasing.",
   },
   hospital: {
-    name: "Hospital",
-    intro:
-      "When you already know the type of care you need, the next question is often where to go.",
-    promise:
-      "Healthcare Central helps you look through hospital information in a simpler, location-focused way.",
+    name: { en: "Hospital", bn: "হাসপাতাল" },
+    intro: {
+      en: "Find hospital information by name, department and location.",
+      bn: "নাম, বিভাগ ও এলাকা অনুযায়ী হাসপাতালের তথ্য খুঁজুন।",
+    },
     points: [
-      "Search hospitals by name, department or location.",
-      "Review the contact and department information available in the directory.",
-      "Use your chosen location to reduce unrelated results.",
-    ],
-    steps: [
-      "Sign in and choose Hospital.",
-      "Search for a hospital, department or service.",
-      "Use the location filter and open the option that fits your need.",
+      { en: "Search hospitals and departments.", bn: "হাসপাতাল ও বিভাগ দিয়ে সার্চ করুন।" },
+      { en: "Review available contact information.", bn: "উপলব্ধ যোগাযোগের তথ্য দেখুন।" },
+      { en: "Filter by location.", bn: "এলাকা অনুযায়ী ফিল্টার করুন।" },
     ],
   },
   "lab-test": {
-    name: "Lab Test",
-    intro:
-      "A lab test search should help you understand where a test is available without making the process harder.",
-    promise:
-      "Healthcare Central brings laboratory and diagnostic test listings into one searchable place.",
+    name: { en: "Lab Test", bn: "ল্যাব টেস্ট" },
+    intro: {
+      en: "Find diagnostic tests and laboratories in one searchable place.",
+      bn: "এক জায়গা থেকে ডায়াগনস্টিক টেস্ট ও ল্যাব খুঁজুন।",
+    },
     points: [
-      "Search for a test by name.",
-      "Review listed laboratories, locations and prices when those details are available.",
-      "Use location filtering to focus your search.",
-    ],
-    steps: [
-      "Sign in and open Lab Test.",
-      "Enter the name of the test you are looking for.",
-      "Review matching listings and their available details.",
+      { en: "Search by test name.", bn: "টেস্টের নাম দিয়ে সার্চ করুন।" },
+      { en: "Review laboratory and location details.", bn: "ল্যাব ও এলাকার তথ্য দেখুন।" },
+      { en: "See listed prices when available.", bn: "উপলব্ধ থাকলে তালিকাভুক্ত মূল্য দেখুন।" },
     ],
   },
   caregiver: {
-    name: "Caregiver",
-    intro:
-      "Care at home is personal, so the search needs to be clear and easy to understand.",
-    promise:
-      "Healthcare Central helps you explore caregiver and nursing-support listings from one place.",
+    name: { en: "Caregiver", bn: "কেয়ারগিভার" },
+    intro: {
+      en: "Explore caregiver and nursing-support listings for home and everyday care.",
+      bn: "বাসা ও দৈনন্দিন যত্নের জন্য caregiver ও nursing support-এর তালিকা দেখুন।",
+    },
     points: [
-      "Search caregiver profiles and the services they offer.",
-      "Review experience, location and listed fees when available.",
-      "Use location filtering to make the results more relevant.",
-    ],
-    steps: [
-      "Sign in and choose Caregiver.",
-      "Describe the kind of support you need.",
-      "Review the matching caregiver listings.",
+      { en: "Search caregiver profiles and services.", bn: "কেয়ারগিভার প্রোফাইল ও সেবা খুঁজুন।" },
+      { en: "Review experience and location.", bn: "অভিজ্ঞতা ও এলাকা দেখুন।" },
+      { en: "See listed fees when available.", bn: "উপলব্ধ থাকলে তালিকাভুক্ত ফি দেখুন।" },
     ],
   },
   ambulance: {
-    name: "Ambulance",
-    intro:
-      "In an urgent situation, ambulance information should be easy to reach.",
-    promise:
-      "Healthcare Central keeps emergency access separate from the normal signed-in service flow so urgent contacts remain available without an account.",
+    name: { en: "Ambulance", bn: "অ্যাম্বুলেন্স" },
+    intro: {
+      en: "Emergency ambulance contacts remain available without an account.",
+      bn: "জরুরি অ্যাম্বুলেন্স যোগাযোগ অ্যাকাউন্ট ছাড়াই পাওয়া যাবে।",
+    },
     points: [
-      "Open Emergency Help without signing in.",
-      "Choose your area to see listed ambulance contacts.",
-      "Signed-in users can also reach ambulance search from the Healthcare Central Assistant.",
+      { en: "Open Emergency Help without signing in.", bn: "লগ ইন ছাড়াই Emergency Help খুলুন।" },
+      { en: "Choose your area.", bn: "আপনার এলাকা নির্বাচন করুন।" },
+      { en: "Call a listed ambulance or emergency number.", bn: "তালিকাভুক্ত অ্যাম্বুলেন্স বা জরুরি নম্বরে কল করুন।" },
     ],
-    steps: [
-      "For urgent help, open the public Emergency page immediately.",
-      "Choose your location.",
-      "Use the listed contact information or the national emergency options shown there.",
-    ],
-    note:
-      "Do not wait for a website search if someone may be in immediate danger. Use the emergency options shown on the Emergency page.",
   },
 };
 
 function isService(value: string): value is ServiceKey {
-  return value in serviceContent;
+  return value in content;
 }
 
-export default async function ServiceDetails({
+export default async function ServicePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ service: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }) {
   const { service } = await params;
   if (!isService(service)) notFound();
 
-  const user = await currentUser();
-  const item = serviceContent[service];
+  const [user, language] = await Promise.all([
+    currentUser(),
+    getLanguage(searchParams),
+  ]);
+
+  const bn = language === "bn";
+  const key = bn ? "bn" : "en";
+  const item = content[service];
   const emergency = service === "ambulance";
 
   return (
     <div className={styles.page}>
       <section className={styles.hero}>
         <Link className={styles.back} href="/#services">
-          ← Back to services
+          ← {bn ? "সেবাগুলোতে ফিরুন" : "Back to services"}
         </Link>
 
-        <p className={styles.label}>Healthcare Central service</p>
-        <h1>{item.name}</h1>
-        <p className={styles.intro}>{item.intro}</p>
-        <p className={styles.promise}>{item.promise}</p>
+        <p className={styles.label}>
+          {bn ? "Healthcare Central সেবা" : "Healthcare Central service"}
+        </p>
+
+        <h1>{item.name[key]}</h1>
+        <p className={styles.intro}>{item.intro[key]}</p>
 
         <div className={styles.actions}>
-          {emergency && (
-            <Link className={styles.emergencyButton} href="/emergency">
-              Emergency Help
-            </Link>
-          )}
-
           <Link
-            className={styles.primaryButton}
-            href={user ? servicePath[service] : "/login"}
+            className={emergency ? styles.emergencyButton : styles.primaryButton}
+            href={emergency ? "/emergency" : user ? servicePath[service] : "/login"}
           >
-            {user ? "Open service" : "Log in to access"}
+            {emergency
+              ? bn
+                ? "জরুরি সহায়তা"
+                : "Emergency Help"
+              : user
+                ? bn
+                  ? "সেবা খুলুন"
+                  : "Open service"
+                : bn
+                  ? "ব্যবহার করতে লগ ইন করুন"
+                  : "Log in to access"}
           </Link>
         </div>
       </section>
 
       <section className={styles.content}>
-        <div className={styles.block}>
-          <p className={styles.blockLabel}>What we offer</p>
-          <h2>A simpler way to start</h2>
+        <p className={styles.blockLabel}>
+          {bn ? "আমরা কী দিচ্ছি" : "What we offer"}
+        </p>
+        <h2>{bn ? "সহজভাবে শুরু করুন" : "A simpler way to start"}</h2>
 
-          <div className={styles.pointGrid}>
-            {item.points.map((point, index) => (
-              <article key={point}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <p>{point}</p>
-              </article>
-            ))}
-          </div>
+        <div className={styles.grid}>
+          {item.points.map((point, index) => (
+            <article key={point.en}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <p>{point[key]}</p>
+            </article>
+          ))}
         </div>
-
-        <div className={styles.block}>
-          <p className={styles.blockLabel}>How it works</p>
-          <h2>Three straightforward steps</h2>
-
-          <div className={styles.steps}>
-            {item.steps.map((step, index) => (
-              <div key={step}>
-                <strong>{index + 1}</strong>
-                <p>{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {item.note && <p className={styles.note}>{item.note}</p>}
-
-        {!user && (
-          <div className={styles.loginPanel}>
-            <div>
-              <span>Ready to use {item.name}?</span>
-              <h2>Sign in when you want to continue.</h2>
-            </div>
-            <Link href="/login">Log in</Link>
-          </div>
-        )}
       </section>
     </div>
   );
