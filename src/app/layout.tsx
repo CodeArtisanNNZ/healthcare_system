@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/auth";
 import { configured } from "@/lib/supabase/server";
 import { getLanguage } from "@/lib/language";
 import { LanguageToggle } from "@/components/language-toggle";
+import { DashboardDrawer } from "@/components/dashboard-drawer";
 import { logout } from "./actions";
 import styles from "./layout.module.css";
 import "./globals.css";
@@ -31,23 +32,6 @@ function PhoneIcon() {
       aria-hidden="true"
     >
       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.15 12.8 19.8 19.8 0 0 1 2.08 4.2 2 2 0 0 1 4.07 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.68a16 16 0 0 0 6.3 6.3l1.23-1.23a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92Z" />
-    </svg>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   );
 }
@@ -80,85 +64,7 @@ export default async function Layout({
             aria-label={bn ? "প্রধান নেভিগেশন" : "Main navigation"}
           >
             {user ? (
-              <>
-                <Link className={styles.emergencyButton} href="/emergency">
-                  <PhoneIcon />
-                  <span className={styles.emergencyFull}>
-                    {bn ? "জরুরি সহায়তা" : "Emergency Help"}
-                  </span>
-                  <span className={styles.emergencyShort}>
-                    {bn ? "জরুরি" : "Emergency"}
-                  </span>
-                </Link>
-
-                <LanguageToggle />
-
-                <details className={styles.menuDropdown}>
-                  <summary
-                    className={styles.menuButton}
-                    aria-label={bn ? "মেনু খুলুন" : "Open menu"}
-                    title={bn ? "মেনু" : "Menu"}
-                  >
-                    <MenuIcon />
-                  </summary>
-
-                  <aside
-                    className={styles.menuPanel}
-                    aria-label={bn ? "ড্যাশবোর্ড মেনু" : "Dashboard menu"}
-                  >
-                    <div className={styles.menuHeader}>
-                      <img src="/images/logo.png" width={42} height={42} alt="" />
-                      <div>
-                        <strong>Healthcare Central</strong>
-                        <span>{bn ? "নেভিগেশন" : "Navigation"}</span>
-                      </div>
-                    </div>
-
-                    <nav className={styles.drawerNav}>
-                      <Link href="/">{bn ? "হোম" : "Home"}</Link>
-                      <Link href="/patient">
-                        {bn ? "ড্যাশবোর্ড" : "Dashboard"}
-                      </Link>
-                      <Link href="/patient/search">
-                        {bn ? "ডাক্তার খুঁজুন" : "Find a doctor"}
-                      </Link>
-                      <Link href="/patient/profile">
-                        {bn ? "আমার প্রোফাইল" : "My profile"}
-                      </Link>
-                      <Link href="/patient/prescriptions">
-                        {bn ? "প্রেসক্রিপশন" : "Prescriptions"}
-                      </Link>
-                      <Link href="/patient/reports">
-                        {bn ? "ল্যাব রিপোর্ট" : "Lab reports"}
-                      </Link>
-                      <Link href="/patient/lab_tests">
-                        {bn ? "ল্যাব টেস্ট" : "Lab tests"}
-                      </Link>
-                      <Link href="/patient/hospitals">
-                        {bn ? "হাসপাতাল" : "Hospitals"}
-                      </Link>
-                      <Link href="/patient/caregivers">
-                        {bn ? "কেয়ারগিভার" : "Caregivers"}
-                      </Link>
-                      <Link href="/patient/ambulances">
-                        {bn ? "অ্যাম্বুলেন্স" : "Ambulances"}
-                      </Link>
-                      <Link href="/#services">{bn ? "সেবা" : "Services"}</Link>
-                      <Link href="/about">
-                        {bn ? "আমাদের সম্পর্কে" : "About"}
-                      </Link>
-                    </nav>
-
-                    <div className={styles.menuFooter}>
-                      <form action={logout}>
-                        <button className={styles.menuLogout}>
-                          {bn ? "সাইন আউট" : "Sign out"}
-                        </button>
-                      </form>
-                    </div>
-                  </aside>
-                </details>
-              </>
+              <DashboardDrawer bn={bn} logoutAction={logout} />
             ) : (
               <>
                 <Link className={styles.desktopLink} href="/">
