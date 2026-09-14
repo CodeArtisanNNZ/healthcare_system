@@ -121,10 +121,10 @@ export default async function AboutPage({
               : "I started Healthcare Central because I kept seeing the same pattern: changing doctors could make a patient’s story feel like it had to start from zero again. Repeated tests, scattered information, and not knowing which doctor to see made healthcare harder than it needed to be. I want to build a system where people understand more about their health, keep better control of their information, and reach the right care with less confusion."}
           </blockquote>
 
-          <div className={styles.founderIdentity}>
+          <div className={styles.founderIdentity} aria-label="Founder Nusaiba Nusrat Zaman">
             <div className={styles.founderInitials}>NNZ</div>
             <div>
-              <strong>Nusaiba Nusrat Zaman</strong>
+              <strong title="Nusaiba Nusrat Zaman">Nusaiba Nusrat Zaman</strong>
               <span>{bn ? "প্রতিষ্ঠাতা ও ফুল-স্ট্যাক ডেভেলপার" : "Founder & Full-Stack Developer"}</span>
             </div>
           </div>
