@@ -123,20 +123,24 @@ export function ServiceCarousel({ language }: { language: Language }) {
 
     if (reducedMotion) return;
 
+    const cruiseSpeed = 0.017;
+    let currentSpeed = cruiseSpeed;
     let frame = 0;
     let previous = performance.now();
 
     const move = (now: number) => {
-      const elapsed = Math.min(now - previous, 32);
+      const elapsed = Math.min(now - previous, 28);
       previous = now;
 
-      if (now > pauseUntilRef.current) {
-        scroller.scrollLeft += elapsed * 0.008;
+      const targetSpeed = now > pauseUntilRef.current ? cruiseSpeed : 0;
+      const easing = Math.min(1, elapsed / 220);
+      currentSpeed += (targetSpeed - currentSpeed) * easing;
 
-        const loopPoint = scroller.scrollWidth / 2;
-        if (loopPoint > 0 && scroller.scrollLeft >= loopPoint) {
-          scroller.scrollLeft -= loopPoint;
-        }
+      scroller.scrollLeft += elapsed * currentSpeed;
+
+      const loopPoint = scroller.scrollWidth / 2;
+      if (loopPoint > 0 && scroller.scrollLeft >= loopPoint) {
+        scroller.scrollLeft -= loopPoint;
       }
 
       frame = requestAnimationFrame(move);
@@ -146,7 +150,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  function pauseFor(ms = 700) {
+  function pauseFor(ms = 320) {
     pauseUntilRef.current = performance.now() + ms;
   }
 
@@ -157,9 +161,9 @@ export function ServiceCarousel({ language }: { language: Language }) {
       <div
         ref={scrollerRef}
         className={styles.scroller}
-        onPointerDown={() => pauseFor(900)}
-        onTouchStart={() => pauseFor(900)}
-        onWheel={() => pauseFor(900)}
+        onPointerDown={() => pauseFor(380)}
+        onTouchStart={() => pauseFor(380)}
+        onWheel={() => pauseFor(420)}
         aria-label={bn ? "স্বাস্থ্যসেবা কার্ড" : "Healthcare service cards"}
       >
         <div className={styles.track}>
@@ -174,7 +178,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
                   isFlipped ? styles.flipped : ""
                 }`}
                 onClick={() => {
-                  pauseFor(1100);
+                  pauseFor(520);
                   setFlipped((current) =>
                     current === service.id ? null : service.id,
                   );
