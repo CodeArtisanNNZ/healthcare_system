@@ -5,6 +5,7 @@ import { configured } from "@/lib/supabase/server";
 import { getLanguage } from "@/lib/language";
 import { LanguageToggle } from "@/components/language-toggle";
 import { DashboardDrawer } from "@/components/dashboard-drawer";
+import { ActionGlyph } from "@/components/action-glyph";
 import { logout } from "./actions";
 import styles from "./layout.module.css";
 import "./globals.css";
@@ -18,24 +19,6 @@ export const metadata: Metadata = {
   description:
     "Healthcare Central helps people find doctors, hospitals, medicines, caregivers, lab tests and emergency ambulance contacts in Bangladesh.",
 };
-
-function PhoneIcon() {
-  return (
-    <svg
-      width="17"
-      height="17"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 5.15 12.8 19.8 19.8 0 0 1 2.08 4.2 2 2 0 0 1 4.07 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.68a16 16 0 0 0 6.3 6.3l1.23-1.23a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92Z" />
-    </svg>
-  );
-}
 
 export default async function Layout({
   children,
@@ -78,8 +61,12 @@ export default async function Layout({
                   {bn ? "আমাদের সম্পর্কে" : "About"}
                 </Link>
 
-                <Link className={styles.emergencyButton} href="/emergency">
-                  <PhoneIcon />
+                <Link
+                  className={`${styles.emergencyButton} hc-action-button`}
+                  data-action="emergency"
+                  href="/emergency"
+                >
+                  <ActionGlyph kind="emergency" />
                   <span className={styles.emergencyFull}>
                     {bn ? "জরুরি সহায়তা" : "Emergency Help"}
                   </span>
@@ -90,8 +77,13 @@ export default async function Layout({
 
                 <LanguageToggle />
 
-                <Link className={styles.accountButton} href="/login">
-                  {bn ? "লগ ইন" : "Log in"}
+                <Link
+                  className={`${styles.accountButton} hc-action-button`}
+                  data-action="login"
+                  href="/login"
+                >
+                  <span>{bn ? "লগ ইন" : "Log in"}</span>
+                  <ActionGlyph kind="login" />
                 </Link>
               </>
             )}
