@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { healthcareLocations } from "@/lib/locations";
+import { ActionGlyph } from "@/components/action-glyph";
 import styles from "./healthcare-assistant.module.css";
 
 const categories = [
@@ -67,8 +68,6 @@ export function HealthcareAssistant({
       return;
     }
 
-    // Medicine uses the dedicated pharmacy-comparison flow,
-    // not the internal Healthcare Central directory search.
     if (category === "medicine") {
       const params = new URLSearchParams({ q: message });
 
@@ -204,17 +203,21 @@ export function HealthcareAssistant({
           </label>
 
           <button
-            className={styles.searchButton}
+            className={`${styles.searchButton} hc-action-button`}
+            data-action="search"
             type="submit"
             disabled={busy}
           >
-            {busy
-              ? bn
-                ? "খোঁজা হচ্ছে"
-                : "Searching"
-              : bn
-                ? "সার্চ করুন"
-                : "Search"}
+            <span>
+              {busy
+                ? bn
+                  ? "খোঁজা হচ্ছে"
+                  : "Searching"
+                : bn
+                  ? "সার্চ করুন"
+                  : "Search"}
+            </span>
+            <ActionGlyph kind="search" />
           </button>
         </div>
       </form>
@@ -243,8 +246,9 @@ export function HealthcareAssistant({
                 </span>
               </div>
 
-              <Link href="/emergency">
-                {bn ? "জরুরি সহায়তা" : "Emergency Help"}
+              <Link className="hc-action-button" data-action="emergency" href="/emergency">
+                <span>{bn ? "জরুরি সহায়তা" : "Emergency Help"}</span>
+                <ActionGlyph kind="emergency" />
               </Link>
             </div>
           )}
