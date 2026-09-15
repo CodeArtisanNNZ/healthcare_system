@@ -1,42 +1,42 @@
 /* Eye-comfort light theme for Healthcare Central.
-   Keeps the teal identity while replacing stark white with a soft sage-green palette. */
+   Keeps the teal identity while replacing stark white with a muted sage-green palette. */
 
 :root {
-  --white: #dfead5;
-  --surface: #bed9a7;
+  --white: #dfe9dc;
+  --surface: #bed9b4;
 }
 
 html,
 body {
-  background: #bed9a7;
+  background: #bed9b4;
 }
 
 body > header,
 body > footer {
-  background: #dfead5 !important;
+  background: #dfe9dc !important;
 }
 
 main {
-  background: #bed9a7;
+  background: #bed9b4;
 }
 
-/* Homepage: use the requested soft sage tone without flattening every surface. */
+/* Homepage: use the requested muted sage tone without flattening every surface. */
 main > div:has(#services) {
-  background: #bed9a7 !important;
+  background: #bed9b4 !important;
 }
 
 main > div:has(#services) > section:first-child {
   background:
-    linear-gradient(90deg, rgba(223, 234, 213, 0.98), rgba(190, 217, 167, 0.95)),
-    #bed9a7 !important;
+    linear-gradient(90deg, rgba(223, 233, 220, 0.98), rgba(190, 217, 180, 0.95)),
+    #bed9b4 !important;
 }
 
 /* The route-level loading experience stays soft and easy on the eyes. */
 main > div[role="status"] {
   background:
     radial-gradient(circle at 14% 20%, rgba(22, 143, 137, 0.12), transparent 30%),
-    radial-gradient(circle at 90% 84%, rgba(118, 153, 92, 0.12), transparent 28%),
-    linear-gradient(145deg, #dfead5, #c9dfb7) !important;
+    radial-gradient(circle at 90% 84%, rgba(113, 149, 105, 0.12), transparent 28%),
+    linear-gradient(145deg, #dfe9dc, #cadfc4) !important;
 }
 
 /* Shared form and utility surfaces stay lighter for readability. */
@@ -48,13 +48,13 @@ textarea,
 .empty,
 .portal-nav a,
 .skip-link {
-  background-color: #eaf2e4;
+  background-color: #e9f1e6;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  background-color: #f1f6ed;
+  background-color: #f0f5ed;
 }
 
 /* Avoid recoloring emergency/red areas; only the neutral shell is softened. */
