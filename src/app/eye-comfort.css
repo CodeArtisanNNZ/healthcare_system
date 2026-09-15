@@ -2,41 +2,41 @@
    Keeps the teal identity while replacing stark white with a soft muted sage palette. */
 
 :root {
-  --white: #e2eee4;
-  --surface: #bedcc8;
+  --white: #e3eee9;
+  --surface: #bedccd;
 }
 
 html,
 body {
-  background: #bedcc8;
+  background: #bedccd;
 }
 
 body > header,
 body > footer {
-  background: #e2eee4 !important;
+  background: #e3eee9 !important;
 }
 
 main {
-  background: #bedcc8;
+  background: #bedccd;
 }
 
 /* Homepage: use the requested soft sage tone without flattening every surface. */
 main > div:has(#services) {
-  background: #bedcc8 !important;
+  background: #bedccd !important;
 }
 
 main > div:has(#services) > section:first-child {
   background:
-    linear-gradient(90deg, rgba(226, 238, 228, 0.98), rgba(190, 220, 200, 0.95)),
-    #bedcc8 !important;
+    linear-gradient(90deg, rgba(227, 238, 233, 0.98), rgba(190, 220, 205, 0.95)),
+    #bedccd !important;
 }
 
 /* The route-level loading experience stays soft and easy on the eyes. */
 main > div[role="status"] {
   background:
     radial-gradient(circle at 14% 20%, rgba(22, 143, 137, 0.11), transparent 30%),
-    radial-gradient(circle at 90% 84%, rgba(111, 151, 121, 0.10), transparent 28%),
-    linear-gradient(145deg, #e2eee4, #cce3d3) !important;
+    radial-gradient(circle at 90% 84%, rgba(111, 151, 126, 0.10), transparent 28%),
+    linear-gradient(145deg, #e3eee9, #cee3d7) !important;
 }
 
 /* Shared form and utility surfaces stay lighter for readability. */
@@ -48,13 +48,13 @@ textarea,
 .empty,
 .portal-nav a,
 .skip-link {
-  background-color: #eaf3ec;
+  background-color: #ebf3ee;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  background-color: #f1f6f2;
+  background-color: #f2f6f3;
 }
 
 /* Avoid recoloring emergency/red areas; only the neutral shell is softened. */
