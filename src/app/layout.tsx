@@ -8,6 +8,7 @@ import { DashboardDrawer } from "@/components/dashboard-drawer";
 import { logout } from "./actions";
 import styles from "./layout.module.css";
 import "./globals.css";
+import "./interaction-effects.css";
 
 export const dynamic = "force-dynamic";
 
