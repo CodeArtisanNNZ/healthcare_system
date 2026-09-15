@@ -2,6 +2,7 @@ import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { getLanguage } from "@/lib/language";
 import { ServiceCarousel } from "@/components/service-carousel";
+import { ActionGlyph } from "@/components/action-glyph";
 import styles from "./home.module.css";
 
 export default async function Home({
@@ -39,12 +40,22 @@ export default async function Home({
 
             <div className={styles.heroActions}>
               {user ? (
-                <Link className={styles.primaryButton} href="/patient">
-                  {bn ? "ড্যাশবোর্ড খুলুন" : "Open dashboard"}
+                <Link
+                  className={`${styles.primaryButton} hc-action-button`}
+                  data-action="dashboard"
+                  href="/patient"
+                >
+                  <span>{bn ? "ড্যাশবোর্ড খুলুন" : "Open dashboard"}</span>
+                  <ActionGlyph kind="dashboard" />
                 </Link>
               ) : (
-                <Link className={styles.primaryButton} href="/login">
-                  {bn ? "লগ ইন" : "Log in"}
+                <Link
+                  className={`${styles.primaryButton} hc-action-button`}
+                  data-action="login"
+                  href="/login"
+                >
+                  <span>{bn ? "লগ ইন" : "Log in"}</span>
+                  <ActionGlyph kind="login" />
                 </Link>
               )}
             </div>
@@ -118,14 +129,21 @@ export default async function Home({
             </h2>
           </div>
 
-          <Link href={user ? "/patient" : "/login"}>
-            {user
-              ? bn
-                ? "Assistant খুলুন"
-                : "Open Assistant"
-              : bn
-                ? "লগ ইন"
-                : "Log in"}
+          <Link
+            className="hc-action-button"
+            data-action={user ? "assistant" : "login"}
+            href={user ? "/patient" : "/login"}
+          >
+            <span>
+              {user
+                ? bn
+                  ? "Assistant খুলুন"
+                  : "Open Assistant"
+                : bn
+                  ? "লগ ইন"
+                  : "Log in"}
+            </span>
+            <ActionGlyph kind={user ? "assistant" : "login"} />
           </Link>
         </article>
 
@@ -140,8 +158,9 @@ export default async function Home({
             </h2>
           </div>
 
-          <Link href="/emergency">
-            {bn ? "জরুরি সহায়তা" : "Emergency Help"}
+          <Link className="hc-action-button" data-action="emergency" href="/emergency">
+            <span>{bn ? "জরুরি সহায়তা" : "Emergency Help"}</span>
+            <ActionGlyph kind="emergency" />
           </Link>
         </article>
       </section>
