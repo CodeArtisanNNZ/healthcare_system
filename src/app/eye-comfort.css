@@ -1,42 +1,42 @@
 /* Eye-comfort light theme for Healthcare Central.
-   Keeps the teal identity while replacing stark white with warm eggshell surfaces. */
+   Keeps the teal identity while replacing stark white with a neutral cream/beige palette. */
 
 :root {
-  --white: #f8f4ec;
-  --surface: #f3efe6;
+  --white: #f7f4e9;
+  --surface: #efede3;
 }
 
 html,
 body {
-  background: #f3efe6;
+  background: #efede3;
 }
 
 body > header,
 body > footer {
-  background: #f8f4ec !important;
+  background: #f7f4e9 !important;
 }
 
 main {
-  background: #f3efe6;
+  background: #efede3;
 }
 
-/* Homepage: keep the same layout, but remove the cold bright-white wash. */
+/* Homepage: warm neutral cream, without a pink/red cast. */
 main > div:has(#services) {
-  background: #f3efe6 !important;
+  background: #efede3 !important;
 }
 
 main > div:has(#services) > section:first-child {
   background:
-    linear-gradient(90deg, rgba(247, 243, 234, 0.98), rgba(237, 244, 239, 0.94)),
-    #f3efe6 !important;
+    linear-gradient(90deg, rgba(247, 244, 233, 0.99), rgba(239, 241, 231, 0.96)),
+    #efede3 !important;
 }
 
-/* The route-level loading experience should feel soft rather than glaring. */
+/* The route-level loading experience should stay soft and easy on the eyes. */
 main > div[role="status"] {
   background:
-    radial-gradient(circle at 14% 20%, rgba(72, 176, 166, 0.12), transparent 30%),
-    radial-gradient(circle at 90% 84%, rgba(177, 151, 111, 0.08), transparent 28%),
-    linear-gradient(145deg, #f8f4ec, #ebe9df) !important;
+    radial-gradient(circle at 14% 20%, rgba(72, 176, 166, 0.10), transparent 30%),
+    radial-gradient(circle at 90% 84%, rgba(174, 160, 118, 0.08), transparent 28%),
+    linear-gradient(145deg, #f7f4e9, #e9e7dc) !important;
 }
 
 /* Shared form and utility surfaces. */
@@ -48,13 +48,13 @@ textarea,
 .empty,
 .portal-nav a,
 .skip-link {
-  background-color: #faf6ee;
+  background-color: #f8f5eb;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  background-color: #fcf8f1;
+  background-color: #faf8f0;
 }
 
 /* Avoid turning emergency/red areas cream; only the neutral shell is softened. */
