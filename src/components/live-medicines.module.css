@@ -85,7 +85,7 @@
 }
 
 .searchActions > span {
-  max-width: 620px;
+  max-width: 650px;
   color: #728784;
   font-size: 10px;
   line-height: 1.5;
@@ -128,43 +128,25 @@
   animation: medicinePulse 1.25s ease-in-out infinite;
 }
 
-.loading strong {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 12px;
-}
+.loading strong { display: block; margin-bottom: 2px; font-size: 12px; }
+.loading p { margin: 0; color: #728784; font-size: 10px; }
 
-.loading p {
-  margin: 0;
-  color: #728784;
-  font-size: 10px;
-}
-
-.resultsSection {
-  margin-top: 28px;
-}
-
-.resultsHeading {
-  margin-bottom: 16px;
-}
-
+.resultsSection { margin-top: 28px; }
+.resultsHeading { margin-bottom: 16px; }
 .resultsHeading h2 {
   margin: 0 0 6px;
   color: #123d39;
   font-size: clamp(24px, 3vw, 32px);
 }
-
 .resultsHeading > p:last-child {
-  max-width: 740px;
+  max-width: 800px;
   margin: 0;
   color: #6f8582;
   font-size: 11px;
+  line-height: 1.55;
 }
 
-.results {
-  display: grid;
-  gap: 14px;
-}
+.results { display: grid; gap: 16px; }
 
 .sellerCard {
   overflow: hidden;
@@ -200,7 +182,8 @@
 .sellerHeader h3 {
   margin: 0;
   color: #153f3b;
-  font-size: 18px;
+  font-size: 17px;
+  line-height: 1.35;
 }
 
 .priceStatus {
@@ -222,60 +205,56 @@
   color: #08746e;
 }
 
-.medicineList {
-  padding: 6px 20px;
-}
+.medicineList { padding: 6px 20px; }
 
 .medicineRow {
-  min-height: 62px;
-  padding: 11px 0;
+  min-height: 70px;
+  padding: 12px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 22px;
   border-bottom: 1px solid #edf3f2;
 }
 
-.medicineRow:last-child {
-  border-bottom: 0;
-}
-
-.medicineRow > div:first-child {
-  min-width: 0;
-}
-
+.medicineRow:last-child { border-bottom: 0; }
+.medicineRow > div:first-child { min-width: 0; }
 .medicineRow strong,
-.medicineRow span {
-  display: block;
-}
-
-.medicineRow > div:first-child strong {
-  color: #183f3c;
-  font-size: 13px;
-}
-
+.medicineRow span { display: block; }
+.medicineRow > div:first-child strong { color: #183f3c; font-size: 13px; }
 .medicineRow > div:first-child span {
-  margin-top: 2px;
+  margin-top: 3px;
   color: #7a8e8b;
   font-size: 10px;
 }
 
 .itemPrice {
-  min-width: 120px;
+  min-width: 190px;
   text-align: right;
 }
 
 .itemPrice strong {
   color: #0b706a;
-  font-size: 12px;
+  font-size: 13px;
+}
+
+.livePrice {
+  color: #08766f !important;
+  font-size: 14px !important;
+}
+
+.missingPrice {
+  color: #7f8f8c !important;
+  font-size: 11px !important;
+  font-weight: 750;
 }
 
 .itemPrice a {
-  margin-top: 3px;
+  margin-top: 5px;
   display: inline-flex;
-  color: #5f7774;
+  color: #376f6a;
   font-size: 9px;
-  font-weight: 750;
+  font-weight: 800;
 }
 
 .sellerFooter {
@@ -298,7 +277,7 @@
 
 .sellerFooter > a {
   flex: 0 0 auto;
-  min-width: 138px;
+  min-width: 160px;
   min-height: 40px;
   padding: 8px 12px;
   border-radius: 10px;
@@ -330,36 +309,23 @@
   }
 
   .searchActions button,
-  .sellerFooter > a {
-    width: 100%;
-  }
+  .sellerFooter > a { width: 100%; }
 
   .itemPrice {
     min-width: 0;
     text-align: left;
   }
 
-  .medicineRow {
-    gap: 7px;
-  }
+  .medicineRow { gap: 7px; }
 }
 
 @media (max-width: 480px) {
-  .search {
-    padding: 17px;
-    border-radius: 16px;
-  }
-
+  .search { padding: 17px; border-radius: 16px; }
   .sellerHeader,
   .medicineList,
-  .sellerFooter {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
+  .sellerFooter { padding-left: 15px; padding-right: 15px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loadingDot {
-    animation: none;
-  }
+  .loadingDot { animation: none; }
 }
