@@ -3,12 +3,7 @@
   padding-top: 34px;
   border-top: 1px solid #dbeae7;
 }
-.heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 20px;
-}
+
 .kicker {
   margin: 0 0 6px;
   color: #0d948d;
@@ -16,82 +11,355 @@
   font-weight: 900;
   letter-spacing: .14em;
 }
-.heading h2 { margin: 0; }
-.intro {
-  max-width: 780px;
-  color: #677f7c;
-  font-size: 13px;
-}
+
 .search {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  margin: 18px 0;
+  padding: 22px;
+  border: 1px solid #cfe3df;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 94% 6%, rgba(34, 156, 146, .08), transparent 28%),
+    linear-gradient(145deg, #f9fdfc, #eef8f6);
+  box-shadow:
+    0 8px 0 rgba(109, 169, 160, .08),
+    0 18px 34px rgba(17, 77, 72, .07),
+    inset 0 1px rgba(255, 255, 255, .9);
 }
-.sortButton {
-  min-height: 38px;
-  padding: 7px 11px;
-  border: 1px solid #c9dfdc;
-  background: #fff;
-  color: #0b706b;
+
+.searchHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.searchLabel {
+  display: block;
+  margin: 0 0 3px;
+  color: #15443f;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.searchHeading p {
+  margin: 0;
+  color: #6a817e;
   font-size: 11px;
 }
-.results { display: grid; gap: 10px; }
-.offer {
-  padding: 16px 18px;
+
+.counter {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid #c7ded9;
+  border-radius: 999px;
+  background: rgba(255,255,255,.82);
+  color: #26766f;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.search textarea {
+  width: 100%;
+  min-height: 118px;
+  resize: vertical;
+  padding: 14px 15px;
+  border: 1px solid #bfd8d4;
+  border-radius: 14px;
+  background: rgba(255,255,255,.95);
+  color: #153d39;
+  line-height: 1.55;
+  box-shadow: inset 0 1px 3px rgba(29, 83, 78, .04);
+}
+
+.search textarea:focus {
+  border-color: #4da9a0;
+  outline: 3px solid rgba(17,154,147,.1);
+}
+
+.searchActions {
+  margin-top: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 22px;
-  border: 1px solid #d8e8e5;
-  border-radius: 13px;
-  background: #fff;
+  gap: 18px;
 }
-.platform {
-  margin: 0 0 4px;
-  color: #0d8b84;
+
+.searchActions > span {
+  max-width: 620px;
+  color: #728784;
   font-size: 10px;
-  font-weight: 900;
-  letter-spacing: .1em;
+  line-height: 1.5;
 }
-.offer h3 { margin: 0 0 4px; font-size: 16px; }
-.description { margin: 0; color: #718885; font-size: 11px; }
-.offerAction {
-  min-width: 170px;
-  text-align: right;
+
+.searchActions button {
+  min-width: 188px;
+  background: #119a93;
 }
-.offerAction strong { display: block; margin-bottom: 8px; }
-.offerAction a {
-  display: inline-flex;
-  padding: 8px 11px;
-  border-radius: 9px;
-  color: #fff;
-  background: #0d948d;
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 800;
-}
+
 .error {
+  margin-top: 14px;
   padding: 12px 14px;
   border: 1px solid #efcbd0;
   border-radius: 10px;
   background: #fff5f6;
   color: #8d1b2a;
+  font-size: 12px;
 }
-.disclaimer {
-  margin: 14px 0 0;
-  color: #7b8f8c;
+
+.loading {
+  margin-top: 18px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #d5e7e4;
+  border-radius: 15px;
+  background: #fff;
+  color: #183f3b;
+}
+
+.loadingDot {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #1b9d94;
+  box-shadow: 0 0 0 6px rgba(27,157,148,.09);
+  animation: medicinePulse 1.25s ease-in-out infinite;
+}
+
+.loading strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+
+.loading p {
+  margin: 0;
+  color: #728784;
   font-size: 10px;
 }
-@media (max-width: 650px) {
-  .heading,
-  .offer {
+
+.resultsSection {
+  margin-top: 28px;
+}
+
+.resultsHeading {
+  margin-bottom: 16px;
+}
+
+.resultsHeading h2 {
+  margin: 0 0 6px;
+  color: #123d39;
+  font-size: clamp(24px, 3vw, 32px);
+}
+
+.resultsHeading > p:last-child {
+  max-width: 740px;
+  margin: 0;
+  color: #6f8582;
+  font-size: 11px;
+}
+
+.results {
+  display: grid;
+  gap: 14px;
+}
+
+.sellerCard {
+  overflow: hidden;
+  border: 1px solid #d3e5e2;
+  border-radius: 19px;
+  background: #fff;
+  box-shadow:
+    0 7px 0 rgba(113, 166, 159, .07),
+    0 18px 34px rgba(20, 78, 73, .06);
+}
+
+.sellerHeader {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #e5efed;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(17,154,147,.08), transparent 30%),
+    #f7fbfa;
+}
+
+.platform {
+  margin: 0 0 3px;
+  color: #0d8b84;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.sellerHeader h3 {
+  margin: 0;
+  color: #153f3b;
+  font-size: 18px;
+}
+
+.priceStatus {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border: 1px solid #d4dfdd;
+  border-radius: 999px;
+  background: #f8faf9;
+  color: #71817f;
+  font-size: 9px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.priceStatus.complete {
+  border-color: #abd6d0;
+  background: #eaf7f4;
+  color: #08746e;
+}
+
+.medicineList {
+  padding: 6px 20px;
+}
+
+.medicineRow {
+  min-height: 62px;
+  padding: 11px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #edf3f2;
+}
+
+.medicineRow:last-child {
+  border-bottom: 0;
+}
+
+.medicineRow > div:first-child {
+  min-width: 0;
+}
+
+.medicineRow strong,
+.medicineRow span {
+  display: block;
+}
+
+.medicineRow > div:first-child strong {
+  color: #183f3c;
+  font-size: 13px;
+}
+
+.medicineRow > div:first-child span {
+  margin-top: 2px;
+  color: #7a8e8b;
+  font-size: 10px;
+}
+
+.itemPrice {
+  min-width: 120px;
+  text-align: right;
+}
+
+.itemPrice strong {
+  color: #0b706a;
+  font-size: 12px;
+}
+
+.itemPrice a {
+  margin-top: 3px;
+  display: inline-flex;
+  color: #5f7774;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.sellerFooter {
+  padding: 14px 20px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid #e7f0ee;
+  background: #fbfdfd;
+}
+
+.sellerFooter p {
+  max-width: 760px;
+  margin: 0;
+  color: #788b88;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.sellerFooter > a {
+  flex: 0 0 auto;
+  min-width: 138px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: #fff;
+  background: #0e8f88;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.disclaimer {
+  margin: 16px 0 0;
+  color: #7b8f8c;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+@keyframes medicinePulse {
+  0%, 100% { transform: scale(.92); opacity: .72; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@media (max-width: 720px) {
+  .searchActions,
+  .sellerHeader,
+  .sellerFooter,
+  .medicineRow {
     align-items: flex-start;
     flex-direction: column;
   }
-  .search { grid-template-columns: 1fr; }
-  .offerAction {
+
+  .searchActions button,
+  .sellerFooter > a {
+    width: 100%;
+  }
+
+  .itemPrice {
     min-width: 0;
     text-align: left;
+  }
+
+  .medicineRow {
+    gap: 7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search {
+    padding: 17px;
+    border-radius: 16px;
+  }
+
+  .sellerHeader,
+  .medicineList,
+  .sellerFooter {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingDot {
+    animation: none;
   }
 }
