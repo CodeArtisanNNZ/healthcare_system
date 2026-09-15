@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { healthcareLocations } from "@/lib/locations";
 import { ActionGlyph } from "@/components/action-glyph";
+import { LoadingExperience } from "@/components/loading-experience";
 import styles from "./healthcare-assistant.module.css";
 
 const categories = [
@@ -226,6 +227,20 @@ export function HealthcareAssistant({
         <p className={styles.error} role="alert">
           {error}
         </p>
+      )}
+
+      {busy && (
+        <div className={styles.searchLoading}>
+          <LoadingExperience
+            compact
+            title={bn ? "সঠিক তথ্য মিলিয়ে দেখা হচ্ছে" : "Finding the best match"}
+            message={
+              bn
+                ? "আপনার সার্চ, সেবার ধরন ও লোকেশন মিলিয়ে সবচেয়ে প্রাসঙ্গিক Healthcare Central ফলাফল প্রস্তুত হচ্ছে।"
+                : "Your search, service type and location are being matched with the most relevant Healthcare Central results."
+            }
+          />
+        </div>
       )}
 
       {response && (
