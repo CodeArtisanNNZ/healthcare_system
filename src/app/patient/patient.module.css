@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 42px 0 64px;
 }
+
 .top {
   margin-bottom: 24px;
   display: flex;
@@ -10,6 +11,7 @@
   justify-content: space-between;
   gap: 24px;
 }
+
 .kicker {
   margin: 0 0 8px;
   color: #0d948d;
@@ -17,53 +19,248 @@
   font-weight: 900;
   letter-spacing: 0.16em;
 }
+
 .top h1 {
   margin: 0 0 7px;
   color: #103938;
   font-size: clamp(30px, 4vw, 46px);
 }
-.top p:last-child { margin: 0; color: #667f7c; }
+
+.top p:last-child {
+  margin: 0;
+  color: #667f7c;
+}
+
 .homeLink {
   white-space: nowrap;
   color: #0b7772;
   font-size: 12px;
   font-weight: 800;
 }
+
 .dashboardGrid {
+  padding: 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: 18px;
   align-items: start;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #cfe6e2;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(73, 179, 168, 0.12), transparent 28%),
+    radial-gradient(circle at 92% 88%, rgba(104, 172, 165, 0.1), transparent 30%),
+    linear-gradient(135deg, #edf8f6 0%, #f7fbfa 50%, #e6f4f1 100%);
+  box-shadow:
+    0 22px 55px rgba(26, 87, 82, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
+
+.dashboardGrid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  background-image:
+    linear-gradient(rgba(29, 111, 105, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(29, 111, 105, 0.08) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(to bottom, #000, transparent 72%);
+}
+
+.dashboardGrid > * {
+  position: relative;
+  z-index: 1;
+  animation: dashboardRise 680ms cubic-bezier(0.18, 0.82, 0.22, 1) both;
+}
+
+.dashboardGrid > :nth-child(2) {
+  animation-delay: 90ms;
+}
+
 .accountPanel {
-  padding: 24px;
-  border: 1px solid #d6e8e5;
-  border-radius: 20px;
-  background: #fff;
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #b9dcd7;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.78), transparent 24%),
+    linear-gradient(145deg, #dff1ee, #eaf7f4 55%, #d7ece8);
+  box-shadow:
+    0 9px 0 rgba(88, 147, 140, 0.14),
+    0 18px 34px rgba(27, 83, 78, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
 }
-.accountPanel h2 { margin: 0 0 16px; font-size: 23px; }
+
+.accountPanel::after {
+  content: "";
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  right: -56px;
+  bottom: -64px;
+  border: 1px solid rgba(31, 125, 117, 0.15);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 20px rgba(31, 125, 117, 0.035),
+    0 0 0 42px rgba(31, 125, 117, 0.02);
+  pointer-events: none;
+}
+
+.panelHeading {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelHeading h2 {
+  margin: 0;
+  color: #103b38;
+  font-size: 24px;
+}
+
+.liveDot {
+  width: 11px;
+  height: 11px;
+  margin-top: 4px;
+  flex: 0 0 auto;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  background: #2d9d93;
+  box-shadow:
+    0 0 0 5px rgba(45, 157, 147, 0.1),
+    0 3px 10px rgba(25, 111, 104, 0.22);
+}
+
 .accountPanel nav {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 11px;
 }
-.accountPanel nav a {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  border: 1px solid #e0ecea;
-  border-radius: 12px;
+
+.quickCard {
+  min-height: 78px;
+  padding: 13px 12px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(157, 202, 196, 0.76);
+  border-radius: 15px;
   color: #153f3d;
-  background: #fbfefd;
+  background: rgba(255, 255, 255, 0.82);
   text-decoration: none;
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 5px 0 #bddbd6,
+    0 11px 20px rgba(23, 79, 74, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transform: translateY(0);
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.accountPanel nav a:hover {
-  border-color: #a8d5d0;
-  background: #f3fbf9;
+
+.quickCard:hover {
+  border-color: #8fc6bf;
+  background: rgba(255, 255, 255, 0.96);
+  transform: translateY(-2px);
+  box-shadow:
+    0 7px 0 #b3d4cf,
+    0 15px 25px rgba(23, 79, 74, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
 }
-.accountPanel strong { font-size: 13px; }
-.accountPanel span { color: #708784; font-size: 11px; }
+
+.quickCard:active {
+  transform: translateY(4px) scale(0.988);
+  box-shadow:
+    0 1px 0 #b3d4cf,
+    0 5px 11px rgba(23, 79, 74, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.quickIcon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(123, 185, 177, 0.55);
+  border-radius: 13px;
+  background: linear-gradient(145deg, #f7fffd, #cde7e2);
+  color: #0b7771;
+  box-shadow:
+    0 4px 0 rgba(106, 169, 161, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.quickCard:nth-child(2) .quickIcon {
+  background: linear-gradient(145deg, #f9fffe, #d8ebe6);
+  color: #226e68;
+}
+
+.quickCard:nth-child(3) .quickIcon {
+  background: linear-gradient(145deg, #f7fffd, #cfe3df);
+  color: #155f5a;
+}
+
+.quickIcon svg,
+.quickArrow svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.quickCopy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quickCopy strong {
+  font-size: 13px;
+}
+
+.quickCopy > span {
+  color: #6d8581;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.quickArrow {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #2d7771;
+  background: rgba(223, 242, 238, 0.72);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.quickArrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.quickCard:hover .quickArrow {
+  transform: translateX(2px);
+  background: #d3ebe6;
+}
+
 .emergencyStrip {
   margin-top: 18px;
   padding: 22px 24px;
@@ -74,7 +271,9 @@
   border: 1px solid #efcbd0;
   border-radius: 17px;
   background: linear-gradient(100deg, #fff8f9, #ffedef);
+  animation: dashboardRise 720ms 150ms cubic-bezier(0.18, 0.82, 0.22, 1) both;
 }
+
 .emergencyStrip p {
   margin: 0 0 4px;
   color: #b41227;
@@ -83,11 +282,13 @@
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
+
 .emergencyStrip h2 {
   margin: 0;
   color: #5d1d26;
   font-size: 19px;
 }
+
 .emergencyStrip > a {
   min-width: 155px;
   padding: 11px 16px;
@@ -98,21 +299,70 @@
   text-decoration: none;
   font-size: 12px;
   font-weight: 850;
+  box-shadow:
+    0 5px 0 #74101d,
+    0 10px 18px rgba(137, 14, 32, 0.18);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
+
+.emergencyStrip > a:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+  box-shadow:
+    0 7px 0 #74101d,
+    0 13px 22px rgba(137, 14, 32, 0.22);
+}
+
+.emergencyStrip > a:active {
+  transform: translateY(4px) scale(0.985);
+  box-shadow:
+    0 1px 0 #74101d,
+    0 5px 10px rgba(137, 14, 32, 0.16);
+}
+
+@keyframes dashboardRise {
+  from {
+    opacity: 0;
+    transform: translateY(34px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 900px) {
-  .dashboardGrid { grid-template-columns: 1fr; }
-  .accountPanel { order: 2; }
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .accountPanel {
+    order: 2;
+  }
 }
+
 @media (max-width: 620px) {
   .page {
     width: min(94%, 620px);
     padding-top: 28px;
   }
+
   .top,
   .emergencyStrip {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .dashboardGrid {
+    padding: 12px;
+    border-radius: 24px;
+  }
+
+  .accountPanel {
+    padding: 18px;
+  }
+
   .homeLink {
     display: inline-flex;
     min-height: 40px;
@@ -122,5 +372,21 @@
     border-radius: 9px;
     text-decoration: none;
   }
-  .emergencyStrip > a { width: 100%; }
+
+  .emergencyStrip > a {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboardGrid > *,
+  .emergencyStrip {
+    animation: none;
+  }
+
+  .quickCard,
+  .quickArrow,
+  .emergencyStrip > a {
+    transition: none;
+  }
 }
