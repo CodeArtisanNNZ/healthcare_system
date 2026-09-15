@@ -1,45 +1,45 @@
 /* Eye-comfort light theme for Healthcare Central.
-   Keeps the teal identity while replacing stark white with a neutral cream/beige palette. */
+   Keeps the teal identity while replacing stark white with a soft cream palette. */
 
 :root {
-  --white: #f7f4e9;
-  --surface: #efede3;
+  --white: #f8f3cf;
+  --surface: #f3ebb2;
 }
 
 html,
 body {
-  background: #efede3;
+  background: #f3ebb2;
 }
 
 body > header,
 body > footer {
-  background: #f7f4e9 !important;
+  background: #f8f3cf !important;
 }
 
 main {
-  background: #efede3;
+  background: #f3ebb2;
 }
 
-/* Homepage: warm neutral cream, without a pink/red cast. */
+/* Homepage: use the requested cream tone without making every surface identical. */
 main > div:has(#services) {
-  background: #efede3 !important;
+  background: #f3ebb2 !important;
 }
 
 main > div:has(#services) > section:first-child {
   background:
-    linear-gradient(90deg, rgba(247, 244, 233, 0.99), rgba(239, 241, 231, 0.96)),
-    #efede3 !important;
+    linear-gradient(90deg, rgba(248, 243, 207, 0.98), rgba(243, 235, 178, 0.95)),
+    #f3ebb2 !important;
 }
 
 /* The route-level loading experience should stay soft and easy on the eyes. */
 main > div[role="status"] {
   background:
     radial-gradient(circle at 14% 20%, rgba(72, 176, 166, 0.10), transparent 30%),
-    radial-gradient(circle at 90% 84%, rgba(174, 160, 118, 0.08), transparent 28%),
-    linear-gradient(145deg, #f7f4e9, #e9e7dc) !important;
+    radial-gradient(circle at 90% 84%, rgba(188, 166, 94, 0.10), transparent 28%),
+    linear-gradient(145deg, #f8f3cf, #efe5a8) !important;
 }
 
-/* Shared form and utility surfaces. */
+/* Shared form and utility surfaces stay slightly lighter for readability. */
 input,
 select,
 textarea,
@@ -48,13 +48,13 @@ textarea,
 .empty,
 .portal-nav a,
 .skip-link {
-  background-color: #f8f5eb;
+  background-color: #faf6dc;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  background-color: #faf8f0;
+  background-color: #fffbea;
 }
 
 /* Avoid turning emergency/red areas cream; only the neutral shell is softened. */
