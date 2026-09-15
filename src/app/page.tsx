@@ -82,38 +82,55 @@ export default async function Home({
       </section>
 
       <section className={styles.anatomySection}>
-        <div className={styles.anatomyHeading}>
-          <p>
-            {bn
-              ? "মানবদেহ অন্বেষণ করুন"
-              : "Explore the human body"}
-          </p>
+        <div className={styles.anatomyCard}>
+          <div className={styles.anatomyHeading}>
+            <p>
+              {bn
+                ? "মানবদেহ অন্বেষণ করুন"
+                : "Explore the human body"}
+            </p>
 
-          <h2>
-            {bn
-              ? "শরীরকে ভেতর থেকে দেখুন"
-              : "See the body from the inside"}
-          </h2>
+            <h2>
+              {bn
+                ? "শরীরকে ভেতর থেকে দেখুন"
+                : "See the body from the inside"}
+            </h2>
 
-          <span>
-            {bn
-              ? "স্পর্শ বা ড্র্যাগ করে মানবদেহ ঘোরান, জুম করুন এবং চোখ, মস্তিষ্ক, থাইরয়েড, ফুসফুস, হৃদ্‌যন্ত্রসহ বহু প্রধান অঙ্গ দেখুন।"
-              : "Touch or drag to rotate the body, zoom in, and explore the eyes, brain, thyroid, lungs, heart and many other major structures."}
-          </span>
-        </div>
+            <span>
+              {bn
+                ? "চোখ, মস্তিষ্ক, থাইরয়েড, ফুসফুস, হৃদ্‌যন্ত্রসহ প্রধান অঙ্গগুলো একটি ইন্টারঅ্যাকটিভ ৩ডি ভিউতে দেখুন। এক্সপ্লোরার খুলে স্পর্শ বা ড্র্যাগ করে ঘোরাতে ও জুম করতে পারবেন।"
+                : "Explore the eyes, brain, thyroid, lungs, heart and other major structures in an interactive 3D view. Open the explorer, then touch or drag to rotate and zoom."}
+            </span>
+          </div>
 
-        <div className={styles.anatomyFrameWrap}>
-          <iframe
-            className={styles.anatomyFrame}
-            src={`/anatomy-explorer-v4.html?lang=${language}`}
-            title={
-              bn
-                ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
-                : "Interactive 3D human anatomy"
-            }
-            loading="lazy"
-            allowFullScreen
-          />
+          <details className={styles.anatomyDetails}>
+            <summary
+              className={`${styles.anatomyOpenButton} hc-action-button`}
+              data-action="arrow"
+            >
+              <span className={styles.openLabel}>
+                {bn ? "৩ডি বডি এক্সপ্লোরার খুলুন" : "Open 3D body explorer"}
+              </span>
+              <span className={styles.closeLabel}>
+                {bn ? "৩ডি বডি এক্সপ্লোরার বন্ধ করুন" : "Close 3D body explorer"}
+              </span>
+              <ActionGlyph kind="arrow" />
+            </summary>
+
+            <div className={styles.anatomyFrameWrap}>
+              <iframe
+                className={styles.anatomyFrame}
+                src={`/anatomy-explorer-v4.html?lang=${language}`}
+                title={
+                  bn
+                    ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
+                    : "Interactive 3D human anatomy"
+                }
+                loading="lazy"
+                allowFullScreen
+              />
+            </div>
+          </details>
         </div>
       </section>
 
