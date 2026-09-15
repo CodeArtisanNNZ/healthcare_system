@@ -8,6 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import { ActionGlyph } from "@/components/action-glyph";
+import { LoadingExperience } from "@/components/loading-experience";
 import styles from "./live-medicines.module.css";
 
 type Language = "en" | "bn";
@@ -215,17 +216,15 @@ export function LiveMedicines({
       )}
 
       {busy && (
-        <div className={styles.loading} aria-live="polite">
-          <span className={styles.loadingDot} />
-          <div>
-            <strong>{bn ? "ফার্মেসিগুলো দেখা হচ্ছে" : "Checking pharmacies"}</strong>
-            <p>
-              {bn
-                ? "প্রতিটি ওষুধের বর্তমান লিস্টিং ও মূল্য মিলিয়ে দেখা হচ্ছে।"
-                : "Matching each medicine with current seller listings and readable prices."}
-            </p>
-          </div>
-        </div>
+        <LoadingExperience
+          compact
+          title={bn ? "ফার্মেসিগুলো ঘুরে দেখা হচ্ছে" : "Shopping around for you"}
+          message={
+            bn
+              ? "আপনার ওষুধগুলোর লিস্টিং ও readable price একসাথে মিলিয়ে দেখা হচ্ছে—কোনো দাম বানিয়ে দেখানো হবে না।"
+              : "We are matching your medicines across pharmacy listings and readable prices without inventing unavailable data."
+          }
+        />
       )}
 
       {bundles && !busy && (
