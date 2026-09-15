@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase/server";
-import { searchMedicines } from "@/lib/medicine-search";
+import {
+  parseMedicineQueries,
+  searchMedicineList,
+} from "@/lib/medicine-search";
 
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
@@ -27,19 +30,27 @@ export async function POST(request: NextRequest) {
 
     const input = await request.json();
 
-    if (
-      typeof input.q !== "string" ||
-      input.q.trim().length < 2 ||
-      input.q.length > 100
-    ) {
+    if (typeof input.q !== "string" || input.q.length > 1_000) {
       return NextResponse.json(
-        { error: "Enter a medicine name between 2 and 100 characters." },
+        { error: "Enter up to 10 medicine names." },
+        { status: 400 },
+      );
+    }
+
+    const queries = parseMedicineQueries(input.q);
+
+    if (!queries.length) {
+      return NextResponse.json(
+        { error: "Enter at least one medicine name." },
         { status: 400 },
       );
     }
 
     return NextResponse.json(
-      { offers: await searchMedicines(input.q.trim()) },
+      {
+        queries,
+        bundles: await searchMedicineList(queries),
+      },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch {
