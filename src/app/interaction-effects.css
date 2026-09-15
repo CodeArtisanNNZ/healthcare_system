@@ -1,0 +1,76 @@
+/* Shared tactile feedback for Healthcare Central controls.
+   This keeps each control's own colour/theme while making taps feel physical. */
+button:not(:disabled),
+.button,
+a[class*="Button"],
+a[class*="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 4px 3px rgba(13, 82, 77, 0.14));
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+button:not(:disabled):hover,
+.button:hover,
+a[class*="Button"]:hover,
+a[class*="button"]:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 6px 5px rgba(13, 82, 77, 0.16));
+}
+
+button:not(:disabled):active,
+.button:active,
+a[class*="Button"]:active,
+a[class*="button"]:active {
+  transform: translateY(3px) scale(0.985);
+  filter:
+    drop-shadow(0 1px 1px rgba(13, 82, 77, 0.1))
+    brightness(0.97)
+    saturate(1.04);
+  transition-duration: 70ms;
+}
+
+button:not(:disabled):focus-visible,
+.button:focus-visible,
+a[class*="Button"]:focus-visible,
+a[class*="button"]:focus-visible {
+  filter:
+    drop-shadow(0 5px 4px rgba(13, 82, 77, 0.14))
+    brightness(1.015);
+}
+
+@media (hover: none) {
+  button:not(:disabled):hover,
+  .button:hover,
+  a[class*="Button"]:hover,
+  a[class*="button"]:hover {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 4px 3px rgba(13, 82, 77, 0.14));
+  }
+
+  button:not(:disabled):active,
+  .button:active,
+  a[class*="Button"]:active,
+  a[class*="button"]:active {
+    transform: translateY(3px) scale(0.98);
+    filter:
+      drop-shadow(0 1px 1px rgba(13, 82, 77, 0.08))
+      brightness(0.965)
+      saturate(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled),
+  .button,
+  a[class*="Button"],
+  a[class*="button"] {
+    transition: none;
+  }
+}
