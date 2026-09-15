@@ -1,45 +1,45 @@
 /* Eye-comfort light theme for Healthcare Central.
-   Keeps the teal identity while replacing stark white with a soft cream palette. */
+   Keeps the teal identity while replacing stark white with a soft sage-green palette. */
 
 :root {
-  --white: #f8f3cf;
-  --surface: #f3ebb2;
+  --white: #dfead5;
+  --surface: #bed9a7;
 }
 
 html,
 body {
-  background: #f3ebb2;
+  background: #bed9a7;
 }
 
 body > header,
 body > footer {
-  background: #f8f3cf !important;
+  background: #dfead5 !important;
 }
 
 main {
-  background: #f3ebb2;
+  background: #bed9a7;
 }
 
-/* Homepage: use the requested cream tone without making every surface identical. */
+/* Homepage: use the requested soft sage tone without flattening every surface. */
 main > div:has(#services) {
-  background: #f3ebb2 !important;
+  background: #bed9a7 !important;
 }
 
 main > div:has(#services) > section:first-child {
   background:
-    linear-gradient(90deg, rgba(248, 243, 207, 0.98), rgba(243, 235, 178, 0.95)),
-    #f3ebb2 !important;
+    linear-gradient(90deg, rgba(223, 234, 213, 0.98), rgba(190, 217, 167, 0.95)),
+    #bed9a7 !important;
 }
 
-/* The route-level loading experience should stay soft and easy on the eyes. */
+/* The route-level loading experience stays soft and easy on the eyes. */
 main > div[role="status"] {
   background:
-    radial-gradient(circle at 14% 20%, rgba(72, 176, 166, 0.10), transparent 30%),
-    radial-gradient(circle at 90% 84%, rgba(188, 166, 94, 0.10), transparent 28%),
-    linear-gradient(145deg, #f8f3cf, #efe5a8) !important;
+    radial-gradient(circle at 14% 20%, rgba(22, 143, 137, 0.12), transparent 30%),
+    radial-gradient(circle at 90% 84%, rgba(118, 153, 92, 0.12), transparent 28%),
+    linear-gradient(145deg, #dfead5, #c9dfb7) !important;
 }
 
-/* Shared form and utility surfaces stay slightly lighter for readability. */
+/* Shared form and utility surfaces stay lighter for readability. */
 input,
 select,
 textarea,
@@ -48,16 +48,16 @@ textarea,
 .empty,
 .portal-nav a,
 .skip-link {
-  background-color: #faf6dc;
+  background-color: #eaf2e4;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  background-color: #fffbea;
+  background-color: #f1f6ed;
 }
 
-/* Avoid turning emergency/red areas cream; only the neutral shell is softened. */
+/* Avoid recoloring emergency/red areas; only the neutral shell is softened. */
 @media (prefers-color-scheme: light) {
   body {
     color-scheme: light;
