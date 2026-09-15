@@ -197,8 +197,8 @@
   background: #fff4f5;
 }
 
-.assistantCard span,
-.emergencyCard span {
+.assistantCard > div > span,
+.emergencyCard > div > span {
   display: block;
   margin-bottom: 4px;
   color: #718783;
@@ -208,7 +208,7 @@
   letter-spacing: 0.08em;
 }
 
-.emergencyCard span {
+.emergencyCard > div > span {
   color: #b4172b;
 }
 
@@ -241,10 +241,151 @@
   background: linear-gradient(135deg, var(--red), var(--red-dark));
 }
 
+.assistantCard > a > span,
+.emergencyCard > a > span {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ============================
+   3D ANATOMY EXPLORER
+   ============================ */
+
+.anatomySection {
+  width: min(1180px, 92%);
+  margin: 58px auto 54px;
+}
+
+.anatomyCard {
+  padding: clamp(26px, 4vw, 44px);
+  overflow: hidden;
+  border: 1px solid #cfe5e1;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(255, 255, 255, 0.96), transparent 24%),
+    radial-gradient(circle at 5% 88%, rgba(187, 226, 219, 0.42), transparent 32%),
+    linear-gradient(135deg, #f7fcfb 0%, #edf8f6 50%, #e7f4f1 100%);
+  box-shadow:
+    0 16px 40px rgba(25, 86, 81, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.anatomyHeading {
+  max-width: 720px;
+}
+
+.anatomyHeading > p {
+  margin: 0 0 8px;
+  color: #0f8a82;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.anatomyHeading h2 {
+  margin: 0;
+  color: #153f3c;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.anatomyHeading span {
+  display: block;
+  max-width: 650px;
+  margin-top: 12px;
+  color: #5d7672;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.anatomyDetails {
+  margin-top: 24px;
+}
+
+.anatomyOpenButton {
+  width: fit-content;
+  min-height: 48px;
+  padding: 11px 16px;
+  list-style: none;
+  border: 1px solid #93c8c1;
+  border-radius: 12px;
+  color: #0d625d;
+  background: linear-gradient(145deg, #ffffff, #dff1ee);
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow:
+    0 5px 0 #bad8d3,
+    0 11px 20px rgba(24, 88, 82, 0.1),
+    inset 0 1px 0 #fff;
+  user-select: none;
+}
+
+.anatomyOpenButton::-webkit-details-marker {
+  display: none;
+}
+
+.closeLabel {
+  display: none;
+}
+
+.anatomyDetails[open] .openLabel {
+  display: none;
+}
+
+.anatomyDetails[open] .closeLabel {
+  display: inline;
+}
+
+.anatomyDetails[open] .anatomyOpenButton :global(.hc-glyph-arrow) {
+  transform: rotate(90deg);
+}
+
+.anatomyFrameWrap {
+  position: relative;
+  width: 100%;
+  margin-top: 22px;
+  overflow: hidden;
+  border: 1px solid #c8dfda;
+  border-radius: 24px;
+  background: #edf7f5;
+  box-shadow:
+    0 18px 48px rgba(5, 62, 60, 0.11),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  animation: anatomyReveal 420ms cubic-bezier(0.18, 0.82, 0.22, 1) both;
+}
+
+.anatomyFrame {
+  display: block;
+  width: 100%;
+  height: min(820px, 84vh);
+  min-height: 650px;
+  border: 0;
+  background: #edf7f5;
+}
+
+@keyframes anatomyReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 760px) {
   .heroInner,
   .servicesSection,
-  .bottomRow {
+  .bottomRow,
+  .anatomySection {
     width: min(94%, 650px);
   }
 
@@ -264,6 +405,24 @@
   .bottomRow {
     grid-template-columns: 1fr;
   }
+
+  .anatomySection {
+    margin: 44px auto;
+  }
+
+  .anatomyCard {
+    padding: 24px 20px;
+    border-radius: 22px;
+  }
+
+  .anatomyFrameWrap {
+    border-radius: 18px;
+  }
+
+  .anatomyFrame {
+    height: 740px;
+    min-height: 630px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -281,100 +440,19 @@
   .emergencyCard > a {
     width: 100%;
   }
-}
-/* ============================
-   3D ANATOMY EXPLORER
-   ============================ */
 
-.anatomySection {
-  width: min(1500px, 100%);
-  margin: 72px auto;
-  padding: 0 24px;
-}
-
-.anatomyHeading {
-  max-width: 680px;
-  margin-bottom: 24px;
-}
-
-.anatomyHeading > p {
-  margin: 0 0 8px;
-  color: #0f766e;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.anatomyHeading h2 {
-  margin: 0;
-  color: #102a2a;
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-}
-
-.anatomyHeading span {
-  display: block;
-  max-width: 590px;
-  margin-top: 12px;
-  color: #58706e;
-  font-size: 0.96rem;
-  line-height: 1.7;
-}
-
-.anatomyFrameWrap {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 28px;
-  background: #041c1c;
-
-  box-shadow:
-    0 28px 80px rgba(5, 62, 60, 0.13),
-    0 1px 0 rgba(255, 255, 255, 0.7) inset;
-}
-
-.anatomyFrame {
-  display: block;
-  width: 100%;
-  height: min(850px, 88vh);
-  min-height: 680px;
-  border: 0;
-  background: #041c1c;
-}
-
-@media (max-width: 768px) {
-  .anatomySection {
-    margin: 48px auto;
-    padding: 0 14px;
-  }
-
-  .anatomyFrameWrap {
-    border-radius: 20px;
+  .anatomyOpenButton {
+    width: 100%;
   }
 
   .anatomyFrame {
-    height: 760px;
-    min-height: 650px;
+    height: 700px;
+    min-height: 600px;
   }
 }
 
-@media (max-width: 480px) {
-  .anatomySection {
-    padding: 0;
-  }
-
-  .anatomyHeading {
-    padding: 0 16px;
-  }
-
+@media (prefers-reduced-motion: reduce) {
   .anatomyFrameWrap {
-    border-radius: 0;
-  }
-
-  .anatomyFrame {
-    height: 720px;
-    min-height: 620px;
+    animation: none;
   }
 }
