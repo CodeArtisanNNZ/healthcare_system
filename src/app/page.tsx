@@ -1,52 +1,8 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { getLanguage } from "@/lib/language";
+import { ServiceCarousel } from "@/components/service-carousel";
 import styles from "./home.module.css";
-
-const services = [
-  [
-    "doctor",
-    "Doctor",
-    "ডাক্তার",
-    "Find the right type of doctor for your needs.",
-    "আপনার প্রয়োজন অনুযায়ী উপযুক্ত ধরনের ডাক্তার খোঁজার উপায় জানুন।",
-  ],
-  [
-    "medicine",
-    "Medicine",
-    "ওষুধ",
-    "Compare medicine sellers before you continue to buy.",
-    "কেনার আগে বিভিন্ন অনলাইন ফার্মেসির অপশন দেখুন।",
-  ],
-  [
-    "hospital",
-    "Hospital",
-    "হাসপাতাল",
-    "Explore hospital services and departments.",
-    "হাসপাতাল, বিভাগ এবং সেবাগুলো কীভাবে খুঁজবেন জানুন।",
-  ],
-  [
-    "lab-test",
-    "Lab Test",
-    "ল্যাব টেস্ট",
-    "Understand how lab test search and comparison works.",
-    "ল্যাব টেস্ট ও ডায়াগনস্টিক সেন্টার খোঁজার সুবিধা জানুন।",
-  ],
-  [
-    "caregiver",
-    "Caregiver",
-    "কেয়ারগিভার",
-    "Find support for home and everyday care.",
-    "বাসা ও দৈনন্দিন যত্নের জন্য সহায়তা খোঁজার সুবিধা জানুন।",
-  ],
-  [
-    "ambulance",
-    "Ambulance",
-    "অ্যাম্বুলেন্স",
-    "Learn how ambulance and emergency support works.",
-    "অ্যাম্বুলেন্স ও জরুরি সহায়তা কীভাবে পাওয়া যায় জানুন।",
-  ],
-] as const;
 
 export default async function Home({
   searchParams,
@@ -101,38 +57,17 @@ export default async function Home({
           <p>{bn ? "সেবা" : "Services"}</p>
 
           <h2>
-            {bn ? "একটি সেবা বেছে নিন" : "Start with a service"}
+            {bn ? "আমাদের সেবাগুলো দেখুন" : "Explore our services"}
           </h2>
 
           <span>
             {bn
-              ? "প্রথমে সেবাটি সম্পর্কে জানুন। ব্যবহার করতে চাইলে পরে লগ ইন করুন।"
-              : "See what each service offers first. Sign in only when you want to use it."}
+              ? "কার্ডগুলো পাশে সরান। কোনো কার্ডে চাপ দিলে সেটি ঘুরে সেবাটির সংক্ষিপ্ত বিবরণ দেখাবে।"
+              : "Slide through the cards. Tap any service to flip it and see a short overview of what it provides."}
           </span>
         </div>
 
-        <div className={styles.serviceGrid}>
-          {services.map(
-            ([slug, title, titleBn, description, descriptionBn]) => (
-              <Link
-                key={slug}
-                href={`/services/${slug}`}
-                className={`${styles.serviceCard} ${
-                  slug === "ambulance"
-                    ? styles.emergencyServiceCard
-                    : ""
-                }`}
-              >
-                <div>
-                  <h3>{bn ? titleBn : title}</h3>
-                  <p>{bn ? descriptionBn : description}</p>
-                </div>
-
-                <span aria-hidden="true">→</span>
-              </Link>
-            )
-          )}
-        </div>
+        <ServiceCarousel language={language} />
       </section>
 
       <section className={styles.anatomySection}>
