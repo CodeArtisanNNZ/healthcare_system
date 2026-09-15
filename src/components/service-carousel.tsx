@@ -26,9 +26,9 @@ const services: Service[] = [
     short: "Find the right specialty",
     shortBn: "সঠিক বিশেষজ্ঞ খুঁজুন",
     details:
-      "Search by symptoms, specialty or doctor name, then narrow the results by location.",
+      "Search by symptoms, specialty or doctor name, understand which type of doctor may fit your need, and narrow available options by location before choosing where to continue.",
     detailsBn:
-      "উপসর্গ, বিশেষত্ব বা ডাক্তারের নাম দিয়ে খুঁজুন এবং লোকেশন অনুযায়ী ফলাফল সীমিত করুন।",
+      "উপসর্গ, বিশেষত্ব বা ডাক্তারের নাম দিয়ে খুঁজুন, কোন ধরনের বিশেষজ্ঞ আপনার প্রয়োজনের সঙ্গে মেলে তা বুঝুন এবং লোকেশন অনুযায়ী অপশন সীমিত করে পরবর্তী ধাপ বেছে নিন।",
     tone: "butter",
   },
   {
@@ -39,9 +39,9 @@ const services: Service[] = [
     short: "Compare seller options",
     shortBn: "বিক্রেতার অপশন তুলনা করুন",
     details:
-      "Search once and continue to trusted pharmacy websites to check current price and availability.",
+      "Search a medicine once, see several online pharmacy options together, then continue to the original seller website to confirm current price, stock and purchase information.",
     detailsBn:
-      "একবার সার্চ করে বিশ্বস্ত অনলাইন ফার্মেসিতে গিয়ে বর্তমান মূল্য ও প্রাপ্যতা যাচাই করুন।",
+      "একবার ওষুধ সার্চ করে একসাথে কয়েকটি অনলাইন ফার্মেসির অপশন দেখুন, তারপর বর্তমান মূল্য, স্টক ও কেনার তথ্য নিশ্চিত করতে মূল বিক্রেতার ওয়েবসাইটে যান।",
     tone: "rose",
   },
   {
@@ -52,9 +52,9 @@ const services: Service[] = [
     short: "Explore care locations",
     shortBn: "সেবার স্থান খুঁজুন",
     details:
-      "Find hospitals by location and explore the departments and services listed for each facility.",
+      "Find hospitals by location, review available departments and services, and use the listed information to understand which facility may be more relevant to your care needs.",
     detailsBn:
-      "লোকেশন অনুযায়ী হাসপাতাল খুঁজুন এবং প্রতিটি প্রতিষ্ঠানের বিভাগ ও সেবা দেখুন।",
+      "লোকেশন অনুযায়ী হাসপাতাল খুঁজুন, উপলব্ধ বিভাগ ও সেবাগুলো দেখুন এবং আপনার প্রয়োজনের জন্য কোন প্রতিষ্ঠান বেশি প্রাসঙ্গিক হতে পারে তা বুঝতে তালিকাভুক্ত তথ্য ব্যবহার করুন।",
     tone: "blue",
   },
   {
@@ -65,9 +65,9 @@ const services: Service[] = [
     short: "Find tests and labs",
     shortBn: "টেস্ট ও ল্যাব খুঁজুন",
     details:
-      "Look up diagnostic tests, compare available centres and review listed test information.",
+      "Look up diagnostic tests, review available centres and locations, compare listed test information and prices when available, and keep the search process in one place.",
     detailsBn:
-      "ডায়াগনস্টিক টেস্ট খুঁজুন, সেন্টারগুলোর অপশন দেখুন এবং তালিকাভুক্ত তথ্য তুলনা করুন।",
+      "ডায়াগনস্টিক টেস্ট খুঁজুন, উপলব্ধ সেন্টার ও লোকেশন দেখুন, তথ্য ও মূল্য থাকলে তুলনা করুন এবং পুরো খোঁজার প্রক্রিয়াটি এক জায়গা থেকে করুন।",
     tone: "sage",
   },
   {
@@ -78,9 +78,9 @@ const services: Service[] = [
     short: "Support for everyday care",
     shortBn: "দৈনন্দিন যত্নের সহায়তা",
     details:
-      "Explore caregiver and nursing-support options, including available experience and location details.",
+      "Explore caregiver and nursing-support options for home and everyday care, then review available experience, service details and location information before deciding whom to contact.",
     detailsBn:
-      "কেয়ারগিভার ও নার্সিং সাপোর্টের অপশন, অভিজ্ঞতা এবং লোকেশন সম্পর্কিত তথ্য দেখুন।",
+      "বাসা ও দৈনন্দিন যত্নের জন্য কেয়ারগিভার ও নার্সিং সাপোর্টের অপশন দেখুন, তারপর যোগাযোগের আগে অভিজ্ঞতা, সেবার তথ্য ও লোকেশন পর্যালোচনা করুন।",
     tone: "lavender",
   },
   {
@@ -91,18 +91,26 @@ const services: Service[] = [
     short: "Emergency contacts, quickly",
     shortBn: "দ্রুত জরুরি যোগাযোগ",
     details:
-      "Reach emergency and ambulance contacts quickly, with location-based options where available.",
+      "Reach ambulance and emergency contacts quickly without searching through multiple pages, with location-based options shown whenever that information is available.",
     detailsBn:
-      "দ্রুত জরুরি ও অ্যাম্বুলেন্স যোগাযোগ দেখুন এবং উপলব্ধ থাকলে লোকেশনভিত্তিক অপশন ব্যবহার করুন।",
+      "একাধিক পেজ ঘাঁটা ছাড়াই দ্রুত অ্যাম্বুলেন্স ও জরুরি যোগাযোগ দেখুন এবং তথ্য উপলব্ধ থাকলে লোকেশনভিত্তিক অপশন ব্যবহার করুন।",
     tone: "clay",
   },
 ];
+
+function TapIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="7" r="3.25" />
+      <path d="M12 10.5v7.2M12 13.5l-2.1-1.25c-1.15-.68-2.35.65-1.62 1.78l2.75 4.22c.48.74 1.3 1.19 2.18 1.19h3.15c1.42 0 2.58-1.15 2.58-2.58v-3.32c0-1.06-.86-1.92-1.92-1.92-.35 0-.69.1-.98.27a1.9 1.9 0 0 0-1.64-.94c-.48 0-.92.18-1.26.47A1.9 1.9 0 0 0 12 10.5Z" />
+    </svg>
+  );
+}
 
 export function ServiceCarousel({ language }: { language: Language }) {
   const bn = language === "bn";
   const scrollerRef = useRef<HTMLDivElement>(null);
   const pauseUntilRef = useRef(0);
-  const hoveringRef = useRef(false);
   const [flipped, setFlipped] = useState<string | null>(null);
 
   useEffect(() => {
@@ -122,8 +130,8 @@ export function ServiceCarousel({ language }: { language: Language }) {
       const elapsed = Math.min(now - previous, 32);
       previous = now;
 
-      if (!hoveringRef.current && now > pauseUntilRef.current) {
-        scroller.scrollLeft += elapsed * 0.022;
+      if (now > pauseUntilRef.current) {
+        scroller.scrollLeft += elapsed * 0.008;
 
         const loopPoint = scroller.scrollWidth / 2;
         if (loopPoint > 0 && scroller.scrollLeft >= loopPoint) {
@@ -138,7 +146,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  function pauseFor(ms = 2600) {
+  function pauseFor(ms = 700) {
     pauseUntilRef.current = performance.now() + ms;
   }
 
@@ -146,24 +154,12 @@ export function ServiceCarousel({ language }: { language: Language }) {
 
   return (
     <div className={styles.carouselShell}>
-      <div className={styles.carouselHint} aria-hidden="true">
-        <span>{bn ? "টেনে দেখুন" : "Drag to explore"}</span>
-        <i />
-      </div>
-
       <div
         ref={scrollerRef}
         className={styles.scroller}
-        onPointerDown={() => pauseFor(3600)}
-        onTouchStart={() => pauseFor(3600)}
-        onWheel={() => pauseFor(3200)}
-        onMouseEnter={() => {
-          hoveringRef.current = true;
-        }}
-        onMouseLeave={() => {
-          hoveringRef.current = false;
-          pauseFor(700);
-        }}
+        onPointerDown={() => pauseFor(900)}
+        onTouchStart={() => pauseFor(900)}
+        onWheel={() => pauseFor(900)}
         aria-label={bn ? "স্বাস্থ্যসেবা কার্ড" : "Healthcare service cards"}
       >
         <div className={styles.track}>
@@ -178,7 +174,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
                   isFlipped ? styles.flipped : ""
                 }`}
                 onClick={() => {
-                  pauseFor(4200);
+                  pauseFor(1100);
                   setFlipped((current) =>
                     current === service.id ? null : service.id,
                   );
@@ -194,8 +190,6 @@ export function ServiceCarousel({ language }: { language: Language }) {
                       : "Show service details"
                 }`}
               >
-                <span className={styles.gearHalo} aria-hidden="true" />
-
                 <span className={styles.cardInner}>
                   <span className={styles.cardFace}>
                     <span className={styles.cardTopline}>
@@ -211,8 +205,8 @@ export function ServiceCarousel({ language }: { language: Language }) {
                       {bn ? service.shortBn : service.short}
                     </span>
 
-                    <span className={styles.tapLabel}>
-                      {bn ? "বিস্তারিত দেখতে চাপুন" : "Tap to see details"}
+                    <span className={styles.tapIcon} aria-hidden="true">
+                      <TapIcon />
                     </span>
                   </span>
 
@@ -230,8 +224,8 @@ export function ServiceCarousel({ language }: { language: Language }) {
                       {bn ? service.detailsBn : service.details}
                     </span>
 
-                    <span className={styles.tapLabel}>
-                      {bn ? "ফিরতে আবার চাপুন" : "Tap again to flip back"}
+                    <span className={styles.tapIcon} aria-hidden="true">
+                      <TapIcon />
                     </span>
                   </span>
                 </span>
