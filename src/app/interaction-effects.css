@@ -139,6 +139,31 @@
   animation: hc-emergency-pulse 720ms ease-in-out infinite alternate;
 }
 
+.hc-button-pending {
+  gap: 10px;
+  overflow: hidden;
+  cursor: wait;
+}
+
+.hc-button-pending::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-110%);
+  background: linear-gradient(105deg, transparent 28%, rgba(255,255,255,.22) 48%, transparent 68%);
+  animation: hc-pending-sheen 1.4s ease-in-out infinite;
+}
+
+.hc-mini-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: hc-mini-spin .72s linear infinite;
+}
+
 @keyframes hc-button-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
@@ -184,6 +209,15 @@
   to { transform: translateX(0.8px) scaleY(1.08); }
 }
 
+@keyframes hc-mini-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hc-pending-sheen {
+  0% { transform: translateX(-110%); }
+  55%, 100% { transform: translateX(115%); }
+}
+
 @media (hover: none) {
   :where(button:not([class*="card"]):not([class*="Card"]), .button, a[class*="Button"], a[class*="button"], .hc-action-button):not(:disabled):hover {
     transform: translateY(0);
@@ -194,7 +228,9 @@
 @media (prefers-reduced-motion: reduce) {
   :where(button:not([class*="card"]):not([class*="Card"]), .button, a[class*="Button"], a[class*="button"], .hc-action-button),
   .hc-action-glyph,
-  .hc-action-glyph * {
+  .hc-action-glyph *,
+  .hc-mini-spinner,
+  .hc-button-pending::after {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
