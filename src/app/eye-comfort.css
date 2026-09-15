@@ -1,0 +1,65 @@
+/* Eye-comfort light theme for Healthcare Central.
+   Keeps the teal identity while replacing stark white with warm eggshell surfaces. */
+
+:root {
+  --white: #f8f4ec;
+  --surface: #f3efe6;
+}
+
+html,
+body {
+  background: #f3efe6;
+}
+
+body > header,
+body > footer {
+  background: #f8f4ec !important;
+}
+
+main {
+  background: #f3efe6;
+}
+
+/* Homepage: keep the same layout, but remove the cold bright-white wash. */
+main > div:has(#services) {
+  background: #f3efe6 !important;
+}
+
+main > div:has(#services) > section:first-child {
+  background:
+    linear-gradient(90deg, rgba(247, 243, 234, 0.98), rgba(237, 244, 239, 0.94)),
+    #f3efe6 !important;
+}
+
+/* The route-level loading experience should feel soft rather than glaring. */
+main > div[role="status"] {
+  background:
+    radial-gradient(circle at 14% 20%, rgba(72, 176, 166, 0.12), transparent 30%),
+    radial-gradient(circle at 90% 84%, rgba(177, 151, 111, 0.08), transparent 28%),
+    linear-gradient(145deg, #f8f4ec, #ebe9df) !important;
+}
+
+/* Shared form and utility surfaces. */
+input,
+select,
+textarea,
+.secondary,
+.card,
+.empty,
+.portal-nav a,
+.skip-link {
+  background-color: #faf6ee;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: #fcf8f1;
+}
+
+/* Avoid turning emergency/red areas cream; only the neutral shell is softened. */
+@media (prefers-color-scheme: light) {
+  body {
+    color-scheme: light;
+  }
+}
