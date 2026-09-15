@@ -42,8 +42,13 @@ export function ActionForm({
         )}
       </div>
 
-      <button disabled={pending} type="submit">
-        {pending ? pendingLabel : label}
+      <button
+        className={pending ? "hc-button-pending" : undefined}
+        disabled={pending}
+        type="submit"
+      >
+        {pending && <span className="hc-mini-spinner" aria-hidden="true" />}
+        <span>{pending ? pendingLabel : label}</span>
       </button>
     </form>
   );
