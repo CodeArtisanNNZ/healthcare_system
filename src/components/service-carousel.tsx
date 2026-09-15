@@ -123,7 +123,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
 
     if (reducedMotion) return;
 
-    const cruiseSpeed = 0.017;
+    const cruiseSpeed = 0.034;
     let currentSpeed = cruiseSpeed;
     let frame = 0;
     let previous = performance.now();
@@ -133,7 +133,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
       previous = now;
 
       const targetSpeed = now > pauseUntilRef.current ? cruiseSpeed : 0;
-      const easing = Math.min(1, elapsed / 220);
+      const easing = Math.min(1, elapsed / 280);
       currentSpeed += (targetSpeed - currentSpeed) * easing;
 
       scroller.scrollLeft += elapsed * currentSpeed;
@@ -150,7 +150,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  function pauseFor(ms = 320) {
+  function pauseFor(ms = 220) {
     pauseUntilRef.current = performance.now() + ms;
   }
 
@@ -161,9 +161,9 @@ export function ServiceCarousel({ language }: { language: Language }) {
       <div
         ref={scrollerRef}
         className={styles.scroller}
-        onPointerDown={() => pauseFor(380)}
-        onTouchStart={() => pauseFor(380)}
-        onWheel={() => pauseFor(420)}
+        onPointerDown={() => pauseFor(260)}
+        onTouchStart={() => pauseFor(260)}
+        onWheel={() => pauseFor(300)}
         aria-label={bn ? "স্বাস্থ্যসেবা কার্ড" : "Healthcare service cards"}
       >
         <div className={styles.track}>
@@ -178,7 +178,7 @@ export function ServiceCarousel({ language }: { language: Language }) {
                   isFlipped ? styles.flipped : ""
                 }`}
                 onClick={() => {
-                  pauseFor(520);
+                  pauseFor(360);
                   setFlipped((current) =>
                     current === service.id ? null : service.id,
                   );
