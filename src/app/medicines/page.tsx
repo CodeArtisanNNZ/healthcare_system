@@ -16,7 +16,7 @@ export default async function Medicines({
   const bn = language === "bn";
 
   const initialQuery =
-    typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
+    typeof params.q === "string" ? params.q.trim().slice(0, 1_000) : "";
 
   return (
     <div className={`container section ${styles.page}`}>
@@ -29,14 +29,14 @@ export default async function Medicines({
 
         <h1>
           {bn
-            ? "অনলাইন ফার্মেসির অপশন দেখুন।"
-            : "Compare medicine sellers."}
+            ? "একসাথে একাধিক ওষুধের ফার্মেসি অপশন তুলনা করুন।"
+            : "Compare a full medicine list across pharmacies."}
         </h1>
 
         <p>
           {bn
-            ? "একবার সার্চ করে একাধিক অনলাইন ফার্মেসির অপশন দেখুন। বর্তমান ওষুধ, strength, pack size, মূল্য ও প্রাপ্যতা মূল বিক্রেতার ওয়েবসাইটে নিশ্চিত করুন।"
-            : "Search once, review several pharmacy websites, then continue to the original seller to confirm the current medicine, strength, pack size, price and availability."}
+            ? "একবারে সর্বোচ্চ ১০টি ওষুধ লিখুন। Healthcare Central প্রতিটি ফার্মেসিতে আলাদা করে তালিকা মিলিয়ে যেখানে নির্ভরযোগ্য লাইভ মূল্য পাওয়া যায় সেখানে ওষুধভিত্তিক মূল্য ও মোট দেখাবে।"
+            : "Enter up to 10 medicines at once. Healthcare Central checks each seller separately and shows item prices plus a combined total wherever a reliable live listing price can be read."}
         </p>
       </section>
 
