@@ -142,20 +142,20 @@ function extractListingPrice(text: string, query: string): number | null {
   let best: { score: number; price: number } | null = null;
   let tries = 0;
 
-  while (tries < 36) {
+  while (tries < 48) {
     const index = lower.indexOf(anchor, cursor);
     if (index < 0) break;
 
-    const start = Math.max(0, index - 35);
-    const window = text.slice(start, Math.min(text.length, index + 240));
+    const start = Math.max(0, index - 55);
+    const window = text.slice(start, Math.min(text.length, index + 320));
     const windowLower = window.toLocaleLowerCase("en");
     const matchedTokens = tokens.filter((token) => windowLower.includes(token)).length;
     const prices = pricesFromText(window);
 
     if (prices.length && matchedTokens >= Math.min(tokens.length, 2)) {
-      // Seller cards normally show MRP first and the current listed price last.
       const price = prices[prices.length - 1];
-      const score = matchedTokens * 10 + Math.min(prices.length, 3);
+      const exactBonus = windowLower.includes(query.toLocaleLowerCase("en")) ? 20 : 0;
+      const score = exactBonus + matchedTokens * 10 + Math.min(prices.length, 4);
 
       if (!best || score > best.score) {
         best = { score, price };
@@ -169,9 +169,89 @@ function extractListingPrice(text: string, query: string): number | null {
   return best?.price ?? null;
 }
 
-async function fetchSellerText(url: string): Promise<string> {
+type JsonRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readOfferPrice(value: unknown): number | null {
+  const offers = Array.isArray(value) ? value : [value];
+
+  for (const offer of offers) {
+    if (!isRecord(offer)) continue;
+    const raw = offer.price ?? offer.lowPrice ?? offer.highPrice;
+    const amount =
+      typeof raw === "number"
+        ? raw
+        : typeof raw === "string"
+          ? Number(raw.replaceAll(",", "").trim())
+          : NaN;
+
+    if (Number.isFinite(amount) && amount >= 0 && amount < 1_000_000) {
+      return amount;
+    }
+  }
+
+  return null;
+}
+
+function extractStructuredPrice(html: string, query: string): number | null {
+  const tokens = queryTokens(query);
+  if (!tokens.length) return null;
+
+  let best: { score: number; price: number } | null = null;
+
+  function inspect(value: unknown, depth = 0) {
+    if (depth > 18) return;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => inspect(item, depth + 1));
+      return;
+    }
+
+    if (!isRecord(value)) return;
+
+    const type = value["@type"];
+    const isProduct =
+      type === "Product" ||
+      (Array.isArray(type) && type.some((entry) => entry === "Product"));
+
+    if (isProduct && typeof value.name === "string") {
+      const name = value.name.toLocaleLowerCase("en");
+      const matchedTokens = tokens.filter((token) => name.includes(token)).length;
+      const minimumMatches = Math.min(tokens.length, 2);
+      const price = readOfferPrice(value.offers);
+
+      if (price !== null && matchedTokens >= minimumMatches) {
+        const exactBonus = name.includes(query.toLocaleLowerCase("en")) ? 30 : 0;
+        const score = exactBonus + matchedTokens * 12;
+
+        if (!best || score > best.score) {
+          best = { score, price };
+        }
+      }
+    }
+
+    Object.values(value).forEach((child) => inspect(child, depth + 1));
+  }
+
+  for (const match of html.matchAll(
+    /<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  )) {
+    try {
+      inspect(JSON.parse(match[1]));
+    } catch {
+      // Ignore malformed third-party metadata.
+    }
+  }
+
+  return best?.price ?? null;
+}
+
+async function fetchSellerPage(url: string): Promise<{ html: string; text: string }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3500);
+  const timeout = setTimeout(() => controller.abort(), 4500);
 
   try {
     const response = await fetch(url, {
@@ -180,20 +260,21 @@ async function fetchSellerText(url: string): Promise<string> {
       signal: controller.signal,
       headers: {
         Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en-BD,en;q=0.9,bn;q=0.8",
         "User-Agent":
           "Mozilla/5.0 (compatible; HealthcareCentral/1.0; +https://healthcare-system-m5q5.vercel.app)",
       },
     });
 
-    if (!response.ok) return "";
+    if (!response.ok) return { html: "", text: "" };
 
     const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("text/html")) return "";
+    if (!contentType.includes("text/html")) return { html: "", text: "" };
 
-    const html = await response.text();
-    return htmlToText(html.slice(0, 2_000_000));
+    const html = (await response.text()).slice(0, 2_500_000);
+    return { html, text: htmlToText(html) };
   } catch {
-    return "";
+    return { html: "", text: "" };
   } finally {
     clearTimeout(timeout);
   }
@@ -220,8 +301,15 @@ async function searchSellerItem(
     };
   }
 
-  const sellerText = await fetchSellerText(url);
-  const price = sellerText ? extractListingPrice(sellerText, query) : null;
+  const sellerPage = await fetchSellerPage(url);
+  const structuredPrice = sellerPage.html
+    ? extractStructuredPrice(sellerPage.html, query)
+    : null;
+  const textPrice =
+    structuredPrice === null && sellerPage.text
+      ? extractListingPrice(sellerPage.text, query)
+      : null;
+  const price = structuredPrice ?? textPrice;
 
   return {
     query,
@@ -230,15 +318,17 @@ async function searchSellerItem(
     title: query,
     description:
       price === null
-        ? "The seller page is available, but its live price could not be read reliably. Confirm the exact strength and pack on the seller website."
-        : "Live listed seller price found. Confirm the exact strength, pack size, stock and final checkout price before buying.",
+        ? "The seller page is available, but a matching live price could not be read reliably. Open the listing to confirm the exact medicine, strength and pack."
+        : "A matching live seller price was read from the current listing. Confirm the exact strength, pack size, stock and checkout price before buying.",
     price,
     currency: "BDT",
     url,
     source:
       price === null
         ? "Original seller website"
-        : "Live seller listing (price may change at checkout)",
+        : structuredPrice !== null
+          ? "Live seller product metadata"
+          : "Live seller listing text",
     checkedAt: new Date().toISOString(),
   };
 }
@@ -271,11 +361,9 @@ export async function searchMedicineList(
         itemCount: items.length,
         currency: "BDT" as const,
         totalComplete,
-        // Cross-site carts are isolated by each pharmacy's own browser session.
-        // We only enable this after a seller provides a supported cart/deep-link API.
         cartHandoffAvailable: false,
         cartNote:
-          "This pharmacy does not currently expose a supported cross-site cart hand-off. Open the seller to confirm each medicine and add it to that seller's cart.",
+          "Healthcare Central opens the original pharmacy. Cart contents remain controlled by that pharmacy's own website and session.",
       };
     }),
   );
