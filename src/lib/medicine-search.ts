@@ -200,7 +200,9 @@ function extractStructuredPrice(html: string, query: string): number | null {
   const tokens = queryTokens(query);
   if (!tokens.length) return null;
 
-  let best: { score: number; price: number } | null = null;
+  const best: {
+    value: { score: number; price: number } | null;
+  } = { value: null };
 
   function inspect(value: unknown, depth = 0) {
     if (depth > 18) return;
@@ -227,8 +229,8 @@ function extractStructuredPrice(html: string, query: string): number | null {
         const exactBonus = name.includes(query.toLocaleLowerCase("en")) ? 30 : 0;
         const score = exactBonus + matchedTokens * 12;
 
-        if (!best || score > best.score) {
-          best = { score, price };
+        if (!best.value || score > best.value.score) {
+          best.value = { score, price };
         }
       }
     }
@@ -246,7 +248,7 @@ function extractStructuredPrice(html: string, query: string): number | null {
     }
   }
 
-  return best?.price ?? null;
+  return best.value?.price ?? null;
 }
 
 async function fetchSellerPage(url: string): Promise<{ html: string; text: string }> {
