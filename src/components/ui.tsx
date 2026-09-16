@@ -35,7 +35,7 @@ export function Search({
       <label className="sr-only" htmlFor="q">{placeholder}</label>
       <input id="q" name="q" defaultValue={q} placeholder={placeholder} maxLength={160} />
       {extras}
-      <button>Search</button>
+      <button className="hc-action-button" data-action="search">Search</button>
     </form>
   );
 }
@@ -46,17 +46,22 @@ export function Pager({
   q = "",
   location = "",
   path = "",
+  filters = {},
 }: {
   page: number;
   hasNext: boolean;
   q?: string;
   location?: string;
   path?: string;
+  filters?: Record<string, string>;
 }) {
   function href(targetPage: number) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (location) params.set("location", location);
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) params.set(key, value);
+    }
     params.set("page", String(targetPage));
     return `${path}?${params.toString()}`;
   }
@@ -148,13 +153,24 @@ export async function DirectoryCard({
 }) {
   const entity = entities[kind];
   const image = await fileUrl("directory-images", row.image_path);
+  const profileHref =
+    kind === "doctors"
+      ? `/doctors/${row.id}`
+      : kind === "hospitals"
+        ? `/hospitals/${row.id}`
+        : kind === "caregivers"
+          ? `/caregivers/${row.id}`
+          : "";
+  const eyebrow = specialty || (kind === "hospitals" && row.category ? String(row.category) : entity.singular);
 
   return (
     <article className="card directory-card">
       {image && <img className="directory-image" src={image} alt={String(row[entity.nameKey])} />}
       <div>
-        <p className="eyebrow">{specialty || entity.singular}</p>
-        <h2>{String(row[entity.nameKey])}</h2>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2>
+          {profileHref ? <Link href={profileHref}>{String(row[entity.nameKey])}</Link> : String(row[entity.nameKey])}
+        </h2>
         <dl>
           {entity.fields
             .filter((field) => ![entity.nameKey, "user_id", "specialty_id", "status"].includes(field.key))
@@ -167,12 +183,23 @@ export async function DirectoryCard({
               ) : null,
             )}
         </dl>
-        {row.phone && (
-          <a className="button secondary" href={"tel:" + String(row.phone).replace(/[^+\d]/g, "")}>Call</a>
-        )}
-        {row.driver_phone && (
-          <a className="button secondary" href={"tel:" + String(row.driver_phone).replace(/[^+\d]/g, "")}>Call service</a>
-        )}
+        <div className="directory-actions">
+          {profileHref && (
+            <Link className="button secondary hc-action-button" data-action="open" href={profileHref}>
+              View profile
+            </Link>
+          )}
+          {kind === "doctors" ? (
+            <button className="button secondary hc-action-button" data-action="appointment" type="button" title="Appointment booking will be connected later">
+              Appointment
+            </button>
+          ) : row.phone ? (
+            <a className="button secondary" href={"tel:" + String(row.phone).replace(/[^+\d]/g, "")}>Call</a>
+          ) : null}
+          {row.driver_phone && (
+            <a className="button secondary" href={"tel:" + String(row.driver_phone).replace(/[^+\d]/g, "")}>Call service</a>
+          )}
+        </div>
       </div>
     </article>
   );
