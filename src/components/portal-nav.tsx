@@ -23,7 +23,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/patient/lab_tests", "Lab tests"],
         ["/patient/hospitals", "Hospitals"],
         ["/patient/caregivers", "Caregivers"],
-        ["/patient/ambulances", "Ambulances"],
+        ["/emergency", "Ambulances"],
       ];
 
   return (
