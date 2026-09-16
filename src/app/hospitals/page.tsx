@@ -1,6 +1,24 @@
 import { requireUser } from "@/lib/auth";
 import { directory, queryParams, type Params } from "@/lib/data";
+import { healthcareLocations } from "@/lib/locations";
 import { DirectoryCard, Empty, Heading, Pager, Search } from "@/components/ui";
+
+const hospitalCategories = [
+  "General / Multidisciplinary",
+  "Medical College / Teaching",
+  "Specialized",
+  "Cardiac",
+  "Cancer",
+  "Eye",
+  "ENT",
+  "Kidney & Urology",
+  "Children & Paediatrics",
+  "Women & Maternity",
+  "Orthopaedic & Trauma",
+  "Mental Health",
+  "Chest & Respiratory",
+  "Dental",
+] as const;
 
 export default async function HospitalsPage({
   searchParams,
@@ -9,26 +27,40 @@ export default async function HospitalsPage({
 }) {
   await requireUser("patient");
 
-  const { q, location, page } = queryParams(await searchParams);
-  const rows = await directory("hospitals", q, page, location);
+  const { q, location, category, page } = queryParams(await searchParams);
+  const rows = await directory("hospitals", q, page, location, { category });
 
   return (
     <div className="container section">
       <Heading title="Hospitals" eyebrow="HEALTHCARE DIRECTORY">
-        Browse hospitals and medical centres, or search by name, department or location.
+        Hospitals are listed A–Z by default. Search by hospital name, category, department or Dhaka area; close spellings are matched automatically.
       </Heading>
 
       <Search
         q={q}
-        placeholder="Search hospitals or departments"
+        placeholder="Hospital name, department or service"
         extras={
-          <input
-            name="location"
-            defaultValue={location}
-            placeholder="Location, e.g. Dhaka or Dhanmondi"
-            maxLength={100}
-            aria-label="Location"
-          />
+          <>
+            <input
+              name="location"
+              defaultValue={location}
+              placeholder="Area, e.g. Dhanmondi, Mirpur"
+              maxLength={100}
+              aria-label="Location"
+              list="hospital-location-options"
+            />
+            <datalist id="hospital-location-options">
+              {healthcareLocations.map((item) => (
+                <option key={item} value={item} />
+              ))}
+            </datalist>
+            <select name="category" defaultValue={category} aria-label="Hospital category">
+              <option value="">All hospital categories</option>
+              {hospitalCategories.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+          </>
         }
       />
 
@@ -39,7 +71,7 @@ export default async function HospitalsPage({
           ))}
         </div>
       ) : (
-        <Empty>No hospitals found. Try a broader name, department or location.</Empty>
+        <Empty>No hospitals found. Try the full or partial hospital name, another category or a nearby Dhaka area.</Empty>
       )}
 
       <Pager
@@ -48,6 +80,7 @@ export default async function HospitalsPage({
         q={q}
         location={location}
         path="/hospitals"
+        filters={{ category }}
       />
     </div>
   );
