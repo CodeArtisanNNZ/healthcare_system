@@ -15,6 +15,7 @@ type Service = {
   details: string;
   detailsBn: string;
   tone: string;
+  sketch: string;
 };
 
 const services: Service[] = [
@@ -30,6 +31,7 @@ const services: Service[] = [
     detailsBn:
       "উপসর্গ, বিশেষত্ব বা ডাক্তারের নাম দিয়ে খুঁজুন, কোন ধরনের বিশেষজ্ঞ আপনার প্রয়োজনের সঙ্গে মেলে তা বুঝুন এবং লোকেশন অনুযায়ী অপশন সীমিত করে পরবর্তী ধাপ বেছে নিন।",
     tone: "butter",
+    sketch: "doctorSketch",
   },
   {
     id: "medicine",
@@ -43,6 +45,7 @@ const services: Service[] = [
     detailsBn:
       "একবার ওষুধ সার্চ করে একসাথে কয়েকটি অনলাইন ফার্মেসির অপশন দেখুন, তারপর বর্তমান মূল্য, স্টক ও কেনার তথ্য নিশ্চিত করতে মূল বিক্রেতার ওয়েবসাইটে যান।",
     tone: "rose",
+    sketch: "medicineSketch",
   },
   {
     id: "hospital",
@@ -56,6 +59,7 @@ const services: Service[] = [
     detailsBn:
       "লোকেশন অনুযায়ী হাসপাতাল খুঁজুন, উপলব্ধ বিভাগ ও সেবাগুলো দেখুন এবং আপনার প্রয়োজনের জন্য কোন প্রতিষ্ঠান বেশি প্রাসঙ্গিক হতে পারে তা বুঝতে তালিকাভুক্ত তথ্য ব্যবহার করুন।",
     tone: "blue",
+    sketch: "hospitalSketch",
   },
   {
     id: "lab-test",
@@ -69,6 +73,7 @@ const services: Service[] = [
     detailsBn:
       "ডায়াগনস্টিক টেস্ট খুঁজুন, উপলব্ধ সেন্টার ও লোকেশন দেখুন, তথ্য ও মূল্য থাকলে তুলনা করুন এবং পুরো খোঁজার প্রক্রিয়াটি এক জায়গা থেকে করুন।",
     tone: "sage",
+    sketch: "labSketch",
   },
   {
     id: "caregiver",
@@ -82,6 +87,7 @@ const services: Service[] = [
     detailsBn:
       "বাসা ও দৈনন্দিন যত্নের জন্য কেয়ারগিভার ও নার্সিং সাপোর্টের অপশন দেখুন, তারপর যোগাযোগের আগে অভিজ্ঞতা, সেবার তথ্য ও লোকেশন পর্যালোচনা করুন।",
     tone: "lavender",
+    sketch: "caregiverSketch",
   },
   {
     id: "ambulance",
@@ -95,6 +101,7 @@ const services: Service[] = [
     detailsBn:
       "একাধিক পেজ ঘাঁটা ছাড়াই দ্রুত অ্যাম্বুলেন্স ও জরুরি যোগাযোগ দেখুন এবং তথ্য উপলব্ধ থাকলে লোকেশনভিত্তিক অপশন ব্যবহার করুন।",
     tone: "clay",
+    sketch: "ambulanceSketch",
   },
 ];
 
@@ -104,6 +111,17 @@ function TapIcon() {
       <circle cx="12" cy="7" r="3.25" />
       <path d="M12 10.5v7.2M12 13.5l-2.1-1.25c-1.15-.68-2.35.65-1.62 1.78l2.75 4.22c.48.74 1.3 1.19 2.18 1.19h3.15c1.42 0 2.58-1.15 2.58-2.58v-3.32c0-1.06-.86-1.92-1.92-1.92-.35 0-.69.1-.98.27a1.9 1.9 0 0 0-1.64-.94c-.48 0-.92.18-1.26.47A1.9 1.9 0 0 0 12 10.5Z" />
     </svg>
+  );
+}
+
+function SketchEmoji({ sketch }: { sketch: string }) {
+  return (
+    <span className={`${styles.sketchEmoji} ${styles[sketch]}`} aria-hidden="true">
+      <span className={styles.sketchA} />
+      <span className={styles.sketchB} />
+      <span className={styles.sketchC} />
+      <span className={styles.sketchD} />
+    </span>
   );
 }
 
@@ -200,6 +218,8 @@ export function ServiceCarousel({ language }: { language: Language }) {
                       <span>{service.number}</span>
                       <span>{bn ? "সেবা" : "Service"}</span>
                     </span>
+
+                    <SketchEmoji sketch={service.sketch} />
 
                     <span className={styles.cardTitle}>
                       {bn ? service.titleBn : service.title}
