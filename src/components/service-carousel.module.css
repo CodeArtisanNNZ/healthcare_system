@@ -166,31 +166,55 @@
   line-height: 1.48;
 }
 
-/* Original hand-drawn artwork from Downshift/sketchy-icons (MIT), recoloured locally. */
+/* Duma Icons: public MIT-licensed, hand-drawn SVG artwork from GitHub. */
 .sketchEmoji {
-  width: 82px;
-  height: 82px;
+  width: 66px;
+  height: 66px;
   position: absolute;
-  top: 42px;
-  right: 13px;
+  top: 50px;
+  right: 18px;
   display: grid;
   place-items: center;
-  opacity: 0.88;
-  transform: rotate(2deg);
-  transform-origin: 54% 56%;
+  opacity: 0.5;
+  transform: rotate(-3deg);
+  transform-origin: 52% 56%;
   pointer-events: none;
-  filter: drop-shadow(0 4px 5px rgba(45, 58, 55, 0.08));
   transition:
     transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity 260ms ease;
 }
 
 .sketchEmoji img {
-  width: 100%;
-  height: 100%;
+  width: 58px;
+  height: 58px;
   display: block;
   object-fit: contain;
   user-select: none;
+  filter: grayscale(1) contrast(0.82);
+}
+
+.card:nth-child(6n + 1) .sketchEmoji {
+  transform: rotate(-5deg);
+}
+
+.card:nth-child(6n + 2) .sketchEmoji {
+  transform: rotate(4deg);
+}
+
+.card:nth-child(6n + 3) .sketchEmoji {
+  transform: rotate(-2deg);
+}
+
+.card:nth-child(6n + 4) .sketchEmoji {
+  transform: rotate(5deg);
+}
+
+.card:nth-child(6n + 5) .sketchEmoji {
+  transform: rotate(-4deg);
+}
+
+.card:nth-child(6n) .sketchEmoji {
+  transform: rotate(2deg);
 }
 
 .tapIcon {
@@ -223,8 +247,9 @@
 
 .card:hover .sketchEmoji,
 .card:focus-visible .sketchEmoji {
-  opacity: 1;
-  transform: translateY(-4px) rotate(-2deg) scale(1.04);
+  opacity: 0.68;
+  translate: 0 -3px;
+  scale: 1.025;
 }
 
 .flipped:hover .cardInner,
@@ -294,10 +319,15 @@
   }
 
   .sketchEmoji {
-    width: 76px;
-    height: 76px;
-    top: 43px;
-    right: 10px;
+    width: 61px;
+    height: 61px;
+    top: 49px;
+    right: 15px;
+  }
+
+  .sketchEmoji img {
+    width: 54px;
+    height: 54px;
   }
 
   .cardDetails {
@@ -326,9 +356,15 @@
   }
 
   .sketchEmoji {
-    width: 70px;
-    height: 70px;
-    top: 46px;
+    width: 58px;
+    height: 58px;
+    top: 51px;
+    right: 14px;
+  }
+
+  .sketchEmoji img {
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -344,6 +380,7 @@
 
   .card:hover .sketchEmoji,
   .card:focus-visible .sketchEmoji {
-    transform: rotate(2deg);
+    translate: 0 0;
+    scale: 1;
   }
 }
