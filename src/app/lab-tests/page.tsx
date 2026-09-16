@@ -18,15 +18,19 @@ export default async function LabTestsPage({
         Browse available diagnostic tests and the centres that provide them, or search by test, laboratory or location.
       </Heading>
 
-      <Search q={q} placeholder="Search tests or laboratories">
-        <input
-          name="location"
-          defaultValue={location}
-          placeholder="Location, e.g. Dhaka or Mirpur"
-          maxLength={100}
-          aria-label="Location"
-        />
-      </Search>
+      <Search
+        q={q}
+        placeholder="Search tests or laboratories"
+        extras={
+          <input
+            name="location"
+            defaultValue={location}
+            placeholder="Location, e.g. Dhaka or Mirpur"
+            maxLength={100}
+            aria-label="Location"
+          />
+        }
+      />
 
       {rows.length ? (
         <div className="cards directory">
