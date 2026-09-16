@@ -24,15 +24,19 @@ export default async function DoctorsPage({
         Browse the doctor directory, or narrow it by doctor name, specialty, care need or location.
       </Heading>
 
-      <Search q={q} placeholder="Search doctors, specialties or care needs">
-        <input
-          name="location"
-          defaultValue={location}
-          placeholder="Location, e.g. Dhaka or Mirpur"
-          maxLength={100}
-          aria-label="Location"
-        />
-      </Search>
+      <Search
+        q={q}
+        placeholder="Search doctors, specialties or care needs"
+        extras={
+          <input
+            name="location"
+            defaultValue={location}
+            placeholder="Location, e.g. Dhaka or Mirpur"
+            maxLength={100}
+            aria-label="Location"
+          />
+        }
+      />
 
       {rows.length ? (
         <div className="cards directory">
