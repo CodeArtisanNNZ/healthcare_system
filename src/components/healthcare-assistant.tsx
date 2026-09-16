@@ -312,33 +312,6 @@ export function HealthcareAssistant({
                       ? "এটি diagnosis নয়। আপনার লেখা উপসর্গগুলোর সাথে specialist routing মিলিয়ে এই পরামর্শ দেখানো হয়েছে।"
                       : "This is not a diagnosis. It is symptom-to-specialist triage based on the symptoms you entered."}
                   </p>
-
-                  <dl>
-                    {response.triage.suggestions.map((suggestion, index) => {
-                      const phrases = (suggestion.matched_symptoms || [])
-                        .slice(0, 4)
-                        .map((item) => item.phrase)
-                        .join(", ");
-
-                      return (
-                        <div key={suggestion.specialty_id}>
-                          <dt>
-                            {index === 0
-                              ? bn
-                                ? "প্রধান"
-                                : "Primary"
-                              : bn
-                                ? "বিকল্প"
-                                : "Also consider"}
-                          </dt>
-                          <dd>
-                            <strong>{suggestion.specialty_name}</strong>
-                            {phrases ? ` — ${phrases}` : ""}
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
                 </div>
               </article>
             </div>

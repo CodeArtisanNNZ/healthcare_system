@@ -499,6 +499,18 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
     const candidates = form.getAll("candidate_doctor_id").map(String).filter(Boolean);
     const parsedCandidates = z.array(z.uuid()).max(3).parse([...new Set(candidates)]);
     const doctorId = input.doctor_id || parsedCandidates[0] || null;
+    if (!input.alternate_date && (input.alternate_time_start || input.alternate_time_end)) {
+      throw new Error("Choose an alternate date, or clear the alternate times.");
+    }
+    const alternateStart = input.alternate_date
+      ? input.alternate_time_start || input.preferred_time_start
+      : null;
+    const alternateEnd = input.alternate_date
+      ? input.alternate_time_end || input.preferred_time_end
+      : null;
+    if (alternateStart && alternateEnd && alternateEnd <= alternateStart) {
+      throw new Error("Alternate end time must be after its start time.");
+    }
     const db = await supabase();
     const { data: request, error } = await db.from("appointment_requests").insert({
       patient_id: user.id,
@@ -508,8 +520,8 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
       preferred_time_start: input.preferred_time_start,
       preferred_time_end: input.preferred_time_end,
       alternate_date: input.alternate_date || null,
-      alternate_time_start: input.alternate_time_start || null,
-      alternate_time_end: input.alternate_time_end || null,
+      alternate_time_start: alternateStart,
+      alternate_time_end: alternateEnd,
       budget_min: input.budget_min,
       budget_max: input.budget_max,
       area: input.area,
@@ -527,7 +539,12 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
     check(eventError);
     revalidatePath("/patient/appointments");
     return { success: "Appointment request sent. An administrator will confirm the doctor, time and contact details." };
-  } catch (e) { return failure(e); }
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("appointment_requests_check2")) {
+      return { error: "Complete the alternate date and time window, or leave all alternate fields empty." };
+    }
+    return failure(e);
+  }
 }
 
 export async function reviewAppointment(_: ActionState, form: FormData): Promise<ActionState> {
