@@ -11,6 +11,7 @@ import styles from "./layout.module.css";
 import "./globals.css";
 import "./interaction-effects.css";
 import "./eye-comfort.css";
+import "./directory-enhancements.css";
 
 export const dynamic = "force-dynamic";
 
