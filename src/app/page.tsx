@@ -120,7 +120,7 @@ export default async function Home({
             <div className={styles.anatomyFrameWrap}>
               <iframe
                 className={styles.anatomyFrame}
-                src={`/anatomy-explorer-v8.html?lang=${language}`}
+                src={`/anatomy-explorer-v9.html?lang=${language}`}
                 title={
                   bn
                     ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
