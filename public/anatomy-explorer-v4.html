@@ -91,7 +91,7 @@ const ORGANS={
 
 const ORGAN_FILES=["digestive_male.glb","respiratory_male.glb","renal_male.glb","cardiovascular_male.glb","nervous_male.glb","endocrine_male.glb","lymphatic_male.glb"];
 const SAFE_FILES=["regional_male.glb","muscular_male.glb","skeletal_male.glb",...ORGAN_FILES];
-const SENSITIVE=/\b(penis|penile|glans|prepuce|foreskin|scrot|testis|testicle|epididym|spermatic|seminal|prostat|genital|pudend|perine|anal region|bulbospong|ischiocav|cremaster|external urethral|vas deferens|ductus deferens)\b/i;
+const SENSITIVE=/\b(penis|penile|glans|prepuce|foreskin|scrot(?:um|al)?|testis|testicle|epididym|spermatic|seminal|prostat|genital|pudend|perine|anal region|bulbospong|ischiocav|cremaster|external urethral|vas deferens|ductus deferens)\b/i;
 const PELVIC_MUSCLE_DETAIL=/\b(perineal|pelvic diaphragm|pelvic floor|levator ani|coccygeus|bulbospong|ischiocav|cremaster)\b/i;
 
 const $=id=>document.getElementById(id);const els={viewer:$("viewer"),canvas:$("scene"),loader:$("loader"),loaderText:$("loaderText"),bar:$("bar"),error:$("error"),errorText:$("errorText"),organList:$("organList"),search:$("search"),sidebar:$("sidebar"),detailSystem:$("detailSystem"),detailTitle:$("detailTitle"),detailLocation:$("detailLocation"),detailRole:$("detailRole"),langBtn:$("langBtn"),skin:$("skin"),muscles:$("muscles"),bones:$("bones"),inside:$("inside")};
@@ -112,7 +112,7 @@ const materials={};for(const[k,o]of Object.entries(ORGANS)){const c=new THREE.Co
 let selectedKey="heart",skinRoot=null,muscleRoot=null,skeletonRoot=null,skinVisible=true,muscleVisible=true,skeletonVisible=true,fullBox=new THREE.Box3();const organMeshes=Object.fromEntries(Object.keys(ORGANS).map(k=>[k,[]]));const organBoxes=Object.fromEntries(Object.keys(ORGANS).map(k=>[k,new THREE.Box3()]));
 function loadGLB(file){return new Promise((resolve,reject)=>loader.load(BASE+file,resolve,undefined,reject))}function hide(root){root.traverse(n=>{if(n.isMesh)n.visible=false})}function metaText(m){return `${m.organ_id||""} ${m.name_en||""} ${(m.path||[]).join(" ")}`}
 function findKey(meta,file){const text=metaText(meta);for(const[k,o]of Object.entries(ORGANS)){if(o.file===file&&o.match.test(text))return k}return null}
-function nodeText(n){const parts=[];let p=n;for(let i=0;p&&i<5;i+=1,p=p.parent)if(p.name)parts.push(p.name);return parts.join(" ")}
+function nodeText(n){const parts=[];let p=n;for(let i=0;p&&i<5;i+=1,p=p.parent)if(p.name)parts.push(p.name);return parts.join(" ").replace(/[_.-]+/g," ")}
 function isSensitive(n,kind="organ"){const t=nodeText(n);if(SENSITIVE.test(t))return true;if(kind==="muscle"&&PELVIC_MUSCLE_DETAIL.test(t))return true;return false}
 function prepareLayer(layer,material,kind){layer.traverse(n=>{if(!n.isMesh)return;if(isSensitive(n,kind)){n.visible=false;return}n.visible=true;n.material=material;n.castShadow=false;n.receiveShadow=false})}
 function reveal(obj,key){obj.traverse(n=>{if(!n.isMesh||isSensitive(n,"organ"))return;n.visible=true;n.material=materials[key];n.userData.organKey=key;organMeshes[key].push(n)})}
