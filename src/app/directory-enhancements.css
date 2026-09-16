@@ -1,0 +1,66 @@
+/* Directory search/profile refinements. Keeps the existing Healthcare Central theme. */
+.search {
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.search > #q {
+  flex: 2 1 320px;
+}
+
+.search > input:not(#q) {
+  flex: 1 1 220px;
+}
+
+.search > select {
+  flex: 0 1 250px;
+  min-width: 210px;
+}
+
+.search > button {
+  flex: 0 0 auto;
+}
+
+.directory-card h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.directory-card h2 a:hover {
+  color: var(--deep);
+}
+
+.directory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.directory-actions .button,
+.directory-actions button,
+.directory-actions a {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .search > #q,
+  .search > input:not(#q),
+  .search > select,
+  .search > button {
+    width: 100%;
+    min-width: 100%;
+    flex-basis: 100%;
+  }
+
+  .directory-actions {
+    align-items: stretch;
+  }
+
+  .directory-actions .button,
+  .directory-actions button,
+  .directory-actions a {
+    width: 100%;
+  }
+}
