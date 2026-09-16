@@ -18,8 +18,12 @@ type Service = {
   sketch: string;
 };
 
-// Hand-drawn artwork is vendored from Downshift/sketchy-icons (MIT) and
-// recoloured to match Healthcare Central. See public/service-sketches/SOURCE.md.
+// Hand-drawn artwork comes from DudychMarian/duma-icons, a public MIT-licensed
+// GitHub icon collection. The cards use the source SVGs directly so the loose,
+// imperfect pen strokes stay intact instead of being redrawn as common emojis.
+const DUMA_ICON_BASE =
+  "https://raw.githubusercontent.com/DudychMarian/duma-icons/main/icons/SVG/health";
+
 const services: Service[] = [
   {
     id: "doctor",
@@ -33,7 +37,7 @@ const services: Service[] = [
     detailsBn:
       "উপসর্গ, বিশেষত্ব বা ডাক্তারের নাম দিয়ে খুঁজুন, কোন ধরনের বিশেষজ্ঞ আপনার প্রয়োজনের সঙ্গে মেলে তা বুঝুন এবং লোকেশন অনুযায়ী অপশন সীমিত করে পরবর্তী ধাপ বেছে নিন।",
     tone: "butter",
-    sketch: "/service-sketches/doctor.svg",
+    sketch: `${DUMA_ICON_BASE}/stethoscope.svg`,
   },
   {
     id: "medicine",
@@ -47,7 +51,7 @@ const services: Service[] = [
     detailsBn:
       "একবার ওষুধ সার্চ করে একসাথে কয়েকটি অনলাইন ফার্মেসির অপশন দেখুন, তারপর বর্তমান মূল্য, স্টক ও কেনার তথ্য নিশ্চিত করতে মূল বিক্রেতার ওয়েবসাইটে যান।",
     tone: "rose",
-    sketch: "/service-sketches/medicine.svg",
+    sketch: `${DUMA_ICON_BASE}/bottle.svg`,
   },
   {
     id: "hospital",
@@ -61,7 +65,7 @@ const services: Service[] = [
     detailsBn:
       "লোকেশন অনুযায়ী হাসপাতাল খুঁজুন, উপলব্ধ বিভাগ ও সেবাগুলো দেখুন এবং আপনার প্রয়োজনের জন্য কোন প্রতিষ্ঠান বেশি প্রাসঙ্গিক হতে পারে তা বুঝতে তালিকাভুক্ত তথ্য ব্যবহার করুন।",
     tone: "blue",
-    sketch: "/service-sketches/hospital.svg",
+    sketch: `${DUMA_ICON_BASE}/heart-beat.svg`,
   },
   {
     id: "lab-test",
@@ -75,7 +79,7 @@ const services: Service[] = [
     detailsBn:
       "ডায়াগনস্টিক টেস্ট খুঁজুন, উপলব্ধ সেন্টার ও লোকেশন দেখুন, তথ্য ও মূল্য থাকলে তুলনা করুন এবং পুরো খোঁজার প্রক্রিয়াটি এক জায়গা থেকে করুন।",
     tone: "sage",
-    sketch: "/service-sketches/lab.svg",
+    sketch: `${DUMA_ICON_BASE}/microscope.svg`,
   },
   {
     id: "caregiver",
@@ -89,7 +93,7 @@ const services: Service[] = [
     detailsBn:
       "বাসা ও দৈনন্দিন যত্নের জন্য কেয়ারগিভার ও নার্সিং সাপোর্টের অপশন দেখুন, তারপর যোগাযোগের আগে অভিজ্ঞতা, সেবার তথ্য ও লোকেশন পর্যালোচনা করুন।",
     tone: "lavender",
-    sketch: "/service-sketches/caregiver.svg",
+    sketch: `${DUMA_ICON_BASE}/wheelchair.svg`,
   },
   {
     id: "ambulance",
@@ -103,7 +107,7 @@ const services: Service[] = [
     detailsBn:
       "একাধিক পেজ ঘাঁটা ছাড়াই দ্রুত অ্যাম্বুলেন্স ও জরুরি যোগাযোগ দেখুন এবং তথ্য উপলব্ধ থাকলে লোকেশনভিত্তিক অপশন ব্যবহার করুন।",
     tone: "clay",
-    sketch: "/service-sketches/ambulance.svg",
+    sketch: `${DUMA_ICON_BASE}/firstaid-2.svg`,
   },
 ];
 
@@ -119,7 +123,7 @@ function TapIcon() {
 function SketchEmoji({ src }: { src: string }) {
   return (
     <span className={styles.sketchEmoji} aria-hidden="true">
-      <img src={src} alt="" draggable={false} />
+      <img src={src} alt="" draggable={false} loading="lazy" decoding="async" />
     </span>
   );
 }
