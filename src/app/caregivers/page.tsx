@@ -18,15 +18,19 @@ export default async function CaregiversPage({
         Browse caregiver and nursing-support profiles, or search by service, qualification or location.
       </Heading>
 
-      <Search q={q} placeholder="Search caregivers or services">
-        <input
-          name="location"
-          defaultValue={location}
-          placeholder="Location, e.g. Dhaka or Uttara"
-          maxLength={100}
-          aria-label="Location"
-        />
-      </Search>
+      <Search
+        q={q}
+        placeholder="Search caregivers or services"
+        extras={
+          <input
+            name="location"
+            defaultValue={location}
+            placeholder="Location, e.g. Dhaka or Uttara"
+            maxLength={100}
+            aria-label="Location"
+          />
+        }
+      />
 
       {rows.length ? (
         <div className="cards directory">
