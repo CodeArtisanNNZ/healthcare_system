@@ -47,9 +47,10 @@ export const entities: Record<string, Entity> = {
     title: "Hospitals",
     singular: "Hospital",
     nameKey: "name",
-    description: "Explore locations, departments and contact information.",
+    description: "Explore locations, categories, departments and contact information.",
     fields: [
       f("name", "Hospital name", "text", true),
+      f("category", "Category"),
       f("address", "Address", "textarea"),
       f("location", "Location"),
       f("phone", "Phone"),
