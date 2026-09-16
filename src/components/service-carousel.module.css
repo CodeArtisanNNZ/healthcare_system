@@ -128,6 +128,7 @@
 
 .cardTitle {
   display: block;
+  max-width: 64%;
   margin-top: auto;
   color: #273431;
   font-size: clamp(23px, 2.15vw, 29px);
@@ -148,7 +149,7 @@
 
 .cardShort {
   display: block;
-  max-width: 180px;
+  max-width: 165px;
   margin-top: 8px;
   color: color-mix(in srgb, var(--card-deep) 74%, #56625f 26%);
   font-size: 11px;
@@ -165,386 +166,31 @@
   line-height: 1.48;
 }
 
-/* Hand-drawn service emojis: built only from spans, borders and pseudo-elements. */
+/* Original hand-drawn artwork from Downshift/sketchy-icons (MIT), recoloured locally. */
 .sketchEmoji {
-  width: 78px;
-  height: 72px;
+  width: 82px;
+  height: 82px;
   position: absolute;
-  top: 48px;
-  right: 17px;
-  color: color-mix(in srgb, var(--card-deep) 88%, #263230 12%);
-  opacity: 0.9;
+  top: 42px;
+  right: 13px;
+  display: grid;
+  place-items: center;
+  opacity: 0.88;
   transform: rotate(2deg);
-  filter: drop-shadow(1px 2px 0 rgba(255, 255, 255, 0.28));
+  transform-origin: 54% 56%;
   pointer-events: none;
+  filter: drop-shadow(0 4px 5px rgba(45, 58, 55, 0.08));
+  transition:
+    transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 260ms ease;
 }
 
-.sketchEmoji::before {
-  content: "";
-  position: absolute;
-  inset: 2px 0 0 4px;
-  border: 1.5px dashed color-mix(in srgb, var(--card-deep) 25%, transparent);
-  border-radius: 47% 53% 52% 48% / 51% 43% 57% 49%;
-  transform: rotate(-7deg);
-  opacity: 0.45;
-}
-
-.sketchA,
-.sketchB,
-.sketchC,
-.sketchD {
-  position: absolute;
+.sketchEmoji img {
+  width: 100%;
+  height: 100%;
   display: block;
-  box-sizing: border-box;
-}
-
-/* Doctor — loose stethoscope doodle */
-.doctorSketch {
-  transform: rotate(-4deg);
-}
-
-.doctorSketch .sketchA {
-  left: 18px;
-  top: 12px;
-  width: 38px;
-  height: 38px;
-  border: 3px solid currentColor;
-  border-top: 0;
-  border-radius: 0 0 24px 24px;
-}
-
-.doctorSketch .sketchA::before,
-.doctorSketch .sketchA::after {
-  content: "";
-  position: absolute;
-  top: -8px;
-  width: 10px;
-  height: 16px;
-  border: 3px solid currentColor;
-  border-bottom: 0;
-  border-radius: 9px 9px 0 0;
-}
-
-.doctorSketch .sketchA::before {
-  left: -3px;
-  transform: rotate(-9deg);
-}
-
-.doctorSketch .sketchA::after {
-  right: -3px;
-  transform: rotate(9deg);
-}
-
-.doctorSketch .sketchB {
-  left: 35px;
-  top: 45px;
-  width: 23px;
-  height: 17px;
-  border-right: 3px solid currentColor;
-  border-bottom: 3px solid currentColor;
-  border-radius: 0 0 17px 0;
-  transform: rotate(-10deg);
-}
-
-.doctorSketch .sketchC {
-  right: 8px;
-  bottom: 6px;
-  width: 17px;
-  height: 17px;
-  border: 3px solid currentColor;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--card-bg) 85%, transparent);
-}
-
-.doctorSketch .sketchD {
-  left: 8px;
-  top: 8px;
-  width: 8px;
-  height: 8px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  transform: rotate(11deg);
-}
-
-/* Medicine — capsule with tiny sketch sparkles */
-.medicineSketch {
-  transform: rotate(5deg);
-}
-
-.medicineSketch .sketchA {
-  left: 13px;
-  top: 22px;
-  width: 52px;
-  height: 25px;
-  border: 3px solid currentColor;
-  border-radius: 18px;
-  transform: rotate(-28deg);
-}
-
-.medicineSketch .sketchB {
-  left: 37px;
-  top: 23px;
-  width: 3px;
-  height: 25px;
-  background: currentColor;
-  transform: rotate(-28deg);
-  border-radius: 99px;
-}
-
-.medicineSketch .sketchC,
-.medicineSketch .sketchD {
-  width: 7px;
-  height: 7px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.medicineSketch .sketchC {
-  right: 6px;
-  top: 8px;
-}
-
-.medicineSketch .sketchD {
-  left: 9px;
-  bottom: 8px;
-  width: 5px;
-  height: 5px;
-}
-
-/* Hospital — wonky little building + medical cross */
-.hospitalSketch {
-  transform: rotate(-2deg);
-}
-
-.hospitalSketch .sketchA {
-  left: 14px;
-  top: 16px;
-  width: 49px;
-  height: 44px;
-  border: 3px solid currentColor;
-  border-radius: 7px 4px 5px 6px;
-  transform: skewY(-2deg);
-}
-
-.hospitalSketch .sketchA::before {
-  content: "";
-  position: absolute;
-  left: 8px;
-  bottom: 8px;
-  width: 6px;
-  height: 6px;
-  border: 2px solid currentColor;
-  box-shadow: 14px 0 0 -2px var(--card-bg), 14px 0 0 0 currentColor,
-    28px 0 0 -2px var(--card-bg), 28px 0 0 0 currentColor;
-}
-
-.hospitalSketch .sketchB,
-.hospitalSketch .sketchC {
-  background: currentColor;
-  border-radius: 99px;
-}
-
-.hospitalSketch .sketchB {
-  left: 36px;
-  top: 21px;
-  width: 5px;
-  height: 19px;
-}
-
-.hospitalSketch .sketchC {
-  left: 29px;
-  top: 28px;
-  width: 19px;
-  height: 5px;
-}
-
-.hospitalSketch .sketchD {
-  left: 34px;
-  bottom: 11px;
-  width: 10px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-bottom: 0;
-  border-radius: 4px 4px 0 0;
-}
-
-/* Lab — test tube with liquid and bubbles */
-.labSketch {
-  transform: rotate(4deg);
-}
-
-.labSketch .sketchA {
-  left: 28px;
-  top: 10px;
-  width: 27px;
-  height: 52px;
-  border: 3px solid currentColor;
-  border-top: 0;
-  border-radius: 0 0 15px 15px;
-  transform: rotate(-8deg);
-}
-
-.labSketch .sketchA::before {
-  content: "";
-  position: absolute;
-  left: -7px;
-  top: -4px;
-  width: 35px;
-  height: 5px;
-  border: 3px solid currentColor;
-  border-radius: 99px;
-  background: var(--card-bg);
-}
-
-.labSketch .sketchB {
-  left: 32px;
-  top: 39px;
-  width: 20px;
-  height: 16px;
-  border-radius: 4px 4px 10px 10px;
-  background: color-mix(in srgb, var(--card-deep) 28%, transparent);
-  transform: rotate(-8deg);
-}
-
-.labSketch .sketchC,
-.labSketch .sketchD {
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.labSketch .sketchC {
-  left: 14px;
-  top: 22px;
-  width: 9px;
-  height: 9px;
-}
-
-.labSketch .sketchD {
-  right: 8px;
-  top: 10px;
-  width: 6px;
-  height: 6px;
-}
-
-/* Caregiver — heart held by two curved hands */
-.caregiverSketch {
-  transform: rotate(-4deg);
-}
-
-.caregiverSketch .sketchA {
-  left: 30px;
-  top: 17px;
-  width: 22px;
-  height: 22px;
-  background: color-mix(in srgb, var(--card-deep) 78%, transparent);
-  transform: rotate(45deg);
-  border-radius: 4px;
-}
-
-.caregiverSketch .sketchA::before,
-.caregiverSketch .sketchA::after {
-  content: "";
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: inherit;
-}
-
-.caregiverSketch .sketchA::before {
-  left: -11px;
-}
-
-.caregiverSketch .sketchA::after {
-  top: -11px;
-}
-
-.caregiverSketch .sketchB,
-.caregiverSketch .sketchC {
-  bottom: 8px;
-  width: 34px;
-  height: 25px;
-  border-bottom: 3px solid currentColor;
-}
-
-.caregiverSketch .sketchB {
-  left: 7px;
-  border-left: 3px solid currentColor;
-  border-radius: 0 0 0 25px;
-  transform: rotate(9deg);
-}
-
-.caregiverSketch .sketchC {
-  right: 5px;
-  border-right: 3px solid currentColor;
-  border-radius: 0 0 25px 0;
-  transform: rotate(-9deg);
-}
-
-.caregiverSketch .sketchD {
-  left: 9px;
-  top: 11px;
-  width: 8px;
-  height: 8px;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-/* Ambulance — small hand-drawn emergency van */
-.ambulanceSketch {
-  transform: rotate(2deg);
-}
-
-.ambulanceSketch .sketchA {
-  left: 8px;
-  top: 24px;
-  width: 60px;
-  height: 31px;
-  border: 3px solid currentColor;
-  border-radius: 8px 11px 6px 7px;
-  transform: skewX(-3deg);
-}
-
-.ambulanceSketch .sketchA::before {
-  content: "";
-  position: absolute;
-  right: 7px;
-  top: 4px;
-  width: 14px;
-  height: 10px;
-  border: 2px solid currentColor;
-  border-radius: 3px;
-}
-
-.ambulanceSketch .sketchB,
-.ambulanceSketch .sketchC {
-  background: currentColor;
-  border-radius: 99px;
-}
-
-.ambulanceSketch .sketchB {
-  left: 27px;
-  top: 30px;
-  width: 4px;
-  height: 16px;
-}
-
-.ambulanceSketch .sketchC {
-  left: 21px;
-  top: 36px;
-  width: 16px;
-  height: 4px;
-}
-
-.ambulanceSketch .sketchD {
-  left: 17px;
-  bottom: 8px;
-  width: 12px;
-  height: 12px;
-  border: 3px solid currentColor;
-  border-radius: 50%;
-  background: var(--card-bg);
-  box-shadow: 34px 0 0 -3px var(--card-bg), 34px 0 0 0 currentColor;
+  object-fit: contain;
+  user-select: none;
 }
 
 .tapIcon {
@@ -575,21 +221,10 @@
   transform: translateY(-2px);
 }
 
-.card:hover .sketchEmoji {
-  animation: sketchWiggle 560ms ease-in-out;
-}
-
-@keyframes sketchWiggle {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  30% {
-    translate: 0 -3px;
-  }
-  60% {
-    translate: 1px 1px;
-  }
+.card:hover .sketchEmoji,
+.card:focus-visible .sketchEmoji {
+  opacity: 1;
+  transform: translateY(-4px) rotate(-2deg) scale(1.04);
 }
 
 .flipped:hover .cardInner,
@@ -659,10 +294,10 @@
   }
 
   .sketchEmoji {
-    top: 46px;
-    right: 14px;
-    transform: scale(0.92) rotate(2deg);
-    transform-origin: top right;
+    width: 76px;
+    height: 76px;
+    top: 43px;
+    right: 10px;
   }
 
   .cardDetails {
@@ -677,6 +312,7 @@
   }
 
   .cardTitle {
+    max-width: 62%;
     font-size: 26px;
   }
 
@@ -688,6 +324,12 @@
     font-size: 10.2px;
     line-height: 1.45;
   }
+
+  .sketchEmoji {
+    width: 70px;
+    height: 70px;
+    top: 46px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -695,11 +337,13 @@
     animation: none;
   }
 
-  .cardInner {
+  .cardInner,
+  .sketchEmoji {
     transition: none;
   }
 
-  .card:hover .sketchEmoji {
-    animation: none;
+  .card:hover .sketchEmoji,
+  .card:focus-visible .sketchEmoji {
+    transform: rotate(2deg);
   }
 }
