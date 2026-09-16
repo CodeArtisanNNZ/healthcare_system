@@ -125,6 +125,12 @@ function normalize(value: string) {
     .trim();
 }
 
+function canonicalizeSymptomQuery(value: string) {
+  return value
+    .replace(/\bmatha\s+batha\b/gi, "matha betha")
+    .replace(/\bmatha\s+baytha\b/gi, "matha byatha");
+}
+
 function hasEmergencySignals(value: string) {
   return [
     /\b(can(?:not|'t) breathe|unable to breathe|severe difficulty breathing|not breathing)\b/i,
@@ -389,7 +395,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await supabase();
-    const originalQuery = parsed.data.message.trim();
+    const originalQuery = canonicalizeSymptomQuery(parsed.data.message.trim());
     const requestedCategory = parsed.data.category;
 
     let triage: DoctorTriage | null = null;
