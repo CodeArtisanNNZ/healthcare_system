@@ -23,21 +23,12 @@ export default async function CaregiversPage({
         q={q}
         placeholder="Caregiver name, service or qualification"
         extras={
-          <>
-            <input
-              name="location"
-              defaultValue={location}
-              placeholder="Area, e.g. Uttara or Mirpur"
-              maxLength={100}
-              aria-label="Location"
-              list="caregiver-location-options"
-            />
-            <datalist id="caregiver-location-options">
-              {healthcareLocations.map((item) => (
-                <option key={item} value={item} />
-              ))}
-            </datalist>
-          </>
+          <select name="location" defaultValue={location} aria-label="Location">
+            <option value="">All Dhaka locations</option>
+            {healthcareLocations.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </select>
         }
       />
 
