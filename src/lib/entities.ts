@@ -134,6 +134,7 @@ export const entities: Record<string, Entity> = {
       f("specialty_id", "Specialty", "select", true),
       f("priority", "Priority", "number", true),
       f("emergency_notice", "Emergency notice", "textarea"),
+      f("patient_guidance", "Patient guidance", "textarea"),
     ],
   },
   medicines: {

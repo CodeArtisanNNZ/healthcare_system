@@ -38,6 +38,7 @@ type TriageSuggestion = {
 type DoctorTriage = {
   urgent: boolean;
   emergency_notice: string | null;
+  patient_guidance: string | null;
   primary_specialty_id: string | null;
   primary_specialty_name: string | null;
   suggestions: TriageSuggestion[];
@@ -299,6 +300,9 @@ export function HealthcareAssistant({
                   <p className={styles.subtitle}>
                     {bn ? "উপসর্গ অনুযায়ী specialist" : "Specialist guidance from your symptoms"}
                   </p>
+                  {response.triage.patient_guidance && (
+                    <p>{response.triage.patient_guidance}</p>
+                  )}
                   <h4>
                     {bn ? "প্রথমে দেখাতে পারেন: " : "Best first specialist match: "}
                     {response.triage.primary_specialty_name}
@@ -309,7 +313,32 @@ export function HealthcareAssistant({
                       : "This is not a diagnosis. It is symptom-to-specialist triage based on the symptoms you entered."}
                   </p>
 
+                  <dl>
+                    {response.triage.suggestions.map((suggestion, index) => {
+                      const phrases = (suggestion.matched_symptoms || [])
+                        .slice(0, 4)
+                        .map((item) => item.phrase)
+                        .join(", ");
 
+                      return (
+                        <div key={suggestion.specialty_id}>
+                          <dt>
+                            {index === 0
+                              ? bn
+                                ? "প্রধান"
+                                : "Primary"
+                              : bn
+                                ? "বিকল্প"
+                                : "Also consider"}
+                          </dt>
+                          <dd>
+                            <strong>{suggestion.specialty_name}</strong>
+                            {phrases ? ` — ${phrases}` : ""}
+                          </dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
                 </div>
               </article>
             </div>
@@ -341,7 +370,7 @@ export function HealthcareAssistant({
                   key={result.id}
                 >
                   <div className={styles.resultMain}>
-                    <h4>{result.title}</h4>
+                    <h4>{result.href ? <Link href={result.href}>{result.title}</Link> : result.title}</h4>
 
                     {result.subtitle && (
                       <p className={styles.subtitle}>

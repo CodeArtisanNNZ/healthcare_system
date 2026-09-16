@@ -8,6 +8,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/patient", "Preview patient UI"],
         ["/admin", "Overview"],
         ["/admin/users", "Users"],
+        ["/admin/appointments", "Appointment requests"],
         ...Object.entries(entities).map(([key, value]) => [
           `/admin/${key}`,
           value.title,
@@ -17,6 +18,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/", "Home"],
         ["/patient", "Dashboard"],
         ["/patient/search", "Find a doctor"],
+        ["/patient/appointments", "My appointment requests"],
         ["/patient/profile", "My profile"],
         ["/patient/prescriptions", "Prescriptions"],
         ["/patient/reports", "Lab reports"],

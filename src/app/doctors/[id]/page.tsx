@@ -62,14 +62,13 @@ export default async function DoctorProfile({
             {doctor.bio && <div><dt>Profile</dt><dd>{doctor.bio}</dd></div>}
           </dl>
 
-          <button
+          <Link
             className="button secondary hc-action-button"
             data-action="appointment"
-            type="button"
-            title="Appointment booking will be connected later"
+            href={`/appointments/request?doctor=${doctor.id}`}
           >
-            Appointment
-          </button>
+            Request appointment
+          </Link>
         </div>
       </article>
     </div>

@@ -190,9 +190,9 @@ export async function DirectoryCard({
             </Link>
           )}
           {kind === "doctors" ? (
-            <button className="button secondary hc-action-button" data-action="appointment" type="button" title="Appointment booking will be connected later">
-              Appointment
-            </button>
+            <Link className="button secondary hc-action-button" data-action="appointment" href={`/appointments/request?doctor=${row.id}`}>
+              Request appointment
+            </Link>
           ) : row.phone ? (
             <a className="button secondary" href={"tel:" + String(row.phone).replace(/[^+\d]/g, "")}>Call</a>
           ) : null}

@@ -54,6 +54,7 @@ type TriageSuggestion = {
 type DoctorTriage = {
   urgent: boolean;
   emergency_notice: string | null;
+  patient_guidance: string | null;
   primary_specialty_id: string | null;
   primary_specialty_name: string | null;
   suggestions: TriageSuggestion[];
@@ -62,6 +63,7 @@ type DoctorTriage = {
 const emptyTriage: DoctorTriage = {
   urgent: false,
   emergency_notice: null,
+  patient_guidance: null,
   primary_specialty_id: null,
   primary_specialty_name: null,
   suggestions: [],
@@ -123,12 +125,6 @@ function normalize(value: string) {
     .replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function canonicalizeSymptomQuery(value: string) {
-  return value
-    .replace(/\bmatha\s+batha\b/gi, "matha betha")
-    .replace(/\bmatha\s+baytha\b/gi, "matha byatha");
 }
 
 function hasEmergencySignals(value: string) {
@@ -247,6 +243,8 @@ async function resolveDoctorTriage(
     urgent: Boolean(raw.urgent),
     emergency_notice:
       typeof raw.emergency_notice === "string" ? raw.emergency_notice : null,
+    patient_guidance:
+      typeof raw.patient_guidance === "string" ? raw.patient_guidance : null,
     primary_specialty_id:
       typeof raw.primary_specialty_id === "string"
         ? raw.primary_specialty_id
@@ -276,6 +274,7 @@ function resultFor(category: Category, row: Row): SearchResult {
           row.consultation_fee ? `৳${row.consultation_fee}` : "",
         ),
       ]),
+      href: `/doctors/${row.id}`,
     };
   }
 
@@ -395,7 +394,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await supabase();
-    const originalQuery = canonicalizeSymptomQuery(parsed.data.message.trim());
+    const originalQuery = parsed.data.message.trim();
     const requestedCategory = parsed.data.category;
 
     let triage: DoctorTriage | null = null;

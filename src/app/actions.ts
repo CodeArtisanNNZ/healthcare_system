@@ -475,3 +475,92 @@ export async function manageUser(_: ActionState, form: FormData): Promise<Action
     return failure(e);
   }
 }
+
+export async function requestAppointment(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser("patient");
+  try {
+    const input = z.object({
+      doctor_id: z.union([z.uuid(), z.literal("")]),
+      specialty_id: z.union([z.uuid(), z.literal("")]),
+      preferred_date: z.iso.date(),
+      preferred_time_start: z.string().regex(/^\d{2}:\d{2}$/),
+      preferred_time_end: z.string().regex(/^\d{2}:\d{2}$/),
+      alternate_date: z.union([z.iso.date(), z.literal("")]),
+      alternate_time_start: z.union([z.string().regex(/^\d{2}:\d{2}$/), z.literal("")]),
+      alternate_time_end: z.union([z.string().regex(/^\d{2}:\d{2}$/), z.literal("")]),
+      budget_min: z.coerce.number().min(0).max(100000),
+      budget_max: z.coerce.number().min(0).max(100000),
+      area: z.string().trim().min(2).max(120),
+      concern_summary: z.string().trim().max(1200),
+    }).refine((v) => v.preferred_time_end > v.preferred_time_start, { message: "Preferred end time must be after start time." })
+      .refine((v) => v.budget_max >= v.budget_min, { message: "Maximum budget must be at least the minimum." })
+      .parse(Object.fromEntries(form));
+
+    const candidates = form.getAll("candidate_doctor_id").map(String).filter(Boolean);
+    const parsedCandidates = z.array(z.uuid()).max(3).parse([...new Set(candidates)]);
+    const doctorId = input.doctor_id || parsedCandidates[0] || null;
+    const db = await supabase();
+    const { data: request, error } = await db.from("appointment_requests").insert({
+      patient_id: user.id,
+      specialty_id: input.specialty_id || null,
+      requested_doctor_id: doctorId,
+      preferred_date: input.preferred_date,
+      preferred_time_start: input.preferred_time_start,
+      preferred_time_end: input.preferred_time_end,
+      alternate_date: input.alternate_date || null,
+      alternate_time_start: input.alternate_time_start || null,
+      alternate_time_end: input.alternate_time_end || null,
+      budget_min: input.budget_min,
+      budget_max: input.budget_max,
+      area: input.area,
+      concern_summary: input.concern_summary || null,
+    }).select("id").single();
+    check(error);
+    const ranked = [...new Set([doctorId, ...parsedCandidates].filter(Boolean))].slice(0, 3);
+    if (ranked.length) {
+      const { error: candidateError } = await db.from("appointment_request_candidates").insert(
+        ranked.map((id, index) => ({ request_id: request!.id, doctor_id: id, preference_rank: index + 1 })),
+      );
+      check(candidateError);
+    }
+    const { error: eventError } = await db.from("appointment_request_events").insert({ request_id: request!.id, actor_id: user.id, to_status: "Requested", note: "Appointment requested by patient." });
+    check(eventError);
+    revalidatePath("/patient/appointments");
+    return { success: "Appointment request sent. An administrator will confirm the doctor, time and contact details." };
+  } catch (e) { return failure(e); }
+}
+
+export async function reviewAppointment(_: ActionState, form: FormData): Promise<ActionState> {
+  const admin = await requireUser("admin");
+  try {
+    const input = z.object({
+      id: z.uuid(),
+      status: z.enum(["Reviewing", "Confirmed", "Declined", "Completed"]),
+      assigned_doctor_id: z.union([z.uuid(), z.literal("")]),
+      confirmed_time: z.string().max(40),
+      contact_info: z.string().trim().max(500),
+      admin_note: z.string().trim().max(1200),
+    }).parse(Object.fromEntries(form));
+    if (input.status === "Confirmed" && (!input.assigned_doctor_id || !input.confirmed_time || !input.contact_info)) {
+      throw new Error("A confirmed request needs a doctor, final date/time and contact information.");
+    }
+    const db = await supabase();
+    const { data: current, error: readError } = await db.from("appointment_requests").select("status").eq("id", input.id).single();
+    check(readError);
+    const confirmed = input.status === "Confirmed";
+    const { error } = await db.from("appointment_requests").update({
+      status: input.status,
+      assigned_doctor_id: input.assigned_doctor_id || null,
+      confirmed_time: input.confirmed_time ? new Date(`${input.confirmed_time}:00+06:00`).toISOString() : null,
+      contact_info: input.contact_info || null,
+      admin_note: input.admin_note || null,
+      confirmed_at: confirmed ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", input.id);
+    check(error);
+    const { error: eventError } = await db.from("appointment_request_events").insert({ request_id: input.id, actor_id: admin.id, from_status: current!.status, to_status: input.status, note: input.admin_note || null });
+    check(eventError);
+    revalidatePath("/admin/appointments"); revalidatePath("/patient/appointments");
+    return { success: "Appointment request updated." };
+  } catch (e) { return failure(e); }
+}
