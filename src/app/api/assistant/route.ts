@@ -20,7 +20,7 @@ type Category = z.infer<typeof categorySchema>;
 
 const requestSchema = z
   .object({
-    message: z.string().trim().min(1).max(160),
+    message: z.string().trim().min(1).max(500),
     category: categorySchema,
     location: z.string().trim().max(100),
   })
@@ -38,155 +38,34 @@ type SearchResult = {
   href?: string;
 };
 
-type AliasRule = {
-  phrases: string[];
-  canonical: string;
-  specialtyHint?: string;
+type TriageMatchedSymptom = {
+  phrase: string;
+  strength?: number;
 };
 
-const doctorAliases: AliasRule[] = [
-  {
-    phrases: [
-      "matha betha",
-      "matha byatha",
-      "matha bethaa",
-      "mtha betha",
-      "মাথা ব্যথা",
-      "মাথাব্যথা",
-      "head ache",
-      "hedache",
-      "headache",
-    ],
-    canonical: "headache",
-    specialtyHint: "neuro",
-  },
-  {
-    phrases: [
-      "dater betha",
-      "datar betha",
-      "dat betha",
-      "dant betha",
-      "দাঁতের ব্যথা",
-      "দাতের ব্যথা",
-      "tooth ache",
-      "tooth pain",
-    ],
-    canonical: "tooth pain",
-    specialtyHint: "dent",
-  },
-  {
-    phrases: [
-      "heart doctor",
-      "heart er doctor",
-      "cardiac doctor",
-      "হার্ট ডাক্তার",
-      "হৃদরোগ ডাক্তার",
-    ],
-    canonical: "cardiology",
-    specialtyHint: "cardio",
-  },
-  {
-    phrases: [
-      "skin doctor",
-      "skin er doctor",
-      "চর্ম ডাক্তার",
-      "চামড়ার ডাক্তার",
-      "dermatologist",
-    ],
-    canonical: "dermatology",
-    specialtyHint: "derma",
-  },
-  {
-    phrases: [
-      "eye doctor",
-      "chokher doctor",
-      "chokh doctor",
-      "চোখের ডাক্তার",
-      "ophthalmologist",
-    ],
-    canonical: "ophthalmology",
-    specialtyHint: "ophthal",
-  },
-  {
-    phrases: [
-      "child doctor",
-      "bacchar doctor",
-      "baby doctor",
-      "শিশু ডাক্তার",
-      "বাচ্চার ডাক্তার",
-      "pediatrician",
-    ],
-    canonical: "pediatrics",
-    specialtyHint: "pedia",
-  },
-  {
-    phrases: [
-      "bone doctor",
-      "joint pain doctor",
-      "joint pain",
-      "leg pain",
-      "knee pain",
-      "back pain",
-      "neck pain",
-      "payer betha",
-      "paye betha",
-      "pa betha",
-      "hatur betha",
-      "hatu betha",
-      "komor betha",
-      "ghare betha",
-      "haddi doctor",
-      "পায়ে ব্যথা",
-      "পায়ে ব্যথা",
-      "হাঁটু ব্যথা",
-      "হাটু ব্যথা",
-      "কোমর ব্যথা",
-      "ঘাড়ে ব্যথা",
-      "ঘাড়ে ব্যথা",
-      "হার ডাক্তার",
-      "হাড়ের ডাক্তার",
-      "orthopedic",
-      "orthopaedic",
-    ],
-    canonical: "orthopedics",
-    specialtyHint: "ortho",
-  },
-  {
-    phrases: [
-      "women doctor",
-      "gynae doctor",
-      "gyne doctor",
-      "মহিলা ডাক্তার",
-      "গাইনি ডাক্তার",
-      "gynecologist",
-      "gynaecologist",
-    ],
-    canonical: "gynecology",
-    specialtyHint: "gyn",
-  },
-  {
-    phrases: [
-      "ear nose throat",
-      "ent doctor",
-      "kan nak gola",
-      "কান নাক গলা",
-      "কান নাক গলার ডাক্তার",
-    ],
-    canonical: "ENT",
-    specialtyHint: "ent",
-  },
-  {
-    phrases: [
-      "mental health doctor",
-      "psychiatrist",
-      "moner doctor",
-      "মনের ডাক্তার",
-      "মানসিক ডাক্তার",
-    ],
-    canonical: "psychiatry",
-    specialtyHint: "psych",
-  },
-];
+type TriageSuggestion = {
+  specialty_id: string;
+  specialty_name: string;
+  score?: number;
+  matched_count?: number;
+  matched_symptoms?: TriageMatchedSymptom[];
+};
+
+type DoctorTriage = {
+  urgent: boolean;
+  emergency_notice: string | null;
+  primary_specialty_id: string | null;
+  primary_specialty_name: string | null;
+  suggestions: TriageSuggestion[];
+};
+
+const emptyTriage: DoctorTriage = {
+  urgent: false,
+  emergency_notice: null,
+  primary_specialty_id: null,
+  primary_specialty_name: null,
+  suggestions: [],
+};
 
 const entityByCategory: Record<Category, string> = {
   doctor: "doctors",
@@ -246,151 +125,19 @@ function normalize(value: string) {
     .trim();
 }
 
-function levenshtein(a: string, b: string) {
-  if (a === b) return 0;
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-
-  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
-
-  for (let i = 1; i <= a.length; i += 1) {
-    const current = [i];
-
-    for (let j = 1; j <= b.length; j += 1) {
-      current[j] = Math.min(
-        current[j - 1] + 1,
-        previous[j] + 1,
-        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-    }
-
-    for (let j = 0; j < current.length; j += 1) {
-      previous[j] = current[j];
-    }
-  }
-
-  return previous[b.length];
-}
-
-function similarity(a: string, b: string) {
-  const left = normalize(a);
-  const right = normalize(b);
-
-  if (!left || !right) return 0;
-  if (left === right) return 1;
-
-  const longest = Math.max(left.length, right.length);
-  return 1 - levenshtein(left, right) / longest;
-}
-
-const genericAliasWords = new Set([
-  "betha",
-  "byatha",
-  "bethaa",
-  "ব্যথা",
-  "pain",
-  "ache",
-  "doctor",
-  "daktar",
-  "ডাক্তার",
-  "dr",
-  "er",
-  "amar",
-  "amr",
-  "ekta",
-  "onek",
-]);
-
-function meaningfulTokens(value: string) {
-  return normalize(value)
-    .split(" ")
-    .filter((token) => token && !genericAliasWords.has(token));
-}
-
-/**
- * Fuzzy matching must be driven by the meaningful/body-part word,
- * not by generic words such as "betha", "pain" or "doctor".
- *
- * Example:
- *   "payer betha" vs "dater betha"
- * should NOT match just because both contain "betha".
- */
-function safeAliasScore(query: string, phrase: string) {
-  const normalizedQuery = normalize(query);
-  const normalizedPhrase = normalize(phrase);
-
-  if (!normalizedQuery || !normalizedPhrase) return 0;
-
-  if (
-    normalizedQuery === normalizedPhrase ||
-    normalizedQuery.includes(normalizedPhrase)
-  ) {
-    return 1;
-  }
-
-  const queryAnchors = meaningfulTokens(query);
-  const phraseAnchors = meaningfulTokens(phrase);
-
-  if (!queryAnchors.length || !phraseAnchors.length) {
-    return 0;
-  }
-
-  const anchorScores = phraseAnchors.map((phraseToken) =>
-    Math.max(
-      ...queryAnchors.map((queryToken) =>
-        similarity(queryToken, phraseToken),
-      ),
-    ),
-  );
-
-  const weakestAnchor = Math.min(...anchorScores);
-
-  // Require the meaningful word itself to match closely.
-  // This blocks "payer betha" -> "dater betha" (payer/dater are not close enough).
-  if (weakestAnchor < 0.78) {
-    return 0;
-  }
-
-  const averageAnchor =
-    anchorScores.reduce((sum, score) => sum + score, 0) /
-    anchorScores.length;
-
-  // Phrase similarity is only a small tie-breaker.
-  return averageAnchor * 0.9 + similarity(normalizedQuery, normalizedPhrase) * 0.1;
-}
-
-function resolveDoctorAlias(query: string) {
-  let best:
-    | {
-        rule: AliasRule;
-        score: number;
-      }
-    | undefined;
-
-  for (const rule of doctorAliases) {
-    for (const phrase of rule.phrases) {
-      const score = safeAliasScore(query, phrase);
-
-      if (!best || score > best.score) {
-        best = { rule, score };
-      }
-    }
-  }
-
-  return best && best.score >= 0.79 ? best.rule : null;
-}
-
 function hasEmergencySignals(value: string) {
   return [
-    /\b(can(?:not|'t) breathe|unable to breathe|severe difficulty breathing)\b/i,
+    /\b(can(?:not|'t) breathe|unable to breathe|severe difficulty breathing|not breathing)\b/i,
     /\b(severe chest pain|crushing chest pain|chest pressure)\b/i,
     /\b(unconscious|not waking up|unresponsive)\b/i,
-    /\b(severe bleeding|bleeding won(?:'t| not) stop)\b/i,
-    /শ্বাস.{0,12}(কষ্ট|নিতে পারছি না|নিতে সমস্যা)/i,
-    /বুকে.{0,12}(তীব্র ব্যথা|চাপ)/i,
+    /\b(severe bleeding|bleeding won(?:'t| not) stop|vomiting blood)\b/i,
+    /\b(face droop|one sided weakness|slurred speech)\b/i,
+    /শ্বাস.{0,16}(কষ্ট|নিতে পারছি না|নিতে সমস্যা)/i,
+    /বুকে.{0,14}(তীব্র ব্যথা|চাপ)/i,
     /অজ্ঞান|জ্ঞান নেই/i,
-    /\bshash.{0,15}(kosto|nite parchi na|problem)\b/i,
-    /\bbuke.{0,12}(tibro betha|onek beshi betha|chap)\b/i,
+    /রক্ত.{0,12}(বন্ধ হচ্ছে না|বমি)/i,
+    /\bshash.{0,18}(kosto|nite parchi na|problem)\b/i,
+    /\bbuke.{0,14}(tibro betha|onek beshi betha|chap)\b/i,
   ].some((pattern) => pattern.test(value));
 }
 
@@ -409,6 +156,7 @@ function locationText(category: Category, row: Row) {
       text(row.city),
       text(row.address),
       text(row.hospital_name),
+      text(row.coverage),
     ]
       .filter(Boolean)
       .join(" ");
@@ -422,9 +170,13 @@ function filterByLocation(category: Category, rows: Row[], location: string) {
 
   const needle = normalize(location);
 
-  return rows.filter((row) =>
-    normalize(locationText(category, row)).includes(needle),
-  );
+  return rows.filter((row) => {
+    const haystack = normalize(locationText(category, row));
+    return (
+      haystack.includes(needle) ||
+      (category === "ambulance" && haystack.includes("dhaka citywide"))
+    );
+  });
 }
 
 async function searchDirectory(
@@ -437,7 +189,7 @@ async function searchDirectory(
 
   const filtered = await db.rpc("search_directory_filtered", {
     entity,
-    q,
+    q: q.slice(0, 160),
     location_filter: category === "medicine" ? "" : location,
     page_number: 1,
   });
@@ -448,7 +200,7 @@ async function searchDirectory(
 
   const fallback = await db.rpc("search_directory", {
     entity,
-    q,
+    q: q.slice(0, 160),
     page_number: 1,
   });
 
@@ -468,34 +220,38 @@ async function searchDirectory(
   );
 }
 
-async function resolveSpecialtySearch(
+async function resolveDoctorTriage(
   db: Awaited<ReturnType<typeof supabase>>,
-  rule: AliasRule | null,
-) {
-  if (!rule?.specialtyHint) {
-    return {
-      searchTerm: rule?.canonical || "",
-      context: rule?.canonical || "",
-    };
+  query: string,
+): Promise<DoctorTriage> {
+  const { data, error } = await db.rpc("resolve_doctor_triage_multi", {
+    query_text: query,
+  });
+
+  if (error) {
+    console.error("Doctor triage resolver unavailable", error.message);
+    return emptyTriage;
   }
 
-  const { data, error } = await db
-    .from("specialties")
-    .select("name")
-    .ilike("name", `%${rule.specialtyHint}%`)
-    .order("name")
-    .limit(1);
+  if (!data || typeof data !== "object") return emptyTriage;
 
-  if (!error && data?.[0]?.name) {
-    return {
-      searchTerm: String(data[0].name),
-      context: String(data[0].name),
-    };
-  }
+  const raw = data as Partial<DoctorTriage>;
 
   return {
-    searchTerm: rule.canonical,
-    context: rule.canonical,
+    urgent: Boolean(raw.urgent),
+    emergency_notice:
+      typeof raw.emergency_notice === "string" ? raw.emergency_notice : null,
+    primary_specialty_id:
+      typeof raw.primary_specialty_id === "string"
+        ? raw.primary_specialty_id
+        : null,
+    primary_specialty_name:
+      typeof raw.primary_specialty_name === "string"
+        ? raw.primary_specialty_name
+        : null,
+    suggestions: Array.isArray(raw.suggestions)
+      ? (raw.suggestions as TriageSuggestion[]).slice(0, 3)
+      : [],
   };
 }
 
@@ -514,7 +270,6 @@ function resultFor(category: Category, row: Row): SearchResult {
           row.consultation_fee ? `৳${row.consultation_fee}` : "",
         ),
       ]),
-      phone: text(row.phone) || undefined,
     };
   }
 
@@ -541,6 +296,7 @@ function resultFor(category: Category, row: Row): SearchResult {
       ]),
       phone: text(row.phone) || undefined,
       secondaryPhone: text(row.emergency_phone) || undefined,
+      href: `/hospitals/${row.id}`,
     };
   }
 
@@ -580,8 +336,10 @@ function resultFor(category: Category, row: Row): SearchResult {
       detail("Location", row.location || row.city),
       detail("Hospital", row.hospital_name),
       detail("Availability", row.availability),
+      detail("Coverage", row.coverage),
     ]),
     phone: text(row.driver_phone) || undefined,
+    secondaryPhone: text(row.alternate_phone) || undefined,
   };
 }
 
@@ -631,25 +389,34 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await supabase();
-    const urgent = hasEmergencySignals(parsed.data.message);
-    const category: Category = urgent ? "hospital" : parsed.data.category;
+    const originalQuery = parsed.data.message.trim();
+    const requestedCategory = parsed.data.category;
 
-    let searchTerm = parsed.data.message.trim();
+    let triage: DoctorTriage | null = null;
+    let urgent = hasEmergencySignals(originalQuery);
+
+    if (requestedCategory === "doctor") {
+      triage = await resolveDoctorTriage(db, originalQuery);
+      urgent = urgent || triage.urgent;
+    }
+
+    const category: Category = urgent ? "hospital" : requestedCategory;
+
+    let searchTerm = originalQuery.slice(0, 160);
     let context = "";
 
-    if (category === "doctor") {
-      const alias = resolveDoctorAlias(parsed.data.message);
-
-      if (alias) {
-        const resolved = await resolveSpecialtySearch(db, alias);
-        searchTerm = resolved.searchTerm;
-        context = resolved.context;
-      }
+    if (
+      requestedCategory === "doctor" &&
+      triage?.primary_specialty_name &&
+      !urgent
+    ) {
+      searchTerm = triage.primary_specialty_name;
+      context = `Suggested specialist: ${triage.primary_specialty_name}`;
     }
 
     if (urgent) {
       searchTerm = "";
-      context = "Urgent care";
+      context = triage?.emergency_notice || "Urgent medical assessment may be needed";
     }
 
     let rows = await searchDirectory(
@@ -659,16 +426,19 @@ export async function POST(request: NextRequest) {
       selectedLocation,
     );
 
-    // If normalization was too specific, retry the user's original wording.
+    // For names or ordinary directory searches with no symptom match, retry the
+    // original wording. For a recognised symptom route we intentionally keep an
+    // empty doctor list rather than showing an unrelated specialty.
     if (
       rows.length === 0 &&
-      searchTerm !== parsed.data.message.trim() &&
-      !urgent
+      searchTerm !== originalQuery.slice(0, 160) &&
+      !urgent &&
+      !triage?.primary_specialty_name
     ) {
       rows = await searchDirectory(
         db,
         category,
-        parsed.data.message.trim(),
+        originalQuery.slice(0, 160),
         selectedLocation,
       );
     }
@@ -690,10 +460,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         category,
+        requestedCategory,
         location: selectedLocation,
         urgent,
         title: categoryTitle[category],
         context,
+        triage,
         results,
         directoryUrl,
         directoryLabel: `View all ${categoryTitle[category].toLowerCase()}`,
