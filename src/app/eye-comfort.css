@@ -57,6 +57,16 @@ textarea:focus {
   background-color: #f2f6f4;
 }
 
+/* The dashboard assistant only exposes the two flows intended here:
+   symptom/doctor guidance and medicine search. */
+section[aria-labelledby="assistant-title"] [class*="categoryRow"] > button:nth-child(n + 3) {
+  display: none !important;
+}
+
+section[aria-labelledby="assistant-title"] [class*="categoryRow"] > button:nth-child(-n + 2) {
+  flex: 1 1 0;
+}
+
 /* Avoid recoloring emergency/red areas; only the neutral shell is softened. */
 @media (prefers-color-scheme: light) {
   body {
