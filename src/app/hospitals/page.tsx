@@ -41,19 +41,12 @@ export default async function HospitalsPage({
         placeholder="Hospital name, department or service"
         extras={
           <>
-            <input
-              name="location"
-              defaultValue={location}
-              placeholder="Area, e.g. Dhanmondi, Mirpur"
-              maxLength={100}
-              aria-label="Location"
-              list="hospital-location-options"
-            />
-            <datalist id="hospital-location-options">
+            <select name="location" defaultValue={location} aria-label="Location">
+              <option value="">All Dhaka locations</option>
               {healthcareLocations.map((item) => (
-                <option key={item} value={item} />
+                <option key={item} value={item}>{item}</option>
               ))}
-            </datalist>
+            </select>
             <select name="category" defaultValue={category} aria-label="Hospital category">
               <option value="">All hospital categories</option>
               {hospitalCategories.map((item) => (
