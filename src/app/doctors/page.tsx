@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { directory, lookups, queryParams, type Params } from "@/lib/data";
+import { healthcareLocations } from "@/lib/locations";
 import { DirectoryCard, Empty, Heading, Pager, Search } from "@/components/ui";
 
 export default async function DoctorsPage({
@@ -9,9 +10,9 @@ export default async function DoctorsPage({
 }) {
   await requireUser("patient");
 
-  const { q, location, page } = queryParams(await searchParams);
+  const { q, location, specialty, page } = queryParams(await searchParams);
   const [rows, specialties] = await Promise.all([
-    directory("doctors", q, page, location),
+    directory("doctors", q, page, location, { specialty }),
     lookups("specialties"),
   ]);
   const specialtyNames = new Map(
@@ -21,20 +22,36 @@ export default async function DoctorsPage({
   return (
     <div className="container section">
       <Heading title="Doctors" eyebrow="HEALTHCARE DIRECTORY">
-        Browse the doctor directory, or narrow it by doctor name, specialty, care need or location.
+        Search by doctor name, specialty, symptom or Dhaka area. Exact names are ranked first and close spellings are matched automatically.
       </Heading>
 
       <Search
         q={q}
-        placeholder="Search doctors, specialties or care needs"
+        placeholder="Doctor name, specialty or symptom"
         extras={
-          <input
-            name="location"
-            defaultValue={location}
-            placeholder="Location, e.g. Dhaka or Mirpur"
-            maxLength={100}
-            aria-label="Location"
-          />
+          <>
+            <input
+              name="location"
+              defaultValue={location}
+              placeholder="Area, e.g. Mirpur, Uttara"
+              maxLength={100}
+              aria-label="Location"
+              list="doctor-location-options"
+            />
+            <datalist id="doctor-location-options">
+              {healthcareLocations.map((item) => (
+                <option key={item} value={item} />
+              ))}
+            </datalist>
+            <select name="specialty" defaultValue={specialty} aria-label="Specialty">
+              <option value="">All specialties</option>
+              {specialties.map((item) => (
+                <option key={String(item.id)} value={String(item.name)}>
+                  {String(item.name)}
+                </option>
+              ))}
+            </select>
+          </>
         }
       />
 
@@ -56,7 +73,7 @@ export default async function DoctorsPage({
           ))}
         </div>
       ) : (
-        <Empty>No doctors found. Try a broader name, specialty or location.</Empty>
+        <Empty>No doctors found. Try the doctor's full or partial name, another specialty, symptom or nearby area.</Empty>
       )}
 
       <Pager
@@ -65,6 +82,7 @@ export default async function DoctorsPage({
         q={q}
         location={location}
         path="/doctors"
+        filters={{ specialty }}
       />
     </div>
   );
