@@ -28,12 +28,29 @@ type SearchResult = {
   href?: string;
 };
 
+type TriageSuggestion = {
+  specialty_id: string;
+  specialty_name: string;
+  matched_count?: number;
+  matched_symptoms?: Array<{ phrase: string; strength?: number }>;
+};
+
+type DoctorTriage = {
+  urgent: boolean;
+  emergency_notice: string | null;
+  primary_specialty_id: string | null;
+  primary_specialty_name: string | null;
+  suggestions: TriageSuggestion[];
+};
+
 type AssistantResponse = {
   category: Category;
+  requestedCategory?: Category;
   location: string;
   urgent: boolean;
   title: string;
   context: string;
+  triage?: DoctorTriage | null;
   results: SearchResult[];
   directoryUrl: string;
   directoryLabel: string;
@@ -122,6 +139,8 @@ export function HealthcareAssistant({
     }
   }
 
+  const primarySpecialty = response?.triage?.primary_specialty_name || "";
+
   return (
     <section className={styles.shell} aria-labelledby="assistant-title">
       <div className={styles.heading}>
@@ -163,15 +182,19 @@ export function HealthcareAssistant({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            maxLength={160}
+            maxLength={category === "doctor" ? 500 : 160}
             placeholder={
               category === "medicine"
                 ? bn
                   ? "ওষুধের নাম বা strength লিখুন"
                   : "Medicine name or strength"
-                : bn
-                  ? "নাম, বিশেষত্ব বা সেবা লিখুন"
-                  : "Name, specialty or service"
+                : category === "doctor"
+                  ? bn
+                    ? "উপসর্গ লিখুন—বাংলা, English বা Banglish; একাধিক উপসর্গও লিখতে পারেন"
+                    : "Describe one or more symptoms in English, Bangla or Banglish"
+                  : bn
+                    ? "নাম, বিশেষত্ব বা সেবা লিখুন"
+                    : "Name, specialty or service"
             }
           />
         </label>
@@ -236,8 +259,8 @@ export function HealthcareAssistant({
             title={bn ? "সঠিক তথ্য মিলিয়ে দেখা হচ্ছে" : "Finding the best match"}
             message={
               bn
-                ? "আপনার সার্চ, সেবার ধরন ও লোকেশন মিলিয়ে সবচেয়ে প্রাসঙ্গিক Healthcare Central ফলাফল প্রস্তুত হচ্ছে।"
-                : "Your search, service type and location are being matched with the most relevant Healthcare Central results."
+                ? "আপনার উপসর্গ, সেবার ধরন ও লোকেশন মিলিয়ে সবচেয়ে প্রাসঙ্গিক specialist এবং Healthcare Central ফলাফল প্রস্তুত হচ্ছে।"
+                : "Your symptoms, service type and location are being matched with the most relevant specialist and Healthcare Central results."
             }
           />
         </div>
@@ -250,14 +273,15 @@ export function HealthcareAssistant({
               <div>
                 <strong>
                   {bn
-                    ? "জরুরি সহায়তা প্রয়োজন হতে পারে"
-                    : "Urgent help may be needed"}
+                    ? "জরুরি চিকিৎসা প্রয়োজন হতে পারে"
+                    : "Urgent medical assessment may be needed"}
                 </strong>
 
                 <span>
-                  {bn
-                    ? "জরুরি যোগাযোগ ও অ্যাম্বুলেন্স সেবা দেখুন।"
-                    : "Open emergency contacts and ambulance support."}
+                  {response.triage?.emergency_notice ||
+                    (bn
+                      ? "জরুরি যোগাযোগ ও অ্যাম্বুলেন্স সেবা দেখুন।"
+                      : "Open emergency contacts and ambulance support.")}
                 </span>
               </div>
 
@@ -265,6 +289,54 @@ export function HealthcareAssistant({
                 <span>{bn ? "জরুরি সহায়তা" : "Emergency Help"}</span>
                 <ActionGlyph kind="emergency" />
               </Link>
+            </div>
+          )}
+
+          {response.triage && response.triage.suggestions.length > 0 && (
+            <div className={styles.results}>
+              <article className={styles.resultCard}>
+                <div className={styles.resultMain}>
+                  <p className={styles.subtitle}>
+                    {bn ? "উপসর্গ অনুযায়ী specialist" : "Specialist guidance from your symptoms"}
+                  </p>
+                  <h4>
+                    {bn ? "প্রথমে দেখাতে পারেন: " : "Best first specialist match: "}
+                    {response.triage.primary_specialty_name}
+                  </h4>
+                  <p className={styles.subtitle}>
+                    {bn
+                      ? "এটি diagnosis নয়। আপনার লেখা উপসর্গগুলোর সাথে specialist routing মিলিয়ে এই পরামর্শ দেখানো হয়েছে।"
+                      : "This is not a diagnosis. It is symptom-to-specialist triage based on the symptoms you entered."}
+                  </p>
+
+                  <dl>
+                    {response.triage.suggestions.map((suggestion, index) => {
+                      const phrases = (suggestion.matched_symptoms || [])
+                        .slice(0, 4)
+                        .map((item) => item.phrase)
+                        .join(", ");
+
+                      return (
+                        <div key={suggestion.specialty_id}>
+                          <dt>
+                            {index === 0
+                              ? bn
+                                ? "প্রধান"
+                                : "Primary"
+                              : bn
+                                ? "বিকল্প"
+                                : "Also consider"}
+                          </dt>
+                          <dd>
+                            <strong>{suggestion.specialty_name}</strong>
+                            {phrases ? ` — ${phrases}` : ""}
+                          </dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
+                </div>
+              </article>
             </div>
           )}
 
@@ -325,13 +397,19 @@ export function HealthcareAssistant({
 
                     {result.secondaryPhone && (
                       <a href={callHref(result.secondaryPhone)}>
-                        Emergency call
+                        {response.category === "ambulance"
+                          ? bn
+                            ? "বিকল্প নম্বর"
+                            : "Alternate number"
+                          : bn
+                            ? "জরুরি কল"
+                            : "Emergency call"}
                       </a>
                     )}
 
                     {result.href && (
                       <Link href={result.href}>
-                        View details
+                        {bn ? "বিস্তারিত" : "View details"}
                       </Link>
                     )}
                   </div>
@@ -340,9 +418,13 @@ export function HealthcareAssistant({
             </div>
           ) : (
             <div className={styles.empty}>
-              {bn
-                ? "এই সার্চের জন্য কোনো ফলাফল পাওয়া যায়নি।"
-                : "No matching results were found."}
+              {primarySpecialty && !response.urgent
+                ? bn
+                  ? `${primarySpecialty} আপনার উপসর্গের জন্য সবচেয়ে কাছের specialist match, কিন্তু এই মুহূর্তে আমাদের তালিকায় এই specialist-এর কোনো doctor নেই।`
+                  : `${primarySpecialty} is the closest specialist match for these symptoms, but Healthcare Central does not currently have a listed doctor under that specialty.`
+                : bn
+                  ? "এই সার্চের জন্য কোনো ফলাফল পাওয়া যায়নি।"
+                  : "No matching results were found."}
             </div>
           )}
         </div>
@@ -350,8 +432,8 @@ export function HealthcareAssistant({
 
       <p className={styles.disclaimer}>
         {bn
-          ? "এই সেবা চিকিৎসা নির্ণয় করে না।"
-          : "Search assistance only. This service does not provide a diagnosis."}
+          ? "Healthcare Central উপসর্গ থেকে specialist বাছাইয়ে সহায়তা করে; এটি রোগ নির্ণয় বা চিকিৎসকের বিকল্প নয়।"
+          : "Healthcare Central can suggest a type of specialist from symptoms; it does not diagnose conditions or replace a clinician."}
       </p>
     </section>
   );
