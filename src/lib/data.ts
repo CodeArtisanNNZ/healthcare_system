@@ -21,6 +21,20 @@ export async function directory(
   if (!configured()) return [];
 
   const db = await supabase();
+
+  // Doctor search gets a dedicated conservative symptom/specialty resolver.
+  // If the migration has not reached an environment yet, fall back to the
+  // existing directory RPC instead of breaking the directory.
+  if (entity === "doctors") {
+    const smart = await db.rpc("search_doctors_smart", {
+      query_text: q,
+      location_filter: location,
+      page_number: Math.floor(page),
+    });
+
+    if (!smart.error) return (smart.data || []) as Row[];
+  }
+
   const { data, error } = await db.rpc("search_directory_filtered", {
     entity,
     q,
