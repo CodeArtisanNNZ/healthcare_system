@@ -18,15 +18,19 @@ export default async function HospitalsPage({
         Browse hospitals and medical centres, or search by name, department or location.
       </Heading>
 
-      <Search q={q} placeholder="Search hospitals or departments">
-        <input
-          name="location"
-          defaultValue={location}
-          placeholder="Location, e.g. Dhaka or Dhanmondi"
-          maxLength={100}
-          aria-label="Location"
-        />
-      </Search>
+      <Search
+        q={q}
+        placeholder="Search hospitals or departments"
+        extras={
+          <input
+            name="location"
+            defaultValue={location}
+            placeholder="Location, e.g. Dhaka or Dhanmondi"
+            maxLength={100}
+            aria-label="Location"
+          />
+        }
+      />
 
       {rows.length ? (
         <div className="cards directory">
