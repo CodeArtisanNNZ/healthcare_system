@@ -69,7 +69,7 @@ export function DashboardDrawer({
     ["/patient/hospitals", bn ? "হাসপাতাল" : "Hospitals"],
     ["/patient/lab_tests", bn ? "ল্যাব টেস্ট" : "Lab tests"],
     ["/patient/caregivers", bn ? "কেয়ারগিভার" : "Caregivers"],
-    ["/patient/ambulances", bn ? "অ্যাম্বুলেন্স" : "Ambulances"],
+    ["/emergency", bn ? "অ্যাম্বুলেন্স" : "Ambulances"],
     ["/patient/prescriptions", bn ? "প্রেসক্রিপশন" : "Prescriptions"],
     ["/patient/reports", bn ? "ল্যাব রিপোর্ট" : "Lab reports"],
     ["/patient/profile", bn ? "আমার প্রোফাইল" : "My profile"],
