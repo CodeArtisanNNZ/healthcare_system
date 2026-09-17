@@ -255,13 +255,25 @@ export async function saveEntity(_: ActionState, form: FormData): Promise<Action
       image = await upload(file, "directory-images", user.id);
     }
 
-    const row = { ...input, ...(image ? { image_path: image } : {}) };
+    const doctorContact = key === "doctors"
+      ? { phone: input.phone || null, email: input.email || null }
+      : null;
+    const publicInput = key === "doctors"
+      ? Object.fromEntries(Object.entries(input).filter(([field]) => !["phone", "email"].includes(field)))
+      : input;
+    const row = { ...publicInput, ...(image ? { image_path: image } : {}) };
 
     const result = id
       ? await db.from(key).update(row).eq("id", id).select("id").single()
       : await db.from(key).insert(row).select("id").single();
 
     check(result.error);
+    if (key === "doctors" && result.data?.id) {
+      const { error: contactError } = await db
+        .from("doctor_private_contacts")
+        .upsert({ doctor_id: result.data.id, ...doctorContact }, { onConflict: "doctor_id" });
+      check(contactError);
+    }
   } catch (e) {
     if (image) {
       await removeFile("directory-images", image).catch(() => {});

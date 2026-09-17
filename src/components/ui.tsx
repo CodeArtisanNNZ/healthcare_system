@@ -173,7 +173,13 @@ export async function DirectoryCard({
         </h2>
         <dl>
           {entity.fields
-            .filter((field) => ![entity.nameKey, "user_id", "specialty_id", "status"].includes(field.key))
+            .filter((field) => ![
+              entity.nameKey,
+              "user_id",
+              "specialty_id",
+              "status",
+              ...(kind === "doctors" ? ["phone", "email", "source_url", "verified_on"] : []),
+            ].includes(field.key))
             .map((field) =>
               row[field.key] !== null && row[field.key] !== undefined && row[field.key] !== "" ? (
                 <div key={field.key}>

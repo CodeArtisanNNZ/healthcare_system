@@ -158,6 +158,15 @@ export default async function AdminEntity({
       .single();
     if (error || !data) notFound();
     edit = data as Row;
+    if (key === "doctors") {
+      const { data: contact, error: contactError } = await db
+        .from("doctor_private_contacts")
+        .select("phone,email")
+        .eq("doctor_id", id.data)
+        .maybeSingle();
+      if (contactError) throw new Error(contactError.message);
+      edit = { ...edit, phone: contact?.phone || "", email: contact?.email || "" };
+    }
   }
   return (
     <>

@@ -57,10 +57,14 @@ export default async function DoctorProfile({
             {doctor.consultation_fee !== null && doctor.consultation_fee !== undefined && <div><dt>Consultation fee</dt><dd>৳{doctor.consultation_fee}</dd></div>}
             {doctor.available_time && <div><dt>Available time</dt><dd>{doctor.available_time}</dd></div>}
             {doctor.registration_no && <div><dt>Registration number</dt><dd>{doctor.registration_no}</dd></div>}
-            {doctor.phone && <div><dt>Phone</dt><dd>{doctor.phone}</dd></div>}
-            {doctor.email && <div><dt>Email</dt><dd>{doctor.email}</dd></div>}
             {doctor.bio && <div><dt>Profile</dt><dd>{doctor.bio}</dd></div>}
+            {doctor.verification_status === "Verified" && <div><dt>Data status</dt><dd>Verified from an official provider source</dd></div>}
+            {doctor.verified_on && <div><dt>Verified on</dt><dd>{doctor.verified_on}</dd></div>}
           </dl>
+
+          {doctor.source_url && (
+            <p><a href={doctor.source_url} target="_blank" rel="noreferrer">View official source</a></p>
+          )}
 
           <Link
             className="button secondary hc-action-button"
