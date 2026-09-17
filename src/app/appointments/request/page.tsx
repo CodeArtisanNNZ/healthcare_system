@@ -11,31 +11,26 @@ export default async function AppointmentRequest({ searchParams }: { searchParam
   const selected = (await searchParams).doctor || "";
   const doctorId = z.uuid().safeParse(selected).success ? selected : "";
   const db = await supabase();
-  const { data: doctors, error } = await db.from("doctors").select("id,full_name,specialty_id,specialization,experience,location,consultation_fee,hospital_name").eq("status", "Active").order("experience", { ascending: false }).limit(250);
+  const { data: primary, error } = doctorId
+    ? await db.from("doctors").select("id,full_name,specialty_id,specialization,location").eq("id", doctorId).eq("status", "Active").maybeSingle()
+    : { data: null, error: null };
   if (error) throw new Error(error.message);
-  const primary = doctors?.find((doctor) => doctor.id === doctorId);
-  const candidates = primary?.specialty_id ? doctors?.filter((doctor) => doctor.specialty_id === primary.specialty_id) : doctors;
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   return <div className="container section">
-    <Heading eyebrow="PATIENT REQUEST" title="Request an appointment">Choose up to three preferred doctors and a time window. An administrator will verify availability and confirm one doctor, the final time and contact details.</Heading>
+    <Heading eyebrow="PATIENT REQUEST" title="Request an appointment">Tell us where and when you can visit. We will match a suitable doctor in your chosen area and confirm the details.</Heading>
     <div className="card">
       <ActionForm action={requestAppointment} label="Request appointment" pendingLabel="Sending request…">
-        <input type="hidden" name="doctor_id" value={doctorId} />
+        <input type="hidden" name="doctor_id" value={primary?.id || ""} />
         <input type="hidden" name="specialty_id" value={primary?.specialty_id || ""} />
+        {primary && <p><strong>Requested specialty:</strong> {primary.specialization || "Doctor"}<br /><span className="muted">We will keep {primary.full_name} only if the doctor serves your selected area. Otherwise, we will match another doctor of the same specialty nearby.</span></p>}
         <div className="form-grid">
+          <label>Your area<select name="area" required><option value="">Choose your area…</option>{healthcareLocations.filter((area) => area !== "Dhaka").map((area) => <option key={area}>{area}</option>)}</select></label>
           <label>Preferred date<input name="preferred_date" type="date" min={tomorrow} required /></label>
-          <label>From<input name="preferred_time_start" type="time" required /></label>
-          <label>To<input name="preferred_time_end" type="time" required /></label>
-          <label>Alternate date (optional)<input name="alternate_date" type="date" min={tomorrow} /></label>
-          <label>Alternate from<input name="alternate_time_start" type="time" /></label>
-          <label>Alternate to<input name="alternate_time_end" type="time" /></label>
-          <label>Area<select name="area" required><option value="">Select area…</option>{healthcareLocations.map((area) => <option key={area}>{area}</option>)}</select></label>
-          <label>Minimum budget (BDT)<input name="budget_min" type="number" min="0" step="100" defaultValue="500" required /></label>
-          <label>Maximum budget (BDT)<input name="budget_max" type="number" min="0" step="100" defaultValue="1500" required /></label>
+          <label>Preferred time<select name="time_period" required defaultValue=""><option value="" disabled>Choose a time…</option><option value="morning">Morning · 9 AM–12 PM</option><option value="afternoon">Afternoon · 12–4 PM</option><option value="evening">Evening · 4–8 PM</option><option value="anytime">Any time</option></select></label>
+          <label>Maximum consultation budget<select name="budget" required defaultValue="1500"><option value="800">Up to ৳800</option><option value="1500">Up to ৳1,500</option><option value="2500">Up to ৳2,500</option><option value="flexible">Flexible</option></select></label>
         </div>
-        <fieldset><legend>Preferred doctors (choose up to 3)</legend><div className="stack">{(candidates || []).slice(0, 30).map((doctor) => <label key={doctor.id}><input type="checkbox" name="candidate_doctor_id" value={doctor.id} defaultChecked={doctor.id === doctorId} /> <strong>{doctor.full_name}</strong> — {doctor.specialization || "Doctor"}{doctor.location ? ` · ${doctor.location}` : ""}{doctor.consultation_fee ? ` · ৳${doctor.consultation_fee}` : ""}</label>)}</div></fieldset>
-        <label>Reason or access needs (optional)<textarea name="concern_summary" maxLength={1200} placeholder="Brief concern, preferred hospital, accessibility or language needs" /></label>
-        <p className="muted">Listed fees and schedules may change. The administrator will confirm the actual fee and availability before the appointment is final.</p>
+        <label>Anything we should know? <span className="muted">(optional)</span><textarea name="concern_summary" maxLength={1200} placeholder="For example: wheelchair access or preferred hospital" /></label>
+        <p className="muted">No calls are needed now. The administrator will confirm the local doctor, exact time, fee and contact details.</p>
       </ActionForm>
     </div>
   </div>;

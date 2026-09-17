@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { entities, entitySchema } from "@/lib/entities";
 import { upload, removeFile } from "@/lib/storage";
 import type { ActionState } from "@/lib/form-state";
+import { healthcareLocations } from "@/lib/locations";
 
 function failure(e: unknown): ActionState {
   return {
@@ -22,6 +23,13 @@ function failure(e: unknown): ActionState {
 
 function check(error: { message: string } | null) {
   if (error) throw new Error(error.message);
+}
+
+function locationMatches(location: unknown, area: string) {
+  const clean = (value: unknown) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const doctorLocation = clean(location);
+  const selectedArea = clean(area);
+  return Boolean(doctorLocation && selectedArea && (doctorLocation.includes(selectedArea) || selectedArea.includes(doctorLocation)));
 }
 
 const credentials = z.object({
@@ -483,52 +491,43 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
       doctor_id: z.union([z.uuid(), z.literal("")]),
       specialty_id: z.union([z.uuid(), z.literal("")]),
       preferred_date: z.iso.date(),
-      preferred_time_start: z.string().regex(/^\d{2}:\d{2}$/),
-      preferred_time_end: z.string().regex(/^\d{2}:\d{2}$/),
-      alternate_date: z.union([z.iso.date(), z.literal("")]),
-      alternate_time_start: z.union([z.string().regex(/^\d{2}:\d{2}$/), z.literal("")]),
-      alternate_time_end: z.union([z.string().regex(/^\d{2}:\d{2}$/), z.literal("")]),
-      budget_min: z.coerce.number().min(0).max(100000),
-      budget_max: z.coerce.number().min(0).max(100000),
-      area: z.string().trim().min(2).max(120),
+      time_period: z.enum(["morning", "afternoon", "evening", "anytime"]),
+      budget: z.enum(["800", "1500", "2500", "flexible"]),
+      area: z.enum(healthcareLocations),
       concern_summary: z.string().trim().max(1200),
-    }).refine((v) => v.preferred_time_end > v.preferred_time_start, { message: "Preferred end time must be after start time." })
-      .refine((v) => v.budget_max >= v.budget_min, { message: "Maximum budget must be at least the minimum." })
-      .parse(Object.fromEntries(form));
-
-    const candidates = form.getAll("candidate_doctor_id").map(String).filter(Boolean);
-    const parsedCandidates = z.array(z.uuid()).max(3).parse([...new Set(candidates)]);
-    const doctorId = input.doctor_id || parsedCandidates[0] || null;
-    if (!input.alternate_date && (input.alternate_time_start || input.alternate_time_end)) {
-      throw new Error("Choose an alternate date, or clear the alternate times.");
-    }
-    const alternateStart = input.alternate_date
-      ? input.alternate_time_start || input.preferred_time_start
-      : null;
-    const alternateEnd = input.alternate_date
-      ? input.alternate_time_end || input.preferred_time_end
-      : null;
-    if (alternateStart && alternateEnd && alternateEnd <= alternateStart) {
-      throw new Error("Alternate end time must be after its start time.");
-    }
+    }).parse(Object.fromEntries(form));
+    const periods = { morning: ["09:00", "12:00"], afternoon: ["12:00", "16:00"], evening: ["16:00", "20:00"], anytime: ["09:00", "20:00"] } as const;
+    const [preferredStart, preferredEnd] = periods[input.time_period];
+    const budgetMax = input.budget === "flexible" ? 100000 : Number(input.budget);
     const db = await supabase();
+    let doctorId: string | null = null;
+    if (input.doctor_id) {
+      const { data: viewedDoctor, error: doctorError } = await db.from("doctors").select("id,location,specialty_id").eq("id", input.doctor_id).eq("status", "Active").maybeSingle();
+      check(doctorError);
+      if (viewedDoctor && locationMatches(viewedDoctor.location, input.area)) doctorId = viewedDoctor.id;
+    }
+    if (!doctorId && input.specialty_id) {
+      const { data: localDoctors, error: localError } = await db.from("doctors").select("id,location").eq("status", "Active").eq("specialty_id", input.specialty_id).order("experience", { ascending: false }).limit(100);
+      check(localError);
+      doctorId = localDoctors?.find((doctor) => locationMatches(doctor.location, input.area))?.id || null;
+    }
     const { data: request, error } = await db.from("appointment_requests").insert({
       patient_id: user.id,
       specialty_id: input.specialty_id || null,
       requested_doctor_id: doctorId,
       preferred_date: input.preferred_date,
-      preferred_time_start: input.preferred_time_start,
-      preferred_time_end: input.preferred_time_end,
-      alternate_date: input.alternate_date || null,
-      alternate_time_start: alternateStart,
-      alternate_time_end: alternateEnd,
-      budget_min: input.budget_min,
-      budget_max: input.budget_max,
+      preferred_time_start: preferredStart,
+      preferred_time_end: preferredEnd,
+      alternate_date: null,
+      alternate_time_start: null,
+      alternate_time_end: null,
+      budget_min: 0,
+      budget_max: budgetMax,
       area: input.area,
       concern_summary: input.concern_summary || null,
     }).select("id").single();
     check(error);
-    const ranked = [...new Set([doctorId, ...parsedCandidates].filter(Boolean))].slice(0, 3);
+    const ranked = doctorId ? [doctorId] : [];
     if (ranked.length) {
       const { error: candidateError } = await db.from("appointment_request_candidates").insert(
         ranked.map((id, index) => ({ request_id: request!.id, doctor_id: id, preference_rank: index + 1 })),
@@ -539,12 +538,7 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
     check(eventError);
     revalidatePath("/patient/appointments");
     return { success: "Appointment request sent. An administrator will confirm the doctor, time and contact details." };
-  } catch (e) {
-    if (e instanceof Error && e.message.includes("appointment_requests_check2")) {
-      return { error: "Complete the alternate date and time window, or leave all alternate fields empty." };
-    }
-    return failure(e);
-  }
+  } catch (e) { return failure(e); }
 }
 
 export async function reviewAppointment(_: ActionState, form: FormData): Promise<ActionState> {
@@ -562,8 +556,15 @@ export async function reviewAppointment(_: ActionState, form: FormData): Promise
       throw new Error("A confirmed request needs a doctor, final date/time and contact information.");
     }
     const db = await supabase();
-    const { data: current, error: readError } = await db.from("appointment_requests").select("status").eq("id", input.id).single();
+    const { data: current, error: readError } = await db.from("appointment_requests").select("status,area").eq("id", input.id).single();
     check(readError);
+    if (input.assigned_doctor_id) {
+      const { data: assignedDoctor, error: doctorError } = await db.from("doctors").select("location").eq("id", input.assigned_doctor_id).eq("status", "Active").single();
+      check(doctorError);
+      if (!locationMatches(assignedDoctor?.location, current!.area)) {
+        throw new Error(`Select a doctor who serves ${current!.area}.`);
+      }
+    }
     const confirmed = input.status === "Confirmed";
     const { error } = await db.from("appointment_requests").update({
       status: input.status,
