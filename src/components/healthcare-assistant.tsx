@@ -206,8 +206,8 @@ export function HealthcareAssistant({
       ];
 
   return (
-    <section className={styles.shell} aria-labelledby="assistant-title">
-      <div className={styles.heading}>
+    <section className={styles.shell} data-hc-assistant="true" aria-labelledby="assistant-title">
+      <div className={styles.heading} data-hc-assistant-heading="true">
         <span className={styles.label}>
           {bn ? "Healthcare Central সহকারী" : "Healthcare Central Assistant"}
         </span>
@@ -221,7 +221,7 @@ export function HealthcareAssistant({
         </p>
       </div>
 
-      <div className={styles.chatWindow} aria-live="polite">
+      <div className={styles.chatWindow} data-hc-chat="true" aria-live="polite">
         <div className={styles.assistantRow}>
           <div className={styles.assistantBubble}>
             {bn
@@ -231,11 +231,12 @@ export function HealthcareAssistant({
         </div>
 
         {messages.length === 0 && (
-          <div className={styles.quickPrompts}>
+          <div className={styles.quickPrompts} data-hc-quick-prompts="true">
             {quickPrompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"
+                data-hc-quick-prompt="true"
                 onClick={() => setQuery(prompt)}
               >
                 {prompt}
@@ -389,9 +390,9 @@ export function HealthcareAssistant({
         </p>
       )}
 
-      <form className={styles.composer} onSubmit={submit}>
+      <form className={styles.composer} data-hc-composer="true" onSubmit={submit}>
         <div className={styles.modeRow}>
-          <div className={styles.categoryRow} aria-label="Service type">
+          <div className={styles.categoryRow} data-hc-categories="true" aria-label="Service type">
             {categories.map(([id, label]) => (
               <button
                 key={id}
@@ -416,7 +417,7 @@ export function HealthcareAssistant({
             ))}
           </div>
 
-          <label className={styles.locationField}>
+          <label className={styles.locationField} data-hc-location="true">
             <span>{bn ? "এলাকা" : "Location"}</span>
             <select
               value={location}
@@ -441,7 +442,7 @@ export function HealthcareAssistant({
           </label>
         </div>
 
-        <div className={styles.inputRow}>
+        <div className={styles.inputRow} data-hc-input-row="true">
           <textarea
             value={query}
             onChange={(event) => setQuery(event.target.value)}
