@@ -64,3 +64,228 @@
     width: 100%;
   }
 }
+
+
+/* Mobile Healthcare Assistant — enforced after all theme/button styles. */
+@media (max-width: 620px) {
+  main [data-hc-assistant="true"] {
+    width: 100% !important;
+    overflow: visible !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 22px !important;
+    background: linear-gradient(180deg, #eef8f5 0%, #f7fbfa 100%) !important;
+    box-shadow: 0 10px 26px rgba(20, 79, 74, 0.08) !important;
+  }
+
+  main [data-hc-assistant="true"]::before,
+  main [data-hc-assistant="true"]::after {
+    display: none !important;
+  }
+
+  main [data-hc-assistant-heading="true"] {
+    padding: 20px 18px 12px !important;
+  }
+
+  main [data-hc-assistant-heading="true"] > span {
+    margin-bottom: 7px !important;
+    color: #11857e !important;
+    font-size: 10.5px !important;
+    letter-spacing: .08em !important;
+  }
+
+  main [data-hc-assistant-heading="true"] h2 {
+    margin: 0 !important;
+    color: #123f3b !important;
+    font-size: 28px !important;
+    line-height: 1.12 !important;
+  }
+
+  main [data-hc-assistant-heading="true"] p {
+    margin: 9px 0 0 !important;
+    color: #5f7774 !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+
+  main [data-hc-chat="true"] {
+    width: 100% !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 18px 8px !important;
+    overflow: visible !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  main [data-hc-chat="true"] > div:first-child {
+    margin: 2px 0 10px !important;
+  }
+
+  main [data-hc-chat="true"] > div:first-child > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 13px 14px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: rgba(255,255,255,.86) !important;
+    color: #294b48 !important;
+    box-shadow: none !important;
+    font-size: 12.5px !important;
+    line-height: 1.6 !important;
+  }
+
+  main [data-hc-quick-prompts="true"] {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin: 8px 0 12px !important;
+  }
+
+  main button[data-hc-quick-prompt="true"] {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 11px 13px !important;
+    justify-content: flex-start !important;
+    border: 1px solid #d7e7e3 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: #216a64 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+  }
+
+  main button[data-hc-quick-prompt="true"]:hover,
+  main button[data-hc-quick-prompt="true"]:active {
+    border-color: #b8d9d4 !important;
+    background: #eaf6f3 !important;
+    color: #155e59 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  main [data-hc-composer="true"] {
+    width: auto !important;
+    margin: 10px 12px 16px !important;
+    padding: 12px !important;
+    border: 0 !important;
+    outline: 0 !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 6px 18px rgba(20,79,74,.08) !important;
+  }
+
+  main [data-hc-categories="true"] {
+    display: grid !important;
+    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+    gap: 7px !important;
+    margin: 0 !important;
+  }
+
+  main [data-hc-categories="true"] > button {
+    width: 100% !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 8px 10px !important;
+    border: 1px solid #d4e5e2 !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+  }
+
+  main [data-hc-categories="true"] > button[aria-pressed="true"] {
+    border-color: #9ecfc9 !important;
+    background: #dff2ee !important;
+    color: #0a6d67 !important;
+  }
+
+  main [data-hc-categories="true"] > button[aria-pressed="false"] {
+    background: #f7fbfa !important;
+    color: #405e5b !important;
+  }
+
+  main [data-hc-location="true"] {
+    margin-top: 10px !important;
+  }
+
+  main [data-hc-location="true"] > span {
+    margin: 0 0 6px !important;
+    color: #3d5e5a !important;
+    font-size: 12px !important;
+  }
+
+  main [data-hc-location="true"] select {
+    min-height: 48px !important;
+    margin: 0 !important;
+    border: 1px solid #d3e5e1 !important;
+    border-radius: 11px !important;
+    background: #fbfdfd !important;
+    box-shadow: none !important;
+  }
+
+  main [data-hc-input-row="true"] {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+  }
+
+  main [data-hc-input-row="true"] textarea {
+    width: 100% !important;
+    min-height: 108px !important;
+    margin: 0 !important;
+    padding: 12px 13px !important;
+    border: 1px solid #d3e5e1 !important;
+    border-radius: 11px !important;
+    background: #fbfdfd !important;
+    color: #294b48 !important;
+    box-shadow: none !important;
+    resize: vertical !important;
+  }
+
+  main [data-hc-input-row="true"] button[type="submit"] {
+    width: 100% !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 11px !important;
+    background: #168f89 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  main [data-hc-assistant="true"] [class*="assistantBubble"] [class*="resultCard"] {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 14px !important;
+    border: 0 !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(20,79,74,.07) !important;
+  }
+
+  main [data-hc-assistant="true"] [class*="resultCard"] h4 a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  main [data-hc-assistant="true"] [class*="disclaimer"] {
+    margin: 0 16px !important;
+    padding: 6px 2px 16px !important;
+    border: 0 !important;
+    color: #748986 !important;
+    font-size: 9.5px !important;
+  }
+}
