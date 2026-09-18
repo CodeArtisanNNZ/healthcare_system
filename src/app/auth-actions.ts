@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase/server";
+import { createPatientAccount } from "@/lib/public-registration";
 import type { ActionState } from "@/lib/form-state";
 
 const credentials = z.object({
@@ -10,22 +11,36 @@ const credentials = z.object({
   password: z.string().min(8).max(128),
 });
 
-function site() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
-    /\/$/,
-    "",
-  );
-}
-
 function isBangla(form: FormData) {
   return String(form.get("lang") || "") === "bn";
+}
+
+function humanError(message: string, bn: boolean) {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("too many registration attempts")) {
+    return bn
+      ? "অল্প সময়ে অনেকবার অ্যাকাউন্ট তৈরির চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।"
+      : "Too many registration attempts. Please wait and try again.";
+  }
+
+  if (
+    normalized.includes("service_role") ||
+    normalized.includes("account administration requires")
+  ) {
+    return bn
+      ? "সার্ভারের account-creation configuration অসম্পূর্ণ। অ্যাডমিনকে জানান।"
+      : "The server account-creation configuration is incomplete.";
+  }
+
+  return message;
 }
 
 function failure(error: unknown, bn: boolean): ActionState {
   if (error instanceof z.ZodError) {
     return {
       error: bn
-        ? "দেওয়া তথ্যগুলো আবার পরীক্ষা করুন।"
+        ? "ইমেইল, পাসওয়ার্ড ও প্রয়োজনীয় তথ্যগুলো ঠিকভাবে দিন। পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।"
         : error.issues
             .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
             .join("; "),
@@ -33,16 +48,12 @@ function failure(error: unknown, bn: boolean): ActionState {
   }
 
   if (error instanceof Error) {
-    return {
-      error: bn
-        ? "অনুরোধটি সম্পন্ন করা যায়নি। তথ্যগুলো পরীক্ষা করে আবার চেষ্টা করুন।"
-        : error.message,
-    };
+    return { error: humanError(error.message, bn) };
   }
 
   return {
     error: bn
-      ? "অনুরোধটি সম্পন্ন করা যায়নি।"
+      ? "অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।"
       : "The request could not be completed.",
   };
 }
@@ -119,29 +130,21 @@ export async function localizedRegister(
         address: form.get("address") || "",
       });
 
-    const db = await supabase();
+    const result = await createPatientAccount(input);
 
-    const { data, error } = await db.auth.signUp({
-      email: input.email,
-      password: input.password,
-      options: {
-        emailRedirectTo:
-          site() + `/auth/callback${bn ? "?lang=bn" : ""}`,
-        data: {
-          full_name: input.full_name,
-          phone: input.phone,
-          address: input.address,
-        },
-      },
-    });
+    if (result.status === "exists") {
+      return {
+        error: bn
+          ? "এই ইমেইলে আগে থেকেই অ্যাকাউন্ট আছে। লগ ইন করুন অথবা পাসওয়ার্ড রিসেট করুন।"
+          : "An account already exists for this email. Sign in or reset the password.",
+      };
+    }
 
-    if (error) throw new Error(error.message);
-
-    if (!data.session) {
+    if (result.status === "created") {
       return {
         success: bn
-          ? "আপনার ইমেইল যাচাই করুন, তারপর লগ ইন করুন।"
-          : "Check your email to confirm your account, then sign in.",
+          ? "অ্যাকাউন্ট তৈরি হয়েছে। এখন একই ইমেইল ও পাসওয়ার্ড দিয়ে লগ ইন করুন।"
+          : "Account created. Sign in with the same email and password.",
       };
     }
   } catch (error) {
