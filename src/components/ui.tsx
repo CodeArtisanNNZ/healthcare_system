@@ -178,7 +178,22 @@ export async function DirectoryCard({
               "user_id",
               "specialty_id",
               "status",
-              ...(kind === "doctors" ? ["phone", "email", "source_url", "verified_on"] : []),
+              ...(kind === "doctors" ? [
+                "phone",
+                "email",
+                "source_url",
+                "verified_on",
+                "registration_no",
+                "gender",
+                "qualification",
+                "chamber_address",
+                "district",
+                "follow_up_fee",
+                "available_days",
+                "conditions_treated",
+                "bio",
+                "verification_status",
+              ] : []),
             ].includes(field.key))
             .map((field) =>
               row[field.key] !== null && row[field.key] !== undefined && row[field.key] !== "" ? (
