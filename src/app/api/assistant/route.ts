@@ -18,11 +18,17 @@ const categorySchema = z.enum([
 
 type Category = z.infer<typeof categorySchema>;
 
+const historyItemSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().trim().min(1).max(900),
+});
+
 const requestSchema = z
   .object({
     message: z.string().trim().min(1).max(500),
-    category: categorySchema,
-    location: z.string().trim().max(100),
+    category: categorySchema.default("doctor"),
+    location: z.string().trim().max(100).default(""),
+    history: z.array(historyItemSchema).max(10).optional().default([]),
   })
   .strict();
 
@@ -59,6 +65,8 @@ type DoctorTriage = {
   primary_specialty_name: string | null;
   suggestions: TriageSuggestion[];
 };
+
+type ConversationLanguage = "bn" | "banglish" | "en";
 
 const emptyTriage: DoctorTriage = {
   urgent: false,
@@ -122,30 +130,91 @@ function canonicalLocation(value: string) {
 function normalize(value: string) {
   return value
     .toLowerCase()
-    .replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, " ")
+    .replace(/[.,/#!$%^&*;:{}=\-_\`~()?]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
+function normalizeConversationalText(value: string) {
+  return value
+    .replace(/(?<=[a-zA-Z])9(?=[a-zA-Z])/g, "o")
+    .replace(/(?<=[a-zA-Z])0(?=[a-zA-Z])/g, "o")
+    .replace(/\bdoc\b/gi, "doctor")
+    .replace(/\bsomossa\b/gi, "problem")
+    .replace(/\bsomossha\b/gi, "problem")
+    .replace(/\bsymtom\b/gi, "symptom")
+    .replace(/\bsymtoms\b/gi, "symptoms")
+    .replace(/\bmatha\s*beta\b/gi, "matha betha")
+    .replace(/\bpet\s*beta\b/gi, "pet betha")
+    .replace(/\bbuk\s*beta\b/gi, "buk betha")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function detectLanguage(value: string): ConversationLanguage {
+  if (/[\u0980-\u09FF]/.test(value)) return "bn";
+
+  const q = normalize(value);
+  const banglishSignals = [
+    "amar",
+    "ami",
+    "amr",
+    "ki korbo",
+    "ki kora uchit",
+    "kon doctor",
+    "doctor dekhabo",
+    "betha",
+    "jor",
+    "kashi",
+    "bomi",
+    "matha",
+    "pet",
+    "buk",
+    "chokh",
+    "ghum",
+    "somossa",
+    "somossha",
+    "hocche",
+    "hoitese",
+    "lagche",
+    "dhore",
+  ];
+
+  return banglishSignals.some((item) => q.includes(item)) ? "banglish" : "en";
+}
+
 function hasEmergencySignals(value: string) {
+  const q = normalizeConversationalText(value);
+
   return [
     /\b(can(?:not|'t) breathe|unable to breathe|severe difficulty breathing|not breathing)\b/i,
     /\b(severe chest pain|crushing chest pain|chest pressure)\b/i,
     /\b(unconscious|not waking up|unresponsive)\b/i,
     /\b(severe bleeding|bleeding won(?:'t| not) stop|vomiting blood)\b/i,
-    /\b(face droop|one sided weakness|slurred speech)\b/i,
+    /\b(face droop|one sided weakness|slurred speech|sudden weakness on one side)\b/i,
+    /\b(seizure lasting|seizure.*5 minutes|continuous seizure)\b/i,
+    /\b(throat swelling.*breath|anaphylaxis)\b/i,
     /শ্বাস.{0,16}(কষ্ট|নিতে পারছি না|নিতে সমস্যা)/i,
     /বুকে.{0,14}(তীব্র ব্যথা|চাপ)/i,
     /অজ্ঞান|জ্ঞান নেই/i,
     /রক্ত.{0,12}(বন্ধ হচ্ছে না|বমি)/i,
+    /মুখ.{0,12}বেঁকে|এক পাশ.{0,12}(দুর্বল|অবশ)|কথা.{0,12}জড়িয়ে/i,
     /\bshash.{0,18}(kosto|nite parchi na|problem)\b/i,
     /\bbuke.{0,14}(tibro betha|onek beshi betha|chap)\b/i,
-  ].some((pattern) => pattern.test(value));
+    /\b(ojnan|gian nai|rokto bondho hocche na)\b/i,
+  ].some((pattern) => pattern.test(q));
 }
 
 function locationText(category: Category, row: Row) {
   if (category === "doctor" || category === "caregiver") {
-    return text(row.location);
+    return [
+      text(row.location),
+      text(row.area),
+      text(row.district),
+      text(row.chamber_address),
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
   if (category === "hospital" || category === "lab-test") {
@@ -227,7 +296,7 @@ async function resolveDoctorTriage(
   query: string,
 ): Promise<DoctorTriage> {
   const { data, error } = await db.rpc("resolve_doctor_triage_multi", {
-    query_text: query,
+    query_text: query.slice(-500),
   });
 
   if (error) {
@@ -267,8 +336,9 @@ function resultFor(category: Category, row: Row): SearchResult {
       subtitle: text(row.specialization) || undefined,
       details: compact([
         detail("Qualification", row.qualification),
+        detail("Hospital", row.hospital_name || row.chamber_name),
         detail("Experience", row.experience ? `${row.experience} years` : ""),
-        detail("Location", row.location),
+        detail("Location", row.area || row.location),
         detail(
           "Consultation fee",
           row.consultation_fee ? `৳${row.consultation_fee}` : "",
@@ -329,7 +399,6 @@ function resultFor(category: Category, row: Row): SearchResult {
         detail("Location", row.location),
         detail("Daily fee", row.fee_per_day ? `৳${row.fee_per_day}` : ""),
       ]),
-      phone: text(row.phone) || undefined,
     };
   }
 
@@ -346,6 +415,138 @@ function resultFor(category: Category, row: Row): SearchResult {
     phone: text(row.driver_phone) || undefined,
     secondaryPhone: text(row.alternate_phone) || undefined,
   };
+}
+
+function humanReply({
+  language,
+  requestedCategory,
+  category,
+  urgent,
+  triage,
+  resultCount,
+  location,
+}: {
+  language: ConversationLanguage;
+  requestedCategory: Category;
+  category: Category;
+  urgent: boolean;
+  triage: DoctorTriage | null;
+  resultCount: number;
+  location: string;
+}) {
+  if (urgent) {
+    const notice = triage?.emergency_notice?.trim();
+
+    if (language === "bn") {
+      return [
+        "আপনার বর্ণনায় এমন কিছু লক্ষণ আছে যেগুলোর জন্য দ্রুত সরাসরি চিকিৎসা নেওয়া নিরাপদ।",
+        notice || "এখনই নিকটস্থ জরুরি বিভাগে যান বা জরুরি সহায়তা নিন।",
+        "শুধু অনলাইন উত্তর বা সাধারণ ডাক্তার সার্চের জন্য অপেক্ষা করবেন না।",
+      ].join(" ");
+    }
+
+    if (language === "banglish") {
+      return [
+        "Apnar description-e emon symptom ache jeta urgent hote pare.",
+        notice || "Ekhon nearest emergency department-e jawa ba emergency help neya safer.",
+        "Sudhu online answer-er jonno wait korben na.",
+      ].join(" ");
+    }
+
+    return [
+      "Some of the symptoms you described may need urgent in-person assessment.",
+      notice || "Please seek the nearest emergency department or emergency help now.",
+      "Do not wait for an online answer if the symptoms are severe or worsening.",
+    ].join(" ");
+  }
+
+  if (requestedCategory === "doctor") {
+    const specialty = triage?.primary_specialty_name?.trim();
+
+    if (specialty) {
+      const alternatives = (triage?.suggestions || [])
+        .map((item) => item.specialty_name)
+        .filter((item) => item && item !== specialty)
+        .slice(0, 2);
+
+      if (language === "bn") {
+        return [
+          `আপনার লেখা উপসর্গগুলোর সাথে সবচেয়ে বেশি মিলছে ${specialty} specialist-এর।`,
+          "প্রথমে এই ধরনের ডাক্তার দেখানো একটি যুক্তিসংগত next step হতে পারে।",
+          alternatives.length
+            ? `আরও সম্ভাব্য specialist: ${alternatives.join(", ")}।`
+            : "",
+          triage?.patient_guidance || "",
+          resultCount
+            ? `নিচে Healthcare Central-এর ${resultCount} জন matching doctor দেখাচ্ছি${location ? ` (${location})` : ""}।`
+            : "এই specialty-তে এখন matching doctor না থাকলে directory থেকে specialty দিয়ে খুঁজতে পারেন।",
+          "এটি diagnosis নয়—লক্ষণ বদলালে বা খারাপ হলে সরাসরি চিকিৎসা নিন।",
+        ]
+          .filter(Boolean)
+          .join(" ");
+      }
+
+      if (language === "banglish") {
+        return [
+          `Apnar lekha symptom-gulor sathe ${specialty} specialist-er match beshi.`,
+          "Prothome ei type-er doctor dekhano reasonable next step hote pare.",
+          alternatives.length
+            ? `Onno possible specialist: ${alternatives.join(", ")}.`
+            : "",
+          triage?.patient_guidance || "",
+          resultCount
+            ? `Niche Healthcare Central-er ${resultCount} jon matching doctor dekhacchi${location ? ` (${location})` : ""}.`
+            : "Ekhon matching doctor na thakle specialty diye directory-te search korte paren.",
+          "Eta diagnosis na; symptom beshi kharap hole in-person medical care nin.",
+        ]
+          .filter(Boolean)
+          .join(" ");
+      }
+
+      return [
+        `Your symptoms match most closely with a ${specialty}.`,
+        "Seeing this type of specialist first would be a reasonable next step.",
+        alternatives.length
+          ? `Other possible specialist routes: ${alternatives.join(", ")}.`
+          : "",
+        triage?.patient_guidance || "",
+        resultCount
+          ? `I found ${resultCount} matching Healthcare Central doctor${resultCount === 1 ? "" : "s"}${location ? ` in ${location}` : ""} below.`
+          : "There is no matching listed doctor in this specialty right now, but you can open the directory and search by specialty.",
+        "This is symptom-to-specialist guidance, not a diagnosis.",
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
+    if (language === "bn") {
+      return "আপনার কথায় এখনো নির্দিষ্ট specialist বেছে নেওয়ার মতো পরিষ্কার উপসর্গ পাওয়া যাচ্ছে না। কী সমস্যা হচ্ছে, শরীরের কোথায়, কতদিন ধরে, ব্যথা/জ্বর/বমি/শ্বাসকষ্ট আছে কি না—এগুলো একসাথে লিখুন। তারপর আমি কোন ধরনের ডাক্তার দেখানো উচিত সেটা মিলিয়ে বলব।";
+    }
+
+    if (language === "banglish") {
+      return "Ekhono specific specialist choose korar moto clear symptom pacchi na. Ki problem hocche, body-r kothay, koto din dhore, betha/jor/bomi/shashkosto ache kina—egulo ekshathe likhun. Tarpor kon type-er doctor dekhano uchit seta match kore bolbo.";
+    }
+
+    return "I do not have enough symptom detail yet to choose a specialist safely. Tell me what is happening, where in your body, how long it has been going on, and whether you have pain, fever, vomiting, breathing trouble, weakness, or another important symptom. Then I can route you to the most relevant type of doctor.";
+  }
+
+  const label = categoryTitle[category].toLowerCase();
+
+  if (language === "bn") {
+    return resultCount
+      ? `আপনার কথার সাথে মিলিয়ে ${resultCount}টি ${label} result পেয়েছি${location ? ` (${location})` : ""}। নিচে সবচেয়ে relevantগুলো দেখুন।`
+      : "এই কথার সাথে matching result পাইনি। নাম, সেবা বা জায়গাটা আরেকটু নির্দিষ্ট করে লিখুন।";
+  }
+
+  if (language === "banglish") {
+    return resultCount
+      ? `Apnar query-r sathe ${resultCount}ta ${label} result peyechi${location ? ` (${location})` : ""}. Niche relevant result-gulo dekhun.`
+      : "Matching result pacchi na. Naam, service ba location-ta ektu specific kore likhun.";
+  }
+
+  return resultCount
+    ? `I found ${resultCount} relevant ${label} result${resultCount === 1 ? "" : "s"}${location ? ` in ${location}` : ""}. The closest matches are below.`
+    : "I could not find a matching result. Try giving me a more specific name, service, or location.";
 }
 
 export async function POST(request: NextRequest) {
@@ -379,7 +580,7 @@ export async function POST(request: NextRequest) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Enter a valid search." },
+        { error: "Enter a valid message." },
         { status: 400 },
       );
     }
@@ -396,18 +597,28 @@ export async function POST(request: NextRequest) {
     const db = await supabase();
     const originalQuery = parsed.data.message.trim();
     const requestedCategory = parsed.data.category;
+    const userHistory = parsed.data.history
+      .filter((item) => item.role === "user")
+      .slice(-4)
+      .map((item) => normalizeConversationalText(item.content));
+    const normalizedCurrent = normalizeConversationalText(originalQuery);
+    const conversationQuery = [...userHistory, normalizedCurrent]
+      .filter(Boolean)
+      .join(" ")
+      .slice(-500);
+    const language = detectLanguage(originalQuery);
 
     let triage: DoctorTriage | null = null;
-    let urgent = hasEmergencySignals(originalQuery);
+    let urgent = hasEmergencySignals(conversationQuery);
 
     if (requestedCategory === "doctor") {
-      triage = await resolveDoctorTriage(db, originalQuery);
+      triage = await resolveDoctorTriage(db, conversationQuery);
       urgent = urgent || triage.urgent;
     }
 
     const category: Category = urgent ? "hospital" : requestedCategory;
 
-    let searchTerm = originalQuery.slice(0, 160);
+    let searchTerm = normalizedCurrent.slice(0, 160);
     let context = "";
 
     if (
@@ -421,7 +632,8 @@ export async function POST(request: NextRequest) {
 
     if (urgent) {
       searchTerm = "";
-      context = triage?.emergency_notice || "Urgent medical assessment may be needed";
+      context =
+        triage?.emergency_notice || "Urgent medical assessment may be needed";
     }
 
     let rows = await searchDirectory(
@@ -431,19 +643,16 @@ export async function POST(request: NextRequest) {
       selectedLocation,
     );
 
-    // For names or ordinary directory searches with no symptom match, retry the
-    // original wording. For a recognised symptom route we intentionally keep an
-    // empty doctor list rather than showing an unrelated specialty.
     if (
       rows.length === 0 &&
-      searchTerm !== originalQuery.slice(0, 160) &&
+      requestedCategory === "doctor" &&
       !urgent &&
       !triage?.primary_specialty_name
     ) {
       rows = await searchDirectory(
         db,
         category,
-        originalQuery.slice(0, 160),
+        normalizedCurrent.slice(0, 160),
         selectedLocation,
       );
     }
@@ -462,6 +671,16 @@ export async function POST(request: NextRequest) {
       params.toString() ? `?${params.toString()}` : ""
     }`;
 
+    const reply = humanReply({
+      language,
+      requestedCategory,
+      category,
+      urgent,
+      triage,
+      resultCount: results.length,
+      location: selectedLocation,
+    });
+
     return NextResponse.json(
       {
         category,
@@ -470,6 +689,7 @@ export async function POST(request: NextRequest) {
         urgent,
         title: categoryTitle[category],
         context,
+        reply,
         triage,
         results,
         directoryUrl,
