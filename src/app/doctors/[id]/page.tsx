@@ -50,13 +50,22 @@ export default async function DoctorProfile({
         <div>
           <dl>
             {doctor.qualification && <div><dt>Qualification</dt><dd>{doctor.qualification}</dd></div>}
+            {doctor.gender && <div><dt>Gender</dt><dd>{doctor.gender}</dd></div>}
             {doctor.specialization && <div><dt>Specialization</dt><dd>{doctor.specialization}</dd></div>}
+            {doctor.sub_specialty && <div><dt>Sub-specialty</dt><dd>{doctor.sub_specialty}</dd></div>}
             {doctor.experience !== null && doctor.experience !== undefined && <div><dt>Experience</dt><dd>{doctor.experience} years</dd></div>}
-            {doctor.hospital_name && <div><dt>Hospital / chamber</dt><dd>{doctor.hospital_name}</dd></div>}
+            {doctor.hospital_name && <div><dt>Hospital / workplace</dt><dd>{doctor.hospital_name}</dd></div>}
+            {doctor.chamber_name && <div><dt>Chamber / clinic</dt><dd>{doctor.chamber_name}</dd></div>}
+            {doctor.chamber_address && <div><dt>Chamber address</dt><dd>{doctor.chamber_address}</dd></div>}
             {doctor.location && <div><dt>Location</dt><dd>{doctor.location}</dd></div>}
+            {(doctor.area || doctor.district) && <div><dt>Area</dt><dd>{[doctor.area, doctor.district].filter(Boolean).join(", ")}</dd></div>}
+            {doctor.consultation_type && <div><dt>Consultation type</dt><dd>{doctor.consultation_type}</dd></div>}
             {doctor.consultation_fee !== null && doctor.consultation_fee !== undefined && <div><dt>Consultation fee</dt><dd>৳{doctor.consultation_fee}</dd></div>}
+            {doctor.follow_up_fee !== null && doctor.follow_up_fee !== undefined && <div><dt>Follow-up fee</dt><dd>৳{doctor.follow_up_fee}</dd></div>}
+            {doctor.available_days && <div><dt>Available days</dt><dd>{doctor.available_days}</dd></div>}
             {doctor.available_time && <div><dt>Available time</dt><dd>{doctor.available_time}</dd></div>}
-            {doctor.registration_no && <div><dt>Registration number</dt><dd>{doctor.registration_no}</dd></div>}
+            {doctor.conditions_treated && <div><dt>Commonly treats</dt><dd>{doctor.conditions_treated}</dd></div>}
+            {doctor.registration_no && <div><dt>BMDC registration number</dt><dd>{doctor.registration_no}</dd></div>}
             {doctor.bio && <div><dt>Profile</dt><dd>{doctor.bio}</dd></div>}
             {doctor.verification_status === "Verified" && <div><dt>Data status</dt><dd>Verified from an official provider source</dd></div>}
             {doctor.verified_on && <div><dt>Verified on</dt><dd>{doctor.verified_on}</dd></div>}
