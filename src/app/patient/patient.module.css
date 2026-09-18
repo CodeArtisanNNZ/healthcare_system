@@ -390,3 +390,29 @@
     transition: none;
   }
 }
+
+
+@media (max-width: 620px) {
+  .page {
+    width: 100%;
+    padding: 22px 12px 52px;
+  }
+
+  .dashboardGrid {
+    padding: 0;
+    gap: 14px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .dashboardGrid::before {
+    display: none;
+  }
+
+  .accountPanel {
+    border-radius: 18px;
+  }
+}
