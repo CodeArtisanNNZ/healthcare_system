@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase/server";
 import { adminClient } from "@/lib/supabase/admin";
+import { createPatientAccount } from "@/lib/public-registration";
 import { requireUser } from "@/lib/auth";
 import { entities, entitySchema } from "@/lib/entities";
 import { upload, removeFile } from "@/lib/storage";
@@ -84,26 +85,17 @@ export async function register(_: ActionState, form: FormData): Promise<ActionSt
       })
       .parse(Object.fromEntries(form));
 
-    const db = await supabase();
+    const result = await createPatientAccount(input);
 
-    const { data, error } = await db.auth.signUp({
-      email: input.email,
-      password: input.password,
-      options: {
-        emailRedirectTo: site() + "/auth/callback",
-        data: {
-          full_name: input.full_name,
-          phone: input.phone,
-          address: input.address,
-        },
-      },
-    });
-
-    check(error);
-
-    if (!data.session) {
+    if (result.status === "exists") {
       return {
-        success: "Check your email to confirm your account, then sign in.",
+        error: "An account already exists for this email. Sign in or reset the password.",
+      };
+    }
+
+    if (result.status === "created") {
+      return {
+        success: "Account created. Sign in with the same email and password.",
       };
     }
   } catch (e) {
