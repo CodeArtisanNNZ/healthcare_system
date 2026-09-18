@@ -140,8 +140,6 @@ function normalizeConversationalText(value: string) {
     .replace(/(?<=[a-zA-Z])9(?=[a-zA-Z])/g, "o")
     .replace(/(?<=[a-zA-Z])0(?=[a-zA-Z])/g, "o")
     .replace(/\bdoc\b/gi, "doctor")
-    .replace(/\bsomossa\b/gi, "problem")
-    .replace(/\bsomossha\b/gi, "problem")
     .replace(/\bsymtom\b/gi, "symptom")
     .replace(/\bsymtoms\b/gi, "symptoms")
     .replace(/\bmatha\s*beta\b/gi, "matha betha")
@@ -517,6 +515,18 @@ function humanReply({
       ]
         .filter(Boolean)
         .join(" ");
+    }
+
+    if (resultCount > 0) {
+      if (language === "bn") {
+        return "আপনার search অনুযায়ী matching doctor পেয়েছি। নিচে সবচেয়ে relevant doctorগুলো দেখুন। যদি আসলে উপসর্গ থেকে কোন specialist দরকার সেটা জানতে চান, তাহলে সমস্যাটা নিজের ভাষায় লিখুন।";
+      }
+
+      if (language === "banglish") {
+        return "Apnar search onujayi matching doctor peyechi. Niche relevant doctor-gulo dekhun. Jodi symptom theke kon specialist dorkar seta jante chan, tahole problem-ta nijer vashay likhun.";
+      }
+
+      return "I found matching doctors for your search. The closest results are below. If you want symptom-based specialist guidance instead, describe what is happening in your own words.";
     }
 
     if (language === "bn") {
