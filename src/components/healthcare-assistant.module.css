@@ -866,3 +866,238 @@
     margin-right: 10px;
   }
 }
+
+
+/* Final mobile assistant polish: one clean surface, compact suggestions, consistent gutters. */
+@media (max-width: 620px) {
+  .shell {
+    border: none !important;
+    outline: none !important;
+    border-radius: 18px !important;
+    background: #f2faf8 !important;
+    box-shadow: none !important;
+  }
+
+  .shell::before,
+  .shell::after {
+    display: none !important;
+  }
+
+  .heading {
+    padding: 20px 18px 12px !important;
+  }
+
+  .heading h2 {
+    font-size: 27px;
+    line-height: 1.12;
+  }
+
+  .headingCopy {
+    margin-top: 9px;
+    margin-bottom: 0;
+    color: #587572;
+    font-size: 13px;
+    line-height: 1.58;
+  }
+
+  .chatWindow {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 18px 8px !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .assistantRow,
+  .userRow {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  .assistantBubble {
+    width: 100%;
+    max-width: 100% !important;
+    padding: 5px 0 8px !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #244743;
+    font-size: 13px;
+    line-height: 1.62;
+  }
+
+  .chatWindow > .assistantRow:first-child .assistantBubble {
+    padding: 13px 14px !important;
+    border: none !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.78) !important;
+    box-shadow: none !important;
+  }
+
+  .replyText {
+    margin: 0 !important;
+    padding: 0 2px;
+  }
+
+  .quickPrompts {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin: 10px 0 4px !important;
+  }
+
+  .quickPrompts button {
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+    justify-content: flex-start !important;
+    border: 1px solid #d3e6e2 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    color: #226863 !important;
+    box-shadow: none !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1.42 !important;
+    text-align: left !important;
+  }
+
+  .quickPrompts button:hover,
+  .quickPrompts button:active {
+    background: #eaf7f5 !important;
+    color: #155f5a !important;
+    transform: none !important;
+  }
+
+  .userBubble {
+    max-width: 88% !important;
+    padding: 10px 13px !important;
+    border: none !important;
+    border-radius: 14px 14px 5px 14px !important;
+    background: #168f89 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .assistantBubble .results {
+    width: 100%;
+    gap: 9px;
+    margin-top: 12px;
+  }
+
+  .assistantBubble .resultCard {
+    width: 100%;
+    margin: 0;
+    padding: 14px !important;
+    border: none !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(23, 79, 74, 0.07) !important;
+  }
+
+  .resultCard dl > div {
+    grid-template-columns: 82px minmax(0, 1fr) !important;
+    gap: 9px;
+  }
+
+  .answerActions {
+    margin-top: 10px;
+    padding: 9px 2px 0;
+    border-top: 1px solid #dcebe8;
+  }
+
+  .composer {
+    width: auto !important;
+    margin: 10px 12px 16px !important;
+    padding: 12px !important;
+    border: none !important;
+    outline: none !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+    box-shadow: 0 5px 15px rgba(23, 79, 74, 0.07) !important;
+  }
+
+  .modeRow {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .modeRow .categoryRow {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .category,
+  .activeCategory {
+    min-height: 42px !important;
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    font-size: 12px !important;
+  }
+
+  .category {
+    background: #f7fbfa !important;
+    color: #315b57 !important;
+  }
+
+  .activeCategory {
+    border-color: #9bcfc9 !important;
+    background: #dff2ef !important;
+    color: #096d68 !important;
+  }
+
+  .locationField > span {
+    margin-bottom: 6px;
+  }
+
+  .locationField select {
+    min-height: 48px;
+    border-color: #d1e3e0;
+    box-shadow: none;
+  }
+
+  .inputRow {
+    gap: 8px;
+  }
+
+  .inputRow textarea {
+    min-height: 112px;
+    border-color: #d1e3e0;
+    background: #fbfdfd;
+    box-shadow: none;
+  }
+
+  .sendButton {
+    width: 100%;
+    min-height: 48px !important;
+    box-shadow: none !important;
+  }
+
+  .inputHint {
+    display: none;
+  }
+
+  .disclaimer {
+    margin: 0 16px !important;
+    padding: 8px 2px 16px !important;
+    border: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .heading,
+  .chatWindow {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .composer {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+  }
+}
