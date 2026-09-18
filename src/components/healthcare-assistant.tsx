@@ -1,17 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { healthcareLocations } from "@/lib/locations";
 import { ActionGlyph } from "@/components/action-glyph";
-import { LoadingExperience } from "@/components/loading-experience";
 import styles from "./healthcare-assistant.module.css";
 
 const categories = [
-  ["doctor", "Doctor"],
+  ["doctor", "Doctor help"],
   ["medicine", "Medicine"],
   ["hospital", "Hospital"],
-  ["lab-test", "Lab Test"],
+  ["lab-test", "Lab test"],
   ["caregiver", "Caregiver"],
   ["ambulance", "Ambulance"],
 ] as const;
@@ -51,14 +56,32 @@ type AssistantResponse = {
   urgent: boolean;
   title: string;
   context: string;
+  reply: string;
   triage?: DoctorTriage | null;
   results: SearchResult[];
   directoryUrl: string;
   directoryLabel: string;
 };
 
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  response?: AssistantResponse;
+};
+
 function callHref(phone: string) {
-  return `tel:${phone.replace(/[^+\d]/g, "")}`;
+  return "tel:" + phone.replace(/[^+\d]/g, "");
+}
+
+function messageId(prefix: string) {
+  return (
+    prefix +
+    "-" +
+    Date.now() +
+    "-" +
+    Math.random().toString(36).slice(2, 8)
+  );
 }
 
 export function HealthcareAssistant({
@@ -72,35 +95,41 @@ export function HealthcareAssistant({
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [response, setResponse] =
-    useState<AssistantResponse | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [messages, busy]);
 
+  async function sendMessage(rawMessage: string) {
     if (busy) return;
 
-    const message = query.trim();
+    const message = rawMessage.trim();
 
     if (!message) {
-      setError(bn ? "কী খুঁজছেন তা লিখুন।" : "Enter a search.");
+      setError(
+        bn
+          ? "আপনার সমস্যা বা কী খুঁজছেন সেটা লিখুন।"
+          : "Tell me what is happening or what you are looking for.",
+      );
       return;
     }
 
-    if (category === "medicine") {
-      const params = new URLSearchParams({ q: message });
+    const userMessage: ChatMessage = {
+      id: messageId("user"),
+      role: "user",
+      content: message,
+    };
 
-      if (bn) {
-        params.set("lang", "bn");
-      }
+    const history = messages
+      .slice(-8)
+      .map(({ role, content }) => ({ role, content }));
 
-      window.location.href = `/medicines?${params.toString()}`;
-      return;
-    }
-
+    setMessages((current) => [...current, userMessage]);
+    setQuery("");
     setBusy(true);
     setError("");
-    setResponse(null);
 
     try {
       const request = await fetch("/api/assistant", {
@@ -110,6 +139,7 @@ export function HealthcareAssistant({
           message,
           category,
           location,
+          history,
         }),
       });
 
@@ -118,11 +148,18 @@ export function HealthcareAssistant({
       };
 
       if (!request.ok) {
-        throw new Error(data.error || "Search failed.");
+        throw new Error(data.error || "Assistant request failed.");
       }
 
-      setResponse(data);
-      setCategory(data.category);
+      setMessages((current) => [
+        ...current,
+        {
+          id: messageId("assistant"),
+          role: "assistant",
+          content: data.reply,
+          response: data,
+        },
+      ]);
 
       if (!location && data.location) {
         setLocation(data.location);
@@ -132,78 +169,255 @@ export function HealthcareAssistant({
         caught instanceof Error
           ? caught.message
           : bn
-            ? "সার্চ করা যাচ্ছে না। আবার চেষ্টা করুন।"
-            : "Search is unavailable. Please try again.",
+            ? "এখন উত্তর দেওয়া যাচ্ছে না। আবার চেষ্টা করুন।"
+            : "I cannot answer right now. Please try again.",
       );
     } finally {
       setBusy(false);
     }
   }
 
-  const primarySpecialty = response?.triage?.primary_specialty_name || "";
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await sendMessage(query);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  }
+
+  const quickPrompts = bn
+    ? [
+        "আমার মাথা ব্যথা আর বমি হচ্ছে, কোন ডাক্তার দেখাব?",
+        "আমার দাঁতে ব্যথা, কী করা উচিত?",
+        "কয়েকদিন ধরে কাশি ও শ্বাস নিতে কষ্ট হচ্ছে",
+      ]
+    : [
+        "Amar matha betha ar bomi hocche, kon doctor dekhabo?",
+        "My tooth hurts. What kind of doctor should I see?",
+        "I have had cough and breathing trouble for a few days.",
+      ];
 
   return (
     <section className={styles.shell} aria-labelledby="assistant-title">
       <div className={styles.heading}>
         <span className={styles.label}>
-          {bn ? "সহকারী" : "Assistant"}
+          {bn ? "Healthcare Central সহকারী" : "Healthcare Central Assistant"}
         </span>
-
         <h2 id="assistant-title">
-          {bn ? "স্বাস্থ্যসেবা খুঁজুন" : "Search healthcare services"}
+          {bn ? "আপনার সমস্যা বলুন" : "Tell me what is going on"}
         </h2>
+        <p className={styles.headingCopy}>
+          {bn
+            ? "বাংলা, English বা Banglish-এ স্বাভাবিকভাবে লিখুন। আমি প্রয়োজন হলে specialist ও Healthcare Central-এর matching service দেখাব।"
+            : "Write naturally in English, Bangla or Banglish. I can help route symptoms to a specialist and show matching Healthcare Central services."}
+        </p>
       </div>
 
-      <form className={styles.searchPanel} onSubmit={submit}>
-        <div className={styles.categoryRow} aria-label="Service type">
-          {categories.map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className={
-                id === category
-                  ? styles.activeCategory
-                  : styles.category
-              }
-              onClick={() => {
-                setCategory(id);
-                setResponse(null);
-                setError("");
-              }}
-              aria-pressed={id === category}
-            >
-              {label}
-            </button>
-          ))}
+      <div className={styles.chatWindow} aria-live="polite">
+        <div className={styles.assistantRow}>
+          <div className={styles.assistantBubble}>
+            {bn
+              ? "হ্যালো। কী সমস্যা হচ্ছে সেটা নিজের ভাষায় বলুন—যেমন কোথায় ব্যথা, কতদিন ধরে, জ্বর/বমি/শ্বাসকষ্ট আছে কি না। আমি কোন ধরনের ডাক্তার দেখানো যুক্তিযুক্ত হতে পারে সেটা মিলিয়ে বলব।"
+              : "Hi. Tell me what is happening in your own words—where the problem is, how long it has been happening, and any important symptoms such as fever, vomiting or breathing trouble. I will help you find the most relevant type of care."}
+          </div>
         </div>
 
-        <label className={styles.queryLabel}>
-          <span>{bn ? "সার্চ" : "Search"}</span>
+        {messages.length === 0 && (
+          <div className={styles.quickPrompts}>
+            {quickPrompts.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => setQuery(prompt)}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        )}
 
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            maxLength={category === "doctor" ? 500 : 160}
-            placeholder={
-              category === "medicine"
-                ? bn
-                  ? "ওষুধের নাম বা strength লিখুন"
-                  : "Medicine name or strength"
-                : category === "doctor"
-                  ? bn
-                    ? "উপসর্গ লিখুন—বাংলা, English বা Banglish; একাধিক উপসর্গও লিখতে পারেন"
-                    : "Describe one or more symptoms in English, Bangla or Banglish"
-                  : bn
-                    ? "নাম, বিশেষত্ব বা সেবা লিখুন"
-                    : "Name, specialty or service"
-            }
-          />
-        </label>
+        {messages.map((message) => {
+          const response = message.response;
 
-        <div className={styles.searchFooter}>
+          if (message.role === "user") {
+            return (
+              <div className={styles.userRow} key={message.id}>
+                <div className={styles.userBubble}>{message.content}</div>
+              </div>
+            );
+          }
+
+          return (
+            <div className={styles.assistantRow} key={message.id}>
+              <div className={styles.assistantBubble}>
+                <p className={styles.replyText}>{message.content}</p>
+
+                {response?.urgent && (
+                  <div className={styles.urgent}>
+                    <div>
+                      <strong>
+                        {bn
+                          ? "জরুরি মূল্যায়ন প্রয়োজন হতে পারে"
+                          : "Urgent assessment may be needed"}
+                      </strong>
+                      <span>
+                        {response.triage?.emergency_notice ||
+                          (bn
+                            ? "গুরুতর বা দ্রুত খারাপ হওয়া উপসর্গ হলে সরাসরি জরুরি চিকিৎসা নিন।"
+                            : "Seek emergency care for severe or rapidly worsening symptoms.")}
+                      </span>
+                    </div>
+                    <Link
+                      className="hc-action-button"
+                      data-action="emergency"
+                      href="/emergency"
+                    >
+                      <span>{bn ? "জরুরি সহায়তা" : "Emergency help"}</span>
+                      <ActionGlyph kind="emergency" />
+                    </Link>
+                  </div>
+                )}
+
+                {response?.results.length ? (
+                  <div className={styles.results}>
+                    {response.results.map((result) => (
+                      <article className={styles.resultCard} key={result.id}>
+                        <div className={styles.resultMain}>
+                          <h4>
+                            {result.href ? (
+                              <Link href={result.href}>{result.title}</Link>
+                            ) : (
+                              result.title
+                            )}
+                          </h4>
+
+                          {result.subtitle && (
+                            <p className={styles.subtitle}>{result.subtitle}</p>
+                          )}
+
+                          {result.details.length > 0 && (
+                            <dl>
+                              {result.details.slice(0, 4).map((item) => (
+                                <div key={result.id + "-" + item.label}>
+                                  <dt>{item.label}</dt>
+                                  <dd>{item.value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
+                        </div>
+
+                        <div className={styles.resultActions}>
+                          {result.phone && (
+                            <a href={callHref(result.phone)}>
+                              {bn ? "কল করুন" : "Call"}
+                            </a>
+                          )}
+
+                          {result.secondaryPhone && (
+                            <a href={callHref(result.secondaryPhone)}>
+                              {response.category === "ambulance"
+                                ? bn
+                                  ? "বিকল্প নম্বর"
+                                  : "Alternate number"
+                                : bn
+                                  ? "জরুরি কল"
+                                  : "Emergency call"}
+                            </a>
+                          )}
+
+                          {result.href && (
+                            <Link href={result.href}>
+                              {bn ? "বিস্তারিত" : "View details"}
+                            </Link>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+
+                {response && (
+                  <div className={styles.answerActions}>
+                    <Link href={response.directoryUrl}>
+                      {bn ? "আরও ফলাফল দেখুন" : response.directoryLabel}
+                    </Link>
+                    {response.requestedCategory === "doctor" &&
+                      !response.urgent &&
+                      response.triage?.primary_specialty_name && (
+                        <span>
+                          {"Suggested: " +
+                            response.triage.primary_specialty_name}
+                        </span>
+                      )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {busy && (
+          <div className={styles.assistantRow}>
+            <div
+              className={[
+                styles.assistantBubble,
+                styles.typingBubble,
+              ].join(" ")}
+            >
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        )}
+
+        <div ref={endRef} />
+      </div>
+
+      {error && (
+        <p className={styles.error} role="alert">
+          {error}
+        </p>
+      )}
+
+      <form className={styles.composer} onSubmit={submit}>
+        <div className={styles.modeRow}>
+          <div className={styles.categoryRow} aria-label="Service type">
+            {categories.map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={
+                  id === category ? styles.activeCategory : styles.category
+                }
+                onClick={() => {
+                  setCategory(id);
+                  setError("");
+                }}
+                aria-pressed={id === category}
+              >
+                {bn
+                  ? id === "doctor"
+                    ? "ডাক্তার পরামর্শ"
+                    : id === "medicine"
+                      ? "ওষুধ"
+                      : label
+                  : label}
+              </button>
+            ))}
+          </div>
+
           <label className={styles.locationField}>
             <span>{bn ? "এলাকা" : "Location"}</span>
-
             <select
               value={location}
               onChange={(event) => setLocation(event.target.value)}
@@ -218,7 +432,6 @@ export function HealthcareAssistant({
                     ? "সব এলাকা"
                     : "All locations"}
               </option>
-
               {healthcareLocations.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -226,191 +439,45 @@ export function HealthcareAssistant({
               ))}
             </select>
           </label>
-
-          <button
-            className={`${styles.searchButton} hc-action-button`}
-            data-action="search"
-            type="submit"
-            disabled={busy}
-          >
-            <span>
-              {busy
-                ? bn
-                  ? "খোঁজা হচ্ছে"
-                  : "Searching"
-                : bn
-                  ? "সার্চ করুন"
-                  : "Search"}
-            </span>
-            <ActionGlyph kind="search" />
-          </button>
         </div>
-      </form>
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-
-      {busy && (
-        <div className={styles.searchLoading}>
-          <LoadingExperience
-            compact
-            title={bn ? "সঠিক তথ্য মিলিয়ে দেখা হচ্ছে" : "Finding the best match"}
-            message={
+        <div className={styles.inputRow}>
+          <textarea
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleKeyDown}
+            maxLength={500}
+            rows={2}
+            placeholder={
               bn
-                ? "আপনার উপসর্গ, সেবার ধরন ও লোকেশন মিলিয়ে সবচেয়ে প্রাসঙ্গিক specialist এবং Healthcare Central ফলাফল প্রস্তুত হচ্ছে।"
-                : "Your symptoms, service type and location are being matched with the most relevant specialist and Healthcare Central results."
+                ? "যেমন: Amar 3 din dhore matha betha, bomi bomi lage. Amar ki kora uchit?"
+                : "Example: Amar 3 din dhore matha betha, bomi bomi lage. Kon doctor dekhabo?"
             }
           />
+
+          <button
+            className={[styles.sendButton, "hc-action-button"].join(" ")}
+            data-action="assistant"
+            type="submit"
+            disabled={busy || !query.trim()}
+            aria-label={bn ? "বার্তা পাঠান" : "Send message"}
+          >
+            <span>{bn ? "পাঠান" : "Send"}</span>
+            <ActionGlyph kind="assistant" />
+          </button>
         </div>
-      )}
 
-      {response && (
-        <div className={styles.response} aria-live="polite">
-          {response.urgent && (
-            <div className={styles.urgent}>
-              <div>
-                <strong>
-                  {bn
-                    ? "জরুরি চিকিৎসা প্রয়োজন হতে পারে"
-                    : "Urgent medical assessment may be needed"}
-                </strong>
-
-                <span>
-                  {response.triage?.emergency_notice ||
-                    (bn
-                      ? "জরুরি যোগাযোগ ও অ্যাম্বুলেন্স সেবা দেখুন।"
-                      : "Open emergency contacts and ambulance support.")}
-                </span>
-              </div>
-
-              <Link className="hc-action-button" data-action="emergency" href="/emergency">
-                <span>{bn ? "জরুরি সহায়তা" : "Emergency Help"}</span>
-                <ActionGlyph kind="emergency" />
-              </Link>
-            </div>
-          )}
-
-          {response.triage && response.triage.suggestions.length > 0 && (
-            <div className={styles.results}>
-              <article className={styles.resultCard}>
-                <div className={styles.resultMain}>
-                  <p className={styles.subtitle}>
-                    {bn ? "উপসর্গ অনুযায়ী specialist" : "Specialist guidance from your symptoms"}
-                  </p>
-                  {response.triage.patient_guidance && (
-                    <p>{response.triage.patient_guidance}</p>
-                  )}
-                  <h4>
-                    {bn ? "প্রথমে দেখাতে পারেন: " : "Best first specialist match: "}
-                    {response.triage.primary_specialty_name}
-                  </h4>
-                  <p className={styles.subtitle}>
-                    {bn
-                      ? "এটি diagnosis নয়। আপনার লেখা উপসর্গগুলোর সাথে specialist routing মিলিয়ে এই পরামর্শ দেখানো হয়েছে।"
-                      : "This is not a diagnosis. It is symptom-to-specialist triage based on the symptoms you entered."}
-                  </p>
-                </div>
-              </article>
-            </div>
-          )}
-
-          <div className={styles.responseHeading}>
-            <div>
-              <h3>{response.title}</h3>
-
-              {(response.context || response.location) && (
-                <p>
-                  {[response.context, response.location]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              )}
-            </div>
-
-            <Link href={response.directoryUrl}>
-              {response.directoryLabel}
-            </Link>
-          </div>
-
-          {response.results.length ? (
-            <div className={styles.results}>
-              {response.results.map((result) => (
-                <article
-                  className={styles.resultCard}
-                  key={result.id}
-                >
-                  <div className={styles.resultMain}>
-                    <h4>{result.href ? <Link href={result.href}>{result.title}</Link> : result.title}</h4>
-
-                    {result.subtitle && (
-                      <p className={styles.subtitle}>
-                        {result.subtitle}
-                      </p>
-                    )}
-
-                    {result.details.length > 0 && (
-                      <dl>
-                        {result.details
-                          .slice(0, 4)
-                          .map((item) => (
-                            <div
-                              key={`${result.id}-${item.label}`}
-                            >
-                              <dt>{item.label}</dt>
-                              <dd>{item.value}</dd>
-                            </div>
-                          ))}
-                      </dl>
-                    )}
-                  </div>
-
-                  <div className={styles.resultActions}>
-                    {result.phone && (
-                      <a href={callHref(result.phone)}>Call</a>
-                    )}
-
-                    {result.secondaryPhone && (
-                      <a href={callHref(result.secondaryPhone)}>
-                        {response.category === "ambulance"
-                          ? bn
-                            ? "বিকল্প নম্বর"
-                            : "Alternate number"
-                          : bn
-                            ? "জরুরি কল"
-                            : "Emergency call"}
-                      </a>
-                    )}
-
-                    {result.href && (
-                      <Link href={result.href}>
-                        {bn ? "বিস্তারিত" : "View details"}
-                      </Link>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.empty}>
-              {primarySpecialty && !response.urgent
-                ? bn
-                  ? `${primarySpecialty} আপনার উপসর্গের জন্য সবচেয়ে কাছের specialist match, কিন্তু এই মুহূর্তে আমাদের তালিকায় এই specialist-এর কোনো doctor নেই।`
-                  : `${primarySpecialty} is the closest specialist match for these symptoms, but Healthcare Central does not currently have a listed doctor under that specialty.`
-                : bn
-                  ? "এই সার্চের জন্য কোনো ফলাফল পাওয়া যায়নি।"
-                  : "No matching results were found."}
-            </div>
-          )}
-        </div>
-      )}
+        <p className={styles.inputHint}>
+          {bn
+            ? "Enter = পাঠান · Shift + Enter = নতুন লাইন"
+            : "Enter to send · Shift + Enter for a new line"}
+        </p>
+      </form>
 
       <p className={styles.disclaimer}>
         {bn
-          ? "Healthcare Central উপসর্গ থেকে specialist বাছাইয়ে সহায়তা করে; এটি রোগ নির্ণয় বা চিকিৎসকের বিকল্প নয়।"
-          : "Healthcare Central can suggest a type of specialist from symptoms; it does not diagnose conditions or replace a clinician."}
+          ? "Healthcare Central উপসর্গ থেকে উপযুক্ত সেবার ধরন খুঁজতে সাহায্য করে। এটি রোগ নির্ণয় করে না এবং চিকিৎসকের বিকল্প নয়। জরুরি লক্ষণ হলে সরাসরি জরুরি চিকিৎসা নিন।"
+          : "Healthcare Central helps route symptoms to an appropriate type of care. It does not diagnose conditions or replace a clinician. Seek emergency care for urgent symptoms."}
       </p>
     </section>
   );
