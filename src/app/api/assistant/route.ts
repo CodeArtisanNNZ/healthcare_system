@@ -423,6 +423,8 @@ function humanReply({
   triage,
   resultCount,
   location,
+  usedNearby,
+  matchedArea,
 }: {
   language: ConversationLanguage;
   requestedCategory: Category;
@@ -431,6 +433,8 @@ function humanReply({
   triage: DoctorTriage | null;
   resultCount: number;
   location: string;
+  usedNearby: boolean;
+  matchedArea: string;
 }) {
   if (urgent) {
     const notice = triage?.emergency_notice?.trim();
@@ -476,7 +480,9 @@ function humanReply({
             : "",
           triage?.patient_guidance || "",
           resultCount
-            ? `নিচে Healthcare Central-এর ${resultCount} জন matching doctor দেখাচ্ছি${location ? ` (${location})` : ""}।`
+            ? usedNearby && matchedArea
+              ? `${location}-এ এই specialist-এর exact match পাইনি। কাছের ${matchedArea} এলাকার ${resultCount} জন matching doctor দেখাচ্ছি।`
+              : `নিচে Healthcare Central-এর ${resultCount} জন matching doctor দেখাচ্ছি${location ? ` (${location})` : ""}।`
             : "এই specialty-তে এখন matching doctor না থাকলে directory থেকে specialty দিয়ে খুঁজতে পারেন।",
           "এটি diagnosis নয়—লক্ষণ বদলালে বা খারাপ হলে সরাসরি চিকিৎসা নিন।",
         ]
@@ -493,7 +499,9 @@ function humanReply({
             : "",
           triage?.patient_guidance || "",
           resultCount
-            ? `Niche Healthcare Central-er ${resultCount} jon matching doctor dekhacchi${location ? ` (${location})` : ""}.`
+            ? usedNearby && matchedArea
+              ? `${location}-e ei specialist-er exact match paini. Kacher ${matchedArea} area-r ${resultCount} jon matching doctor dekhacchi.`
+              : `Niche Healthcare Central-er ${resultCount} jon matching doctor dekhacchi${location ? ` (${location})` : ""}.`
             : "Ekhon matching doctor na thakle specialty diye directory-te search korte paren.",
           "Eta diagnosis na; symptom beshi kharap hole in-person medical care nin.",
         ]
@@ -509,7 +517,9 @@ function humanReply({
           : "",
         triage?.patient_guidance || "",
         resultCount
-          ? `I found ${resultCount} matching Healthcare Central doctor${resultCount === 1 ? "" : "s"}${location ? ` in ${location}` : ""} below.`
+          ? usedNearby && matchedArea
+            ? `I could not find an exact ${location} match for this specialist, so I am showing ${resultCount} matching doctor${resultCount === 1 ? "" : "s"} from nearby ${matchedArea}.`
+            : `I found ${resultCount} matching Healthcare Central doctor${resultCount === 1 ? "" : "s"}${location ? ` in ${location}` : ""} below.`
           : "There is no matching listed doctor in this specialty right now, but you can open the directory and search by specialty.",
         "This is symptom-to-specialist guidance, not a diagnosis.",
       ]
@@ -519,14 +529,20 @@ function humanReply({
 
     if (resultCount > 0) {
       if (language === "bn") {
-        return "আপনার search অনুযায়ী matching doctor পেয়েছি। নিচে সবচেয়ে relevant doctorগুলো দেখুন। যদি আসলে উপসর্গ থেকে কোন specialist দরকার সেটা জানতে চান, তাহলে সমস্যাটা নিজের ভাষায় লিখুন।";
+        return usedNearby && matchedArea
+          ? `${location}-এ exact matching doctor না থাকায় কাছের ${matchedArea} এলাকার doctor দেখাচ্ছি। যদি উপসর্গ থেকে specialist জানতে চান, সমস্যাটা নিজের ভাষায় লিখুন।`
+          : "আপনার search অনুযায়ী matching doctor পেয়েছি। নিচে সবচেয়ে relevant doctorগুলো দেখুন। যদি আসলে উপসর্গ থেকে কোন specialist দরকার সেটা জানতে চান, তাহলে সমস্যাটা নিজের ভাষায় লিখুন।";
       }
 
       if (language === "banglish") {
-        return "Apnar search onujayi matching doctor peyechi. Niche relevant doctor-gulo dekhun. Jodi symptom theke kon specialist dorkar seta jante chan, tahole problem-ta nijer vashay likhun.";
+        return usedNearby && matchedArea
+          ? `${location}-e exact matching doctor na thakay kacher ${matchedArea} area-r doctor dekhacchi. Symptom theke specialist jante chaile problem-ta nijer vashay likhun.`
+          : "Apnar search onujayi matching doctor peyechi. Niche relevant doctor-gulo dekhun. Jodi symptom theke kon specialist dorkar seta jante chan, tahole problem-ta nijer vashay likhun.";
       }
 
-      return "I found matching doctors for your search. The closest results are below. If you want symptom-based specialist guidance instead, describe what is happening in your own words.";
+      return usedNearby && matchedArea
+        ? `There was no exact matching doctor in ${location}, so I am showing the closest matches from ${matchedArea}. If you want symptom-based specialist guidance, describe what is happening in your own words.`
+        : "I found matching doctors for your search. The closest results are below. If you want symptom-based specialist guidance instead, describe what is happening in your own words.";
     }
 
     if (language === "bn") {
@@ -667,6 +683,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const usedNearby =
+      category === "doctor" &&
+      rows.length > 0 &&
+      Boolean(rows[0]._nearby_fallback);
+    const matchedArea =
+      category === "doctor" && rows.length > 0
+        ? text(rows[0]._matched_area)
+        : "";
+
+    if (usedNearby && matchedArea) {
+      context = [context, `Nearest available area: ${matchedArea}`]
+        .filter(Boolean)
+        .join(" · ");
+    }
+
     const results = rows.slice(0, 6).map((row) => resultFor(category, row));
 
     const params = new URLSearchParams();
@@ -689,6 +720,8 @@ export async function POST(request: NextRequest) {
       triage,
       resultCount: results.length,
       location: selectedLocation,
+      usedNearby,
+      matchedArea,
     });
 
     return NextResponse.json(
@@ -701,6 +734,8 @@ export async function POST(request: NextRequest) {
         context,
         reply,
         triage,
+        usedNearby,
+        matchedArea,
         results,
         directoryUrl,
         directoryLabel: `View all ${categoryTitle[category].toLowerCase()}`,
