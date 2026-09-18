@@ -37,7 +37,7 @@ export async function directory(
   // and apply the filters inside Postgres instead of filtering a partial page
   // in the browser.
   if (entity === "doctors") {
-    const smart = await db.rpc("search_doctors_directory_v2", {
+    const smart = await db.rpc("search_doctors_directory_v3", {
       query_text: q,
       location_filter: location,
       specialty_filter: filters.specialty || "",
