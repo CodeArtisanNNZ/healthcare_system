@@ -31,7 +31,7 @@ export default async function PatientCaregiverRequests() {
   const { data: requests, error } = await db
     .from("caregiver_requests")
     .select(
-      "*,assigned:caregivers!caregiver_requests_assigned_caregiver_id_fkey(id,full_name,gender,qualification,care_type,experience,location,fee_per_day,availability)",
+      "*,assigned:caregivers!caregiver_requests_assigned_caregiver_id_fkey(id,full_name,provider_type,gender,qualification,care_type,experience,location,fee_per_day,availability)",
     )
     .eq("patient_id", user.id)
     .order("created_at", { ascending: false });
@@ -111,11 +111,17 @@ export default async function PatientCaregiverRequests() {
                   borderRadius: "14px",
                 }}
               >
-                <p className="eyebrow">ASSIGNED CAREGIVER</p>
+                <p className="eyebrow">
+                  {request.assigned.provider_type === "Organization"
+                    ? "ASSIGNED CARE PROVIDER"
+                    : "ASSIGNED CAREGIVER"}
+                </p>
                 <h3 style={{ marginTop: 0 }}>{request.assigned.full_name}</h3>
                 <p className="muted">
                   {[
-                    request.assigned.gender,
+                    request.assigned.provider_type === "Organization"
+                      ? "Provider organization"
+                      : request.assigned.gender,
                     request.assigned.care_type,
                     request.assigned.location,
                     request.assigned.experience !== null &&
@@ -128,6 +134,13 @@ export default async function PatientCaregiverRequests() {
                 </p>
                 {request.assigned.qualification && (
                   <p>{request.assigned.qualification}</p>
+                )}
+                {request.assigned.provider_type === "Organization" && (
+                  <p className="muted">
+                    This provider organization is responsible for arranging the
+                    individual caregiver. Confirm the caregiver identity and
+                    schedule before care begins.
+                  </p>
                 )}
               </div>
             )}
