@@ -1,12 +1,92 @@
 begin;
 
+create table if not exists public.caregiver_private_contacts (
+  caregiver_id uuid primary key references public.caregivers(id) on delete cascade,
+  phone text,
+  email text,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.caregiver_private_contacts enable row level security;
+revoke all on table public.caregiver_private_contacts from anon, authenticated;
+grant select, insert, update, delete on table public.caregiver_private_contacts to authenticated;
+grant all on table public.caregiver_private_contacts to service_role;
+
+drop policy if exists "Admins manage private caregiver contacts"
+  on public.caregiver_private_contacts;
+create policy "Admins manage private caregiver contacts"
+  on public.caregiver_private_contacts
+  for all
+  to authenticated
+  using ((select public.is_admin()))
+  with check ((select public.is_admin()));
+
+create table if not exists public.caregiver_requests (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references public.profiles(id) on delete cascade,
+  requested_caregiver_id uuid references public.caregivers(id) on delete set null,
+  assigned_caregiver_id uuid references public.caregivers(id) on delete set null,
+  care_type text not null,
+  area text not null check (length(trim(area)) between 2 and 120),
+  preferred_date date not null,
+  time_period text not null,
+  duration text not null,
+  budget_max numeric not null check (budget_max >= 0),
+  care_notes text check (care_notes is null or length(care_notes) <= 1200),
+  status text not null default 'Requested',
+  confirmed_time timestamptz,
+  contact_info text,
+  admin_note text,
+  confirmed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.caregiver_requests enable row level security;
+grant select, insert, update on table public.caregiver_requests to authenticated;
+revoke delete on table public.caregiver_requests from authenticated;
+
+drop policy if exists "Patients read own caregiver requests"
+  on public.caregiver_requests;
+create policy "Patients read own caregiver requests"
+  on public.caregiver_requests
+  for select
+  to authenticated
+  using (
+    patient_id = (select auth.uid())
+    or (select public.is_admin())
+  );
+
+drop policy if exists "Patients request caregivers"
+  on public.caregiver_requests;
+create policy "Patients request caregivers"
+  on public.caregiver_requests
+  for insert
+  to authenticated
+  with check (
+    patient_id = (select auth.uid())
+    and status = 'Requested'
+    and assigned_caregiver_id is null
+    and confirmed_at is null
+  );
+
+drop policy if exists "Admins update caregiver requests"
+  on public.caregiver_requests;
+create policy "Admins update caregiver requests"
+  on public.caregiver_requests
+  for update
+  to authenticated
+  using ((select public.is_admin()))
+  with check ((select public.is_admin()));
+
 alter table public.caregivers
   add column if not exists patient_types text,
   add column if not exists shift_types text,
   add column if not exists languages text,
   add column if not exists verification_status text not null default 'Needs review',
   add column if not exists source_or_agency text,
-  add column if not exists internal_notes text;
+  add column if not exists internal_notes text,
+  add column if not exists care_type text;
 
 do $$
 begin
@@ -68,6 +148,18 @@ alter table public.caregiver_requests
       'overnight',
       '24-hour',
       'anytime'
+    ));
+
+alter table public.caregiver_requests
+  drop constraint if exists caregiver_requests_status_check,
+  add constraint caregiver_requests_status_check
+    check (status in (
+      'Requested',
+      'Reviewing',
+      'Confirmed',
+      'Declined',
+      'Completed',
+      'Cancelled'
     ));
 
 alter table public.caregiver_requests
