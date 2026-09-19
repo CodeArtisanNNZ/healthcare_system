@@ -337,6 +337,16 @@ export default async function AdminEntity({
       if (contactError) throw new Error(contactError.message);
       edit = { ...edit, phone: contact?.phone || "", email: contact?.email || "" };
     }
+
+    if (key === "caregivers") {
+      const { data: contact, error: contactError } = await db
+        .from("caregiver_private_contacts")
+        .select("phone,email")
+        .eq("caregiver_id", id.data)
+        .maybeSingle();
+      if (contactError) throw new Error(contactError.message);
+      edit = { ...edit, phone: contact?.phone || "", email: contact?.email || "" };
+    }
   }
   return (
     <>
