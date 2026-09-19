@@ -824,7 +824,7 @@ export async function reviewCaregiverRequest(
     if (input.assigned_caregiver_id) {
       const { data: caregiver, error: caregiverError } = await db
         .from("caregivers")
-        .select("id,full_name,gender,status")
+        .select("id,full_name,provider_type,gender,status")
         .eq("id", input.assigned_caregiver_id)
         .eq("status", "Active")
         .single();
@@ -832,12 +832,13 @@ export async function reviewCaregiverRequest(
       check(caregiverError);
 
       if (
+        caregiver?.provider_type !== "Organization" &&
         current?.caregiver_gender_preference &&
         current.caregiver_gender_preference !== "Any" &&
         caregiver?.gender !== current.caregiver_gender_preference
       ) {
         throw new Error(
-          `The patient requested a ${current.caregiver_gender_preference.toLowerCase()} caregiver. Choose a matching caregiver or change the request with the patient first.`,
+          `The patient requested a ${current.caregiver_gender_preference.toLowerCase()} caregiver. Choose a matching caregiver or an organization that can supply one.`,
         );
       }
 
