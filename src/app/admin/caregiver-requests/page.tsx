@@ -46,21 +46,30 @@ function candidateMatch(caregiver: any, request: any) {
   let score = 0;
   const reasons: string[] = [];
 
+  const isOrganization = caregiver.provider_type === "Organization";
+
   if (
+    isOrganization ||
     request.caregiver_gender_preference === "Any" ||
     caregiver.gender === request.caregiver_gender_preference
   ) {
-    score += 3;
-    if (request.caregiver_gender_preference !== "Any") {
+    score += isOrganization ? 1 : 3;
+    if (isOrganization) {
+      reasons.push("provider can confirm gender");
+    } else if (request.caregiver_gender_preference !== "Any") {
       reasons.push("gender");
     }
   } else {
     score -= 12;
   }
 
-  if (includesText(caregiver.location, request.area)) {
-    score += 5;
-    reasons.push("area");
+  if (
+    includesText(caregiver.service_areas, request.area) ||
+    includesText(caregiver.location, request.area) ||
+    (isOrganization && normal(caregiver.location).includes("dhaka"))
+  ) {
+    score += isOrganization ? 3 : 5;
+    reasons.push(isOrganization ? "Dhaka provider" : "area");
   }
 
   const careText = [
@@ -135,7 +144,7 @@ export default async function AdminCaregiverRequests() {
     db
       .from("caregivers")
       .select(
-        "id,full_name,gender,experience,qualification,care_type,patient_types,services,shift_types,availability,location,fee_per_day,languages,verification_status,source_or_agency,status",
+        "id,full_name,provider_type,gender,supplied_genders,experience,qualification,care_type,patient_types,services,shift_types,availability,location,provider_address,service_areas,fee_per_day,languages,verification_status,verified_on,source_or_agency,status",
       )
       .eq("status", "Active")
       .order("full_name"),
@@ -183,6 +192,7 @@ export default async function AdminCaregiverRequests() {
           const topMatches = ranked
             .filter(
               (item) =>
+                item.caregiver.provider_type === "Organization" ||
                 request.caregiver_gender_preference === "Any" ||
                 item.caregiver.gender === request.caregiver_gender_preference,
             )
@@ -304,6 +314,7 @@ export default async function AdminCaregiverRequests() {
                           </strong>
                           <p className="muted" style={{ margin: "0.3rem 0" }}>
                             {[
+                              caregiver.provider_type,
                               caregiver.gender,
                               caregiver.care_type,
                               caregiver.location,
@@ -330,6 +341,18 @@ export default async function AdminCaregiverRequests() {
                               caregiver.availability ||
                               "Not specified"}
                           </p>
+                          {caregiver.provider_type === "Organization" && (
+                            <p style={{ margin: "0.3rem 0" }}>
+                              <strong>Provider office:</strong>{" "}
+                              {caregiver.provider_address || caregiver.location || "Not specified"}
+                              <br />
+                              <strong>Gender supply:</strong>{" "}
+                              {caregiver.supplied_genders || "Confirm with provider"}
+                              <br />
+                              <strong>Service areas:</strong>{" "}
+                              {caregiver.service_areas || "Confirm with provider"}
+                            </p>
+                          )}
                           <p style={{ margin: "0.3rem 0" }}>
                             <strong>Experience / qualification:</strong>{" "}
                             {[
@@ -407,7 +430,9 @@ export default async function AdminCaregiverRequests() {
                         >
                           {item.caregiver.full_name}
                           {" — "}
-                          {item.caregiver.gender || "Gender n/a"}
+                          {item.caregiver.provider_type === "Organization"
+                            ? "Provider organization"
+                            : item.caregiver.gender || "Gender n/a"}
                           {" · "}
                           {item.caregiver.location || "Location n/a"}
                           {item.caregiver.fee_per_day
