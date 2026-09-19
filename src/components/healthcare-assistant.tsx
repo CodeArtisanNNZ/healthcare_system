@@ -59,6 +59,10 @@ type AssistantResponse = {
   reply: string;
   triage?: DoctorTriage | null;
   results: SearchResult[];
+  emergencyNumber?: string | null;
+  emergencyHospitals?: SearchResult[];
+  emergencyAmbulances?: SearchResult[];
+  emergencyMatchedArea?: string;
   directoryUrl: string;
   directoryLabel: string;
 };
@@ -259,32 +263,172 @@ export function HealthcareAssistant({
                 <p className={styles.replyText}>{message.content}</p>
 
                 {response?.urgent && (
-                  <div className={styles.urgent}>
-                    <div>
-                      <strong>
-                        {bn
-                          ? "জরুরি মূল্যায়ন প্রয়োজন হতে পারে"
-                          : "Urgent assessment may be needed"}
-                      </strong>
-                      <span>
-                        {response.triage?.emergency_notice ||
-                          (bn
-                            ? "গুরুতর বা দ্রুত খারাপ হওয়া উপসর্গ হলে সরাসরি জরুরি চিকিৎসা নিন।"
-                            : "Seek emergency care for severe or rapidly worsening symptoms.")}
-                      </span>
+                  <>
+                    <div className={styles.urgent}>
+                      <div>
+                        <strong>
+                          {bn
+                            ? "জরুরি মূল্যায়ন প্রয়োজন হতে পারে"
+                            : "Urgent assessment may be needed"}
+                        </strong>
+                        <span>
+                          {response.triage?.emergency_notice ||
+                            (bn
+                              ? "গুরুতর বা দ্রুত খারাপ হওয়া উপসর্গ হলে সরাসরি জরুরি চিকিৎসা নিন।"
+                              : "Seek emergency care for severe or rapidly worsening symptoms.")}
+                        </span>
+                      </div>
+                      <div className={styles.urgentActions}>
+                        <a
+                          className="hc-action-button"
+                          data-action="emergency"
+                          href={"tel:" + (response.emergencyNumber || "999")}
+                        >
+                          <span>
+                            {bn
+                              ? `৯৯৯ কল করুন`
+                              : `Call ${response.emergencyNumber || "999"}`}
+                          </span>
+                          <ActionGlyph kind="emergency" />
+                        </a>
+                        <Link
+                          className="hc-action-button"
+                          data-action="emergency"
+                          href="/emergency"
+                        >
+                          <span>{bn ? "সব জরুরি নম্বর" : "Emergency directory"}</span>
+                          <ActionGlyph kind="emergency" />
+                        </Link>
+                      </div>
                     </div>
-                    <Link
-                      className="hc-action-button"
-                      data-action="emergency"
-                      href="/emergency"
-                    >
-                      <span>{bn ? "জরুরি সহায়তা" : "Emergency help"}</span>
-                      <ActionGlyph kind="emergency" />
-                    </Link>
-                  </div>
+
+                    {(response.emergencyHospitals?.length ||
+                      response.emergencyAmbulances?.length) && (
+                      <div className={styles.emergencyResources}>
+                        {response.emergencyHospitals?.length ? (
+                          <section>
+                            <div className={styles.resourceHeading}>
+                              <strong>
+                                {bn
+                                  ? "জরুরি হাসপাতাল / ইমার্জেন্সি সেন্টার"
+                                  : "Emergency hospitals / centres"}
+                              </strong>
+                              <span>
+                                {response.location
+                                  ? bn
+                                    ? `${response.location} ও কাছাকাছি`
+                                    : `${response.location} and nearby`
+                                  : bn
+                                    ? "Location দিলে কাছাকাছি ফলাফল দেখাবে"
+                                    : "Choose a location for closer matches"}
+                              </span>
+                            </div>
+                            <div className={styles.results}>
+                              {response.emergencyHospitals.map((result) => (
+                                <article
+                                  className={styles.resultCard}
+                                  key={"hospital-" + result.id}
+                                >
+                                  <div className={styles.resultMain}>
+                                    <h4>
+                                      {result.href ? (
+                                        <Link href={result.href}>{result.title}</Link>
+                                      ) : (
+                                        result.title
+                                      )}
+                                    </h4>
+                                    {result.subtitle && (
+                                      <p className={styles.subtitle}>{result.subtitle}</p>
+                                    )}
+                                    {result.details.length > 0 && (
+                                      <dl>
+                                        {result.details.slice(0, 4).map((item) => (
+                                          <div key={result.id + "-h-" + item.label}>
+                                            <dt>{item.label}</dt>
+                                            <dd>{item.value}</dd>
+                                          </div>
+                                        ))}
+                                      </dl>
+                                    )}
+                                  </div>
+                                  <div className={styles.resultActions}>
+                                    {result.secondaryPhone && (
+                                      <a href={callHref(result.secondaryPhone)}>
+                                        {bn ? "ইমার্জেন্সি কল" : "Emergency call"}
+                                      </a>
+                                    )}
+                                    {result.phone && (
+                                      <a href={callHref(result.phone)}>
+                                        {bn ? "কল করুন" : "Call hospital"}
+                                      </a>
+                                    )}
+                                    {result.href && (
+                                      <Link href={result.href}>
+                                        {bn ? "বিস্তারিত" : "View details"}
+                                      </Link>
+                                    )}
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+                        ) : null}
+
+                        {response.emergencyAmbulances?.length ? (
+                          <section>
+                            <div className={styles.resourceHeading}>
+                              <strong>{bn ? "অ্যাম্বুলেন্স" : "Ambulance options"}</strong>
+                              <span>
+                                {bn
+                                  ? "উপলভ্য নম্বরে সরাসরি কল করুন"
+                                  : "Call an available service directly"}
+                              </span>
+                            </div>
+                            <div className={styles.results}>
+                              {response.emergencyAmbulances.map((result) => (
+                                <article
+                                  className={styles.resultCard}
+                                  key={"ambulance-" + result.id}
+                                >
+                                  <div className={styles.resultMain}>
+                                    <h4>{result.title}</h4>
+                                    {result.subtitle && (
+                                      <p className={styles.subtitle}>{result.subtitle}</p>
+                                    )}
+                                    {result.details.length > 0 && (
+                                      <dl>
+                                        {result.details.slice(0, 4).map((item) => (
+                                          <div key={result.id + "-a-" + item.label}>
+                                            <dt>{item.label}</dt>
+                                            <dd>{item.value}</dd>
+                                          </div>
+                                        ))}
+                                      </dl>
+                                    )}
+                                  </div>
+                                  <div className={styles.resultActions}>
+                                    {result.phone && (
+                                      <a href={callHref(result.phone)}>
+                                        {bn ? "অ্যাম্বুলেন্স কল" : "Call ambulance"}
+                                      </a>
+                                    )}
+                                    {result.secondaryPhone && (
+                                      <a href={callHref(result.secondaryPhone)}>
+                                        {bn ? "বিকল্প নম্বর" : "Alternate number"}
+                                      </a>
+                                    )}
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+                        ) : null}
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {response?.results.length ? (
+                {!response?.urgent && response?.results.length ? (
                   <div className={styles.results}>
                     {response.results.map((result) => (
                       <article className={styles.resultCard} key={result.id}>
