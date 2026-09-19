@@ -31,12 +31,9 @@ main > div:has(#services) > section:first-child {
     #bedcd2 !important;
 }
 
-/* The route-level loading experience stays soft and easy on the eyes. */
+/* Keep the route loader visually open; the animation itself carries the focus. */
 main > div[role="status"] {
-  background:
-    radial-gradient(circle at 14% 20%, rgba(22, 143, 137, 0.11), transparent 30%),
-    radial-gradient(circle at 90% 84%, rgba(111, 151, 131, 0.10), transparent 28%),
-    linear-gradient(145deg, #e3eeeb, #cee3da) !important;
+  background: transparent !important;
 }
 
 /* Shared form and utility surfaces stay lighter for readability. */
