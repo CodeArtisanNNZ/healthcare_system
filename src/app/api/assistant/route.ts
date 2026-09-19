@@ -1006,6 +1006,10 @@ export async function POST(request: NextRequest) {
         episode = updateResult.data as ClinicalEpisodeRow;
       }
 
+      if (!episode) {
+        throw new Error("Unable to create or continue the clinical episode.");
+      }
+
       episodeId = episode.id;
       episodeContext = episode.context_text || normalizedCurrent;
 
