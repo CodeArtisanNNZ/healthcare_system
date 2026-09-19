@@ -108,6 +108,36 @@
   white-space: pre-wrap;
 }
 
+.followUpOptions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.followUpOptions button {
+  min-height: 34px !important;
+  padding: 7px 12px !important;
+  border: 1px solid #cfe0dc !important;
+  border-radius: 999px !important;
+  background: #f7fbfa !important;
+  color: #176f69 !important;
+  box-shadow: none !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  transform: none !important;
+}
+
+.followUpOptions button:hover:not(:disabled) {
+  border-color: #a9cdc7 !important;
+  background: #e9f5f2 !important;
+}
+
+.followUpOptions button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
 .quickPrompts {
   width: min(680px, 100%);
   margin: 2px auto 0;
