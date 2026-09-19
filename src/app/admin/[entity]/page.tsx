@@ -165,22 +165,33 @@ export default async function AdminEntity({
   };
 
   if (key === "doctors") {
-    const { data: filterRows, error: filterError } = await db
-      .from("doctors")
-      .select("area,chamber_name")
-      .order("area")
-      .limit(1000);
+    const [
+      { data: filterRows, error: filterError },
+      { data: locationRows, error: locationError },
+    ] = await Promise.all([
+      db
+        .from("doctors")
+        .select("area,chamber_name")
+        .order("area")
+        .limit(1000),
+      db
+        .from("doctor_locations")
+        .select("doctor_id,area,chamber_name")
+        .order("area")
+        .limit(2000),
+    ]);
 
     if (filterError) throw new Error(filterError.message);
+    if (locationError) throw new Error(locationError.message);
 
     doctorAreas = [...new Set(
-      (filterRows || [])
+      [...(filterRows || []), ...(locationRows || [])]
         .map((row) => String(row.area || "").trim())
         .filter(Boolean),
     )].sort((a, b) => a.localeCompare(b));
 
     doctorChambers = [...new Set(
-      (filterRows || [])
+      [...(filterRows || []), ...(locationRows || [])]
         .map((row) => String(row.chamber_name || "").trim())
         .filter(Boolean),
     )].sort((a, b) => a.localeCompare(b));
@@ -213,16 +224,54 @@ export default async function AdminEntity({
       }
     }
 
-    if (doctorFilters.location) {
-      doctorQuery = doctorQuery.eq("area", doctorFilters.location);
+    if (doctorFilters.location || doctorFilters.chamber) {
+      let locationQuery = db
+        .from("doctor_locations")
+        .select("doctor_id");
+
+      if (doctorFilters.location) {
+        locationQuery = locationQuery.eq("area", doctorFilters.location);
+      }
+
+      if (doctorFilters.chamber) {
+        locationQuery = locationQuery.eq("chamber_name", doctorFilters.chamber);
+      }
+
+      const { data: matchedLocations, error: matchedLocationError } =
+        await locationQuery.limit(2000);
+
+      if (matchedLocationError) throw new Error(matchedLocationError.message);
+
+      let directQuery = db.from("doctors").select("id");
+
+      if (doctorFilters.location) {
+        directQuery = directQuery.eq("area", doctorFilters.location);
+      }
+
+      if (doctorFilters.chamber) {
+        directQuery = directQuery.eq("chamber_name", doctorFilters.chamber);
+      }
+
+      const { data: directMatches, error: directMatchError } =
+        await directQuery.limit(1000);
+
+      if (directMatchError) throw new Error(directMatchError.message);
+
+      const doctorIds = [...new Set([
+        ...(matchedLocations || []).map((row) => String(row.doctor_id)),
+        ...(directMatches || []).map((row) => String(row.id)),
+      ])];
+
+      if (!doctorIds.length) {
+        rows = [];
+        totalRows = 0;
+      } else {
+        doctorQuery = doctorQuery.in("id", doctorIds);
+      }
     }
 
     if (doctorFilters.specialty) {
       doctorQuery = doctorQuery.eq("specialty_id", doctorFilters.specialty);
-    }
-
-    if (doctorFilters.chamber) {
-      doctorQuery = doctorQuery.eq("chamber_name", doctorFilters.chamber);
     }
 
     if (["Verified", "Needs review", "Unverified"].includes(doctorFilters.verification)) {
@@ -255,14 +304,16 @@ export default async function AdminEntity({
       doctorQuery = doctorQuery.order("full_name", { ascending: true });
     }
 
-    const { data, error, count } = await doctorQuery.range(
-      (page - 1) * 24,
-      page * 24 - 1,
-    );
+    if (totalRows !== 0) {
+      const { data, error, count } = await doctorQuery.range(
+        (page - 1) * 24,
+        page * 24 - 1,
+      );
 
-    if (error) throw new Error(error.message);
-    rows = (data || []) as Row[];
-    totalRows = count;
+      if (error) throw new Error(error.message);
+      rows = (data || []) as Row[];
+      totalRows = count;
+    }
   } else {
     rows = await directory(key, q, page);
   }
