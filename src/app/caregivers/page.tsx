@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getLanguage } from "@/lib/language";
-import { supabase } from "@/lib/supabase/server";
 import styles from "./caregivers.module.css";
 
 const situations = [
@@ -117,22 +116,12 @@ export default async function CaregiversPage({
   await requireUser("patient");
   const language = await getLanguage(searchParams);
   const bn = language === "bn";
-  const db = await supabase();
-
   const requestHref = (careType?: string, patientType?: string) => {
     const params = new URLSearchParams({ lang: language });
     if (careType) params.set("care_type", careType);
     if (patientType) params.set("patient_type", patientType);
     return `/caregivers/request?${params.toString()}`;
   };
-
-  const { data: providers } = await db
-    .from("caregivers")
-    .select("id,full_name,services,location,verification_status,provider_type")
-    .eq("status", "Active")
-    .eq("provider_type", "Organization")
-    .order("full_name")
-    .limit(4);
 
   return (
     <div className={styles.page}>
@@ -385,42 +374,6 @@ export default async function CaregiversPage({
         </div>
       </section>
 
-      {providers?.length ? (
-        <section className={styles.providersSection}>
-          <div className={styles.providerHeading}>
-            <span>{bn ? "কেয়ার প্রোভাইডার" : "CARE PROVIDERS"}</span>
-            <h2>{bn ? "ডিরেক্টরিতে থাকা কিছু প্রতিষ্ঠান" : "Some providers in the directory"}</h2>
-          </div>
-
-          <div className={styles.providerGrid}>
-            {providers.map((provider) => (
-              <article className={styles.providerCard} key={provider.id}>
-                <div className={styles.providerInitial}>
-                  {provider.full_name.slice(0, 1).toUpperCase()}
-                </div>
-                <div>
-                  <strong>{provider.full_name}</strong>
-                  <span>
-                    {[
-                      bn && provider.location === "Dhaka" ? "ঢাকা" : provider.location,
-                      bn && provider.verification_status === "Directory checked"
-                        ? "ডিরেক্টরি যাচাই করা"
-                        : provider.verification_status,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                  <p>
-                    {bn
-                      ? "হোম কেয়ার সেবা প্রদানকারী প্রতিষ্ঠান"
-                      : provider.services || "Home-care provider organization"}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
 
     </div>
