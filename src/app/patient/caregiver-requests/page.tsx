@@ -45,7 +45,7 @@ export default async function PatientCaregiverRequests() {
       </Heading>
 
       <p>
-        <Link className="button secondary" href="/caregivers">
+        <Link className="button secondary" href="/caregivers/request">
           + New caregiver request
         </Link>
       </p>
