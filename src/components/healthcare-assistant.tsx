@@ -52,6 +52,9 @@ type DoctorTriage = {
 type AssistantResponse = {
   category: Category;
   requestedCategory?: Category;
+  conversationId?: string;
+  episodeId?: string | null;
+  newEpisodeStarted?: boolean;
   location: string;
   urgent: boolean;
   title: string;
@@ -122,6 +125,7 @@ export function HealthcareAssistant({
   const [error, setError] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const conversationIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -157,6 +161,10 @@ export function HealthcareAssistant({
     setError("");
 
     try {
+      if (!conversationIdRef.current) {
+        conversationIdRef.current = globalThis.crypto.randomUUID();
+      }
+
       const request = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,6 +172,7 @@ export function HealthcareAssistant({
           message,
           category,
           location,
+          conversationId: conversationIdRef.current,
           history,
         }),
       });
@@ -174,6 +183,10 @@ export function HealthcareAssistant({
 
       if (!request.ok) {
         throw new Error(data.error || "Assistant request failed.");
+      }
+
+      if (data.conversationId) {
+        conversationIdRef.current = data.conversationId;
       }
 
       setMessages((current) => [
