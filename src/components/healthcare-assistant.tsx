@@ -206,30 +206,27 @@ export function HealthcareAssistant({
       ];
 
   return (
-    <section className={styles.shell} data-hc-assistant="true" aria-labelledby="assistant-title">
+    <section
+      className={styles.shell}
+      data-hc-assistant="true"
+      data-empty={messages.length === 0 ? "true" : "false"}
+      aria-labelledby="assistant-title"
+    >
       <div className={styles.heading} data-hc-assistant-heading="true">
         <span className={styles.label}>
           {bn ? "Healthcare Central সহকারী" : "Healthcare Central Assistant"}
         </span>
         <h2 id="assistant-title">
-          {bn ? "আপনার সমস্যা বলুন" : "Tell me what is going on"}
+          {bn ? "কীভাবে সাহায্য করতে পারি?" : "How can I help?"}
         </h2>
         <p className={styles.headingCopy}>
           {bn
-            ? "বাংলা, English বা Banglish-এ স্বাভাবিকভাবে লিখুন। আমি প্রয়োজন হলে specialist ও Healthcare Central-এর matching service দেখাব।"
-            : "Write naturally in English, Bangla or Banglish. I can help route symptoms to a specialist and show matching Healthcare Central services."}
+            ? "আপনার সমস্যা নিজের ভাষায় লিখুন—বাংলা, English বা Banglish যেকোনোভাবে।"
+            : "Describe what you need in English, Bangla or Banglish."}
         </p>
       </div>
 
       <div className={styles.chatWindow} data-hc-chat="true" aria-live="polite">
-        <div className={styles.assistantRow}>
-          <div className={styles.assistantBubble}>
-            {bn
-              ? "হ্যালো। কী সমস্যা হচ্ছে সেটা নিজের ভাষায় বলুন—যেমন কোথায় ব্যথা, কতদিন ধরে, জ্বর/বমি/শ্বাসকষ্ট আছে কি না। আমি কোন ধরনের ডাক্তার দেখানো যুক্তিযুক্ত হতে পারে সেটা মিলিয়ে বলব।"
-              : "Hi. Tell me what is happening in your own words—where the problem is, how long it has been happening, and any important symptoms such as fever, vomiting or breathing trouble. I will help you find the most relevant type of care."}
-          </div>
-        </div>
-
         {messages.length === 0 && (
           <div className={styles.quickPrompts} data-hc-quick-prompts="true">
             {quickPrompts.map((prompt) => (
