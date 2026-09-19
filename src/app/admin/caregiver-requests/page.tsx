@@ -169,9 +169,10 @@ export default async function AdminCaregiverRequests() {
   return (
     <>
       <Heading eyebrow="HOME CARE ADMIN" title="Caregiver requests">
-        Patient needs and caregiver profile fields are shown together so you can
-        choose a suitable person quickly. Matching suggestions are based only on
-        stored profile information and still require administrator review.
+        Patient needs and caregiver records are shown together so you can choose
+        an individual caregiver or contact a provider organization quickly.
+        Matching suggestions are based only on stored directory information and
+        still require administrator review.
       </Heading>
 
       <p>
@@ -289,8 +290,8 @@ export default async function AdminCaregiverRequests() {
 
                 {!topMatches.length ? (
                   <p className="muted">
-                    No active caregiver profile matches the requested gender yet.
-                    Add or verify caregivers in the caregiver manager.
+                    No suitable active caregiver or provider record is available
+                    yet. Add or verify caregivers in the caregiver manager.
                   </p>
                 ) : (
                   <div className="stack">
