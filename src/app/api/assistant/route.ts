@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase/server";
+import { adminClient } from "@/lib/supabase/admin";
 import { healthcareLocations } from "@/lib/locations";
 import type { Row } from "@/lib/entities";
 
@@ -744,6 +745,41 @@ export async function POST(request: NextRequest) {
       usedNearby,
       matchedArea,
     });
+
+    const chatDb = adminClient();
+    const { error: chatSaveError } = await chatDb
+      .from("assistant_messages")
+      .insert([
+        {
+          user_id: user.id,
+          role: "user",
+          content: originalQuery,
+          category: requestedCategory,
+          requested_category: requestedCategory,
+          location: selectedLocation || null,
+          urgent,
+          metadata: { source: "healthcare-assistant" },
+        },
+        {
+          user_id: user.id,
+          role: "assistant",
+          content: reply,
+          category,
+          requested_category: requestedCategory,
+          location: selectedLocation || null,
+          urgent,
+          metadata: {
+            context,
+            usedNearby,
+            matchedArea,
+            primarySpecialty: triage?.primary_specialty_name || null,
+          },
+        },
+      ]);
+
+    if (chatSaveError) {
+      console.error("Assistant chat history save failed", chatSaveError);
+    }
 
     return NextResponse.json(
       {
