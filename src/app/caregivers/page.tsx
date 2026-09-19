@@ -180,7 +180,7 @@ export default async function CaregiversPage({
           </div>
 
           <div className={styles.quickChoices}>
-            <a href="#situations">
+            <a href="#choose-care">
               <span className={styles.quickNumber}>01</span>
               <span>
                 <strong>{bn ? "কেয়ারের ধরন দেখুন" : "Explore care options"}</strong>
@@ -219,18 +219,33 @@ export default async function CaregiversPage({
         </div>
       </section>
 
-      <section className={styles.section} id="situations">
+      <section className={styles.finalCta}>
+        <div>
+          <span>{bn ? "কেয়ারের ব্যবস্থা করতে প্রস্তুত?" : "READY TO ARRANGE CARE?"}</span>
+          <h2>{bn ? "রোগীর কী প্রয়োজন তা আমাদের জানান।" : "Tell us what the person needs."}</h2>
+          <p>
+            {bn
+              ? "আপনি শুরু করতে চাইলে তবেই বিস্তারিত অনুরোধের ফর্মটি খুলবে।"
+              : "The detailed request form only opens when you choose to start."}
+          </p>
+        </div>
+        <Link className={styles.primaryAction} href={requestHref()}>
+          {bn ? "কেয়ারগিভারের জন্য অনুরোধ করুন" : "Request a caregiver"}
+        </Link>
+      </section>
+
+      <section className={styles.section} id="choose-care">
         <div className={styles.sectionHeading}>
-          <span>{bn ? "বাড়িতে কী পরিস্থিতি চলছে?" : "WHAT IS HAPPENING AT HOME?"}</span>
+          <span>{bn ? "কী ধরনের সহায়তা প্রয়োজন?" : "WHAT KIND OF HELP IS NEEDED?"}</span>
           <h2>
             {bn
-              ? "মেডিক্যাল নাম নয়, পরিস্থিতি দিয়ে শুরু করুন।"
-              : "Start with the situation, not a medical label."}
+              ? "পরিস্থিতি বেছে নিন, তারপর কেয়ারগিভার নাকি নার্স—দুটোর পার্থক্য দেখুন।"
+              : "Choose the situation, then compare caregiver and nursing support."}
           </h2>
           <p>
             {bn
-              ? "সবচেয়ে কাছাকাছি পরিস্থিতিটি বেছে নিন। অনুরোধ পাঠানোর আগে সব তথ্য পরিবর্তন করতে পারবেন।"
-              : "Choose the closest match. You can change the details before sending the request."}
+              ? "সবচেয়ে কাছাকাছি অপশনটি বেছে নিন। অনুরোধ পাঠানোর আগে সব তথ্য পরিবর্তন করতে পারবেন।"
+              : "Choose the closest option. You can change every detail before sending the request."}
           </p>
         </div>
 
@@ -266,20 +281,12 @@ export default async function CaregiversPage({
             );
           })}
         </div>
-      </section>
-
-      <section className={styles.chooseSection} id="choose-care">
-        <div className={styles.chooseIntro}>
+        <div className={styles.inlineDivider}>
           <span>{bn ? "কেয়ারগিভার নাকি নার্স?" : "CAREGIVER OR NURSE?"}</span>
-          <h2>
-            {bn
-              ? "শুরুতেই সব টার্ম জানা জরুরি নয়।"
-              : "You do not need to know the terminology first."}
-          </h2>
           <p>
             {bn
-              ? "কেয়ারগিভার মূলত দৈনন্দিন জীবন ও নজরদারিতে সহায়তা করে। ক্লিনিক্যাল প্রক্রিয়া বা দক্ষ নার্সিং প্রয়োজন হলে নার্স বেশি উপযুক্ত।"
-              : "A caregiver mainly supports daily living and supervision. A nurse is more appropriate when clinical procedures or skilled nursing are required."}
+              ? "দৈনন্দিন সহায়তার জন্য কেয়ারগিভার, আর ক্লিনিক্যাল বা দক্ষ নার্সিং প্রয়োজন হলে হোম নার্স বেছে নিন।"
+              : "Choose a caregiver for everyday support, or home nursing when clinical or skilled nursing care is needed."}
           </p>
         </div>
 
@@ -326,21 +333,14 @@ export default async function CaregiversPage({
             </Link>
           </article>
         </div>
-      </section>
 
-      <section className={styles.scheduleSection}>
-        <div>
-          <span>{bn ? "পরিবারের সময় অনুযায়ী নমনীয়" : "FLEXIBLE AROUND THE FAMILY"}</span>
-          <h2>
-            {bn
-              ? "বিভিন্ন সময়সূচি অনুযায়ী কেয়ার সাজানো যেতে পারে।"
-              : "Care can be arranged around different schedules."}
-          </h2>
-        </div>
-        <div className={styles.scheduleChips}>
-          {scheduleOptions.map(([en, bnLabel]) => (
-            <span key={en}>{bn ? bnLabel : en}</span>
-          ))}
+        <div className={styles.scheduleRow}>
+          <strong>{bn ? "সময়সূচি:" : "Schedules:"}</strong>
+          <div className={styles.scheduleChips}>
+            {scheduleOptions.map(([en, bnLabel]) => (
+              <span key={en}>{bn ? bnLabel : en}</span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -387,18 +387,9 @@ export default async function CaregiversPage({
 
       {providers?.length ? (
         <section className={styles.providersSection}>
-          <div className={styles.sectionHeading}>
-            <span>{bn ? "ডিরেক্টরিতে থাকা কেয়ার প্রোভাইডার" : "CARE PROVIDERS IN THE DIRECTORY"}</span>
-            <h2>
-              {bn
-                ? "ম্যাচিংয়ের সময় Healthcare Central যেসব প্রতিষ্ঠান পর্যালোচনা করতে পারে।"
-                : "Organizations Healthcare Central can review when matching."}
-            </h2>
-            <p>
-              {bn
-                ? "এগুলো প্রোভাইডার ডিরেক্টরির রেকর্ড—নির্দিষ্ট ব্যক্তিগত কেয়ারগিভারের নিশ্চয়তা নয়। ম্যাচিংয়ের সময় বর্তমান স্টাফের প্রাপ্যতা নিশ্চিত করা হয়।"
-                : "These are provider-directory records, not individual caregiver guarantees. Current staff availability is confirmed during matching."}
-            </p>
+          <div className={styles.providerHeading}>
+            <span>{bn ? "কেয়ার প্রোভাইডার" : "CARE PROVIDERS"}</span>
+            <h2>{bn ? "ডিরেক্টরিতে থাকা কিছু প্রতিষ্ঠান" : "Some providers in the directory"}</h2>
           </div>
 
           <div className={styles.providerGrid}>
@@ -431,20 +422,7 @@ export default async function CaregiversPage({
         </section>
       ) : null}
 
-      <section className={styles.finalCta}>
-        <div>
-          <span>{bn ? "কেয়ারের ব্যবস্থা করতে প্রস্তুত?" : "READY TO ARRANGE CARE?"}</span>
-          <h2>{bn ? "রোগীর কী প্রয়োজন তা আমাদের জানান।" : "Tell us what the person needs."}</h2>
-          <p>
-            {bn
-              ? "আপনি শুরু করতে চাইলে তবেই বিস্তারিত অনুরোধের ফর্মটি খুলবে।"
-              : "The detailed request form only opens when you choose to start."}
-          </p>
-        </div>
-        <Link className={styles.primaryAction} href={requestHref()}>
-          {bn ? "কেয়ারগিভারের জন্য অনুরোধ করুন" : "Request a caregiver"}
-        </Link>
-      </section>
+
     </div>
   );
 }
