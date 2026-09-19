@@ -286,8 +286,8 @@ export function HealthcareAssistant({
                         >
                           <span>
                             {bn
-                              ? `৯৯৯ কল করুন`
-                              : `Call ${response.emergencyNumber || "999"}`}
+                              ? "স্বাস্থ্য হটলাইন ১৬২৬৩"
+                              : `Health hotline ${response.emergencyNumber || "16263"}`}
                           </span>
                           <ActionGlyph kind="emergency" />
                         </a>
