@@ -21,7 +21,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/patient", "Dashboard"],
         ["/patient/search", "Find a doctor"],
         ["/patient/appointments", "My appointment requests"],
-        ["/caregivers", "Request caregiver"],
+        ["/caregivers", "Caregiver services"],
         ["/patient/caregiver-requests", "My caregiver requests"],
         ["/patient/profile", "My profile"],
         ["/patient/prescriptions", "Prescriptions"],
