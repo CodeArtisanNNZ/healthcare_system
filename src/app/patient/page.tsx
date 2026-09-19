@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getLanguage } from "@/lib/language";
 import { HealthcareAssistant } from "@/components/healthcare-assistant";
+import { fileUrl } from "@/lib/storage";
 import styles from "./patient.module.css";
 
 function NavIcon({ kind }: { kind: "chat" | "doctor" | "medicine" | "hospital" | "file" | "profile" }) {
@@ -71,6 +72,7 @@ export default async function Patient({
 
   const language = await getLanguage(searchParams);
   const bn = language === "bn";
+  const avatar = await fileUrl("avatars", user.avatar_path);
 
   const navItems = [
     {
@@ -164,7 +166,15 @@ export default async function Patient({
             </div>
 
             <Link className={styles.profileLink} href="/patient/profile">
-              <span>{user.full_name.slice(0, 1).toUpperCase()}</span>
+              {avatar ? (
+                <img
+                  className={styles.profileAvatar}
+                  src={avatar}
+                  alt={`${user.full_name} profile photo`}
+                />
+              ) : (
+                <span>{user.full_name.slice(0, 1).toUpperCase()}</span>
+              )}
               <span className={styles.profileName}>{user.full_name}</span>
             </Link>
           </header>
