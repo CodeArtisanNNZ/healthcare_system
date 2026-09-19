@@ -6,15 +6,20 @@ import { adminClient } from "@/lib/supabase/admin";
 import { healthcareLocations } from "@/lib/locations";
 import type { Row } from "@/lib/entities";
 import {
-  answeredFromLastQuestion,
+  answerEvidence,
   chooseNextQuestion,
+  classifyConceptMatches,
+  conceptEvidence,
   dedupeEvidence,
   extractGenericEvidence,
+  isExplicitNewProblem,
+  isLikelyFollowUpAnswer,
   isRedFlagAttribute,
   questionText,
   redFlagAnswerIsPositive,
   redFlagNotice,
   type ClinicalConceptMatch,
+  type ClinicalEvidence,
   type FollowUpQuestion,
 } from "@/lib/clinical-reasoning";
 
@@ -41,6 +46,7 @@ const requestSchema = z
     message: z.string().trim().min(1).max(500),
     category: categorySchema.default("doctor"),
     location: z.string().trim().max(100).default(""),
+    conversationId: z.string().uuid().optional(),
     history: z.array(historyItemSchema).max(10).optional().default([]),
   })
   .strict();
@@ -77,6 +83,20 @@ type DoctorTriage = {
   primary_specialty_id: string | null;
   primary_specialty_name: string | null;
   suggestions: TriageSuggestion[];
+};
+
+type ClinicalEpisodeRow = {
+  id: string;
+  user_id: string;
+  conversation_id: string;
+  status: "active" | "closed";
+  primary_concept_id: string | null;
+  primary_concept_code: string | null;
+  primary_specialty_name: string | null;
+  context_text: string;
+  pending_question_id: string | null;
+  pending_attribute_key: string | null;
+  urgency_level: string;
 };
 
 type ConversationLanguage = "bn" | "banglish" | "en";
