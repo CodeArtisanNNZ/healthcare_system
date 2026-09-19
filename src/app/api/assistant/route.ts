@@ -565,7 +565,7 @@ function humanReply({
       return [
         "আপনার বর্ণনায় এমন কিছু লক্ষণ আছে যেগুলোর জন্য দ্রুত সরাসরি চিকিৎসা নেওয়া নিরাপদ।",
         notice || "এখনই নিকটস্থ জরুরি বিভাগে যান বা জরুরি সহায়তা নিন।",
-        "অ্যাম্বুলেন্স বা জাতীয় জরুরি সহায়তা দরকার হলে বাংলাদেশে ৯৯৯-এ কল করুন।",
+        "স্বাস্থ্য বিষয়ে ২৪ ঘণ্টা সরকারি ডাক্তারি পরামর্শের জন্য স্বাস্থ্য বাতায়ন ১৬২৬৩-এ কল করুন। জীবন-হুমকির জরুরি অবস্থা বা তৎক্ষণাৎ অ্যাম্বুলেন্স দরকার হলে ৯৯৯-ও ব্যবহার করা যায়।",
         location
           ? `${location} ও কাছাকাছি এলাকার জরুরি হাসপাতাল এবং অ্যাম্বুলেন্স অপশন নিচে দেখানো হচ্ছে।`
           : "নিচে জরুরি হাসপাতাল ও অ্যাম্বুলেন্স অপশন দেখানো হচ্ছে। Location বেছে নিলে কাছাকাছি ফলাফল আরও নির্দিষ্ট হবে।",
@@ -577,7 +577,7 @@ function humanReply({
       return [
         "Apnar description-e emon symptom ache jeta urgent hote pare.",
         notice || "Ekhon nearest emergency department-e jawa ba emergency help neya safer.",
-        "Ambulance ba national emergency help dorkar hole Bangladesh-e 999-e call korun.",
+        "24 ghonta sorkarer health advice-er jonno Shasthyo Batayon 16263-e call korun. Life-threatening emergency ba immediate ambulance dorkar hole 999-o use kora jay.",
         location
           ? `${location} ebong kacher area-r emergency hospital o ambulance option niche dekhacchi.`
           : "Niche emergency hospital o ambulance option dekhacchi. Location select korle kacher result aro specific hobe.",
@@ -588,7 +588,7 @@ function humanReply({
     return [
       "Some of the symptoms you described may need urgent in-person assessment.",
       notice || "Please seek the nearest emergency department or emergency help now.",
-      "For an ambulance or national emergency assistance in Bangladesh, call 999.",
+      "For 24-hour government health advice in Bangladesh, call Shasthyo Batayon 16263. For a life-threatening emergency or immediate ambulance dispatch, 999 is also available.",
       location
         ? `Emergency hospitals and ambulance options for ${location} and nearby areas are shown below.`
         : "Emergency hospital and ambulance options are shown below. Choose a location to narrow them to your area.",
@@ -929,7 +929,7 @@ export async function POST(request: NextRequest) {
         usedNearby,
         matchedArea,
         results,
-        emergencyNumber: urgent ? "999" : null,
+        emergencyNumber: urgent ? "16263" : null,
         emergencyHospitals,
         emergencyAmbulances,
         emergencyMatchedArea,
