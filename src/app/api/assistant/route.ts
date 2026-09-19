@@ -1360,7 +1360,12 @@ export async function POST(request: NextRequest) {
           requested_category: requestedCategory,
           location: selectedLocation || null,
           urgent,
-          metadata: { source: "healthcare-assistant" },
+          conversation_id: conversationId,
+          episode_id: episodeId,
+          metadata: {
+            source: "healthcare-assistant",
+            clinicalEngine: requestedCategory === "doctor" ? "v3" : null,
+          },
         },
         {
           user_id: user.id,
@@ -1370,6 +1375,8 @@ export async function POST(request: NextRequest) {
           requested_category: requestedCategory,
           location: selectedLocation || null,
           urgent,
+          conversation_id: conversationId,
+          episode_id: episodeId,
           metadata: {
             context,
             usedNearby,
@@ -1378,7 +1385,10 @@ export async function POST(request: NextRequest) {
             emergencyHospitalCount: emergencyHospitals.length,
             emergencyAmbulanceCount: emergencyAmbulances.length,
             primarySpecialty: triage?.primary_specialty_name || null,
-            clinicalEngine: "v2-mvp",
+            clinicalEngine: requestedCategory === "doctor" ? "v3" : null,
+            conversationId,
+            episodeId,
+            newEpisodeStarted,
             primaryConcept: primaryConcept?.code || null,
             concepts: conceptMatches.map((item) => ({
               code: item.code,
@@ -1400,6 +1410,9 @@ export async function POST(request: NextRequest) {
       {
         category,
         requestedCategory,
+        conversationId,
+        episodeId,
+        newEpisodeStarted,
         location: selectedLocation,
         urgent,
         title: categoryTitle[category],
@@ -1410,7 +1423,7 @@ export async function POST(request: NextRequest) {
         matchedArea,
         results,
         clinicalState: {
-          engine: "v2-mvp",
+          engine: requestedCategory === "doctor" ? "v3" : "directory",
           concepts: conceptMatches.map((item) => ({
             code: item.code,
             name:
