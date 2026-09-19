@@ -275,6 +275,18 @@
   font-weight: 850;
 }
 
+.profileAvatar {
+  width: 30px;
+  height: 30px;
+  display: block;
+  flex: 0 0 auto;
+  border: 1px solid #cfe1dd;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  background: #dcece9;
+}
+
 .profileName {
   max-width: 170px;
   overflow: hidden;
