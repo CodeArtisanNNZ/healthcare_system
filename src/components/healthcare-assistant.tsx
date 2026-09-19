@@ -63,6 +63,27 @@ type AssistantResponse = {
   emergencyHospitals?: SearchResult[];
   emergencyAmbulances?: SearchResult[];
   emergencyMatchedArea?: string;
+  clinicalState?: {
+    engine: string;
+    concepts: Array<{
+      code: string;
+      name: string;
+      score: number;
+      matchedAlias: string;
+    }>;
+    evidence: Array<{
+      key: string;
+      value: string;
+      source: "message" | "follow-up";
+    }>;
+    needsMoreInfo: boolean;
+  };
+  followUp?: {
+    attributeKey: string;
+    question: string;
+    answerType: "choice" | "text";
+    options: string[];
+  } | null;
   directoryUrl: string;
   directoryLabel: string;
 };
@@ -261,6 +282,45 @@ export function HealthcareAssistant({
             <div className={styles.assistantRow} key={message.id}>
               <div className={styles.assistantBubble}>
                 <p className={styles.replyText}>{message.content}</p>
+
+                {response?.followUp?.options?.length ? (
+                  <div className={styles.followUpOptions}>
+                    {response.followUp.options.map((option) => {
+                      const labels: Record<string, string> = {
+                        Yes: bn ? "হ্যাঁ" : "Yes",
+                        No: bn ? "না" : "No",
+                        "Not sure": bn ? "নিশ্চিত নই" : "Not sure",
+                        Today: bn ? "আজ" : "Today",
+                        "Just now": bn ? "এইমাত্র" : "Just now",
+                        "1–3 days": bn ? "১–৩ দিন" : "1–3 days",
+                        "1–3 days ago": bn ? "১–৩ দিন আগে" : "1–3 days ago",
+                        "4–7 days": bn ? "৪–৭ দিন" : "4–7 days",
+                        "More than a week": bn ? "এক সপ্তাহের বেশি" : "More than a week",
+                        "More than 3 days": bn ? "৩ দিনের বেশি" : "More than 3 days",
+                        "Less than 1 hour": bn ? "১ ঘণ্টার কম" : "Less than 1 hour",
+                        "Less than 6 hours": bn ? "৬ ঘণ্টার কম" : "Less than 6 hours",
+                        Longer: bn ? "আরও আগে থেকে" : "Longer",
+                        "Longer ago": bn ? "আরও আগে" : "Longer ago",
+                        "Upper abdomen": bn ? "পেটের উপরের অংশ" : "Upper abdomen",
+                        "Lower abdomen": bn ? "তলপেট" : "Lower abdomen",
+                        "Right side": bn ? "ডান পাশে" : "Right side",
+                        "Left side": bn ? "বাম পাশে" : "Left side",
+                        "All over": bn ? "সারা পেটে" : "All over",
+                      };
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => void sendMessage(option)}
+                          disabled={busy}
+                        >
+                          {labels[option] || option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
 
                 {response?.urgent && (
                   <>
