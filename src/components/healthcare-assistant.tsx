@@ -282,7 +282,7 @@ export function HealthcareAssistant({
                         <a
                           className="hc-action-button"
                           data-action="emergency"
-                          href={"tel:" + (response.emergencyNumber || "999")}
+                          href={"tel:" + (response.emergencyNumber || "16263")}
                         >
                           <span>
                             {bn
