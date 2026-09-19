@@ -152,6 +152,10 @@ export default async function AdminEntity({
   let totalRows: number | null = null;
   let doctorAreas: string[] = [];
   let doctorChambers: string[] = [];
+  const caregiverContacts = new Map<
+    string,
+    { phone: string | null; email: string | null; internal_notes: string | null }
+  >();
 
   const doctorFilters = {
     location: typeof filters.location === "string" ? filters.location.slice(0, 100) : "",
@@ -316,6 +320,24 @@ export default async function AdminEntity({
     }
   } else {
     rows = await directory(key, q, page);
+
+    if (key === "caregivers" && rows.length) {
+      const caregiverIds = rows.map((row) => String(row.id));
+      const { data: contactRows, error: caregiverContactError } = await db
+        .from("caregiver_private_contacts")
+        .select("caregiver_id,phone,email,internal_notes")
+        .in("caregiver_id", caregiverIds);
+
+      if (caregiverContactError) throw new Error(caregiverContactError.message);
+
+      for (const contact of contactRows || []) {
+        caregiverContacts.set(String(contact.caregiver_id), {
+          phone: contact.phone,
+          email: contact.email,
+          internal_notes: contact.internal_notes,
+        });
+      }
+    }
   }
   let edit: Row | undefined;
   if (typeof filters.edit === "string") {
@@ -603,6 +625,139 @@ export default async function AdminEntity({
               consultation: doctorFilters.consultation,
               sort: doctorFilters.sort === "name" ? "" : doctorFilters.sort,
             }}
+          />
+        </>
+      ) : key === "caregivers" ? (
+        <>
+          <Search
+            q={q}
+            placeholder="Search provider, caregiver, service or location"
+          />
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Provider / caregiver</th>
+                  <th>Coverage</th>
+                  <th>Admin contact</th>
+                  <th>Verification / source</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const contact = caregiverContacts.get(String(r.id));
+                  const phone = contact?.phone || "";
+                  const email = contact?.email || "";
+                  const phoneHref = phone
+                    ? "tel:" + phone.split("/")[0].replace(/[^+\\d]/g, "")
+                    : "";
+
+                  return (
+                    <tr key={r.id}>
+                      <td>
+                        <strong>{String(r.full_name || "Caregiver")}</strong>
+                        <small>
+                          {[
+                            r.provider_type || "Individual",
+                            r.care_type || r.services,
+                          ]
+                            .filter(Boolean)
+                            .map(String)
+                            .join(" · ")}
+                        </small>
+                      </td>
+
+                      <td>
+                        <strong>{String(r.location || "Dhaka")}</strong>
+                        <small>
+                          {String(
+                            r.service_areas ||
+                              r.provider_address ||
+                              "Coverage not specified",
+                          )}
+                        </small>
+                      </td>
+
+                      <td>
+                        {phone ? (
+                          <a href={phoneHref}>
+                            <strong>{phone}</strong>
+                          </a>
+                        ) : (
+                          <strong>No phone stored</strong>
+                        )}
+                        <small>
+                          {email ? (
+                            <a href={"mailto:" + email}>{email}</a>
+                          ) : (
+                            "Admin-only contact"
+                          )}
+                        </small>
+                      </td>
+
+                      <td>
+                        <span
+                          className={`admin-status-pill ${
+                            r.verification_status === "Verified"
+                              ? "verified"
+                              : r.verification_status === "Directory checked"
+                                ? "verified"
+                                : r.verification_status === "Needs review"
+                                  ? "review"
+                                  : ""
+                          }`}
+                        >
+                          {String(r.verification_status || "Needs review")}
+                        </span>
+                        <small>
+                          {String(
+                            r.source_or_agency ||
+                              "Source information not recorded",
+                          )}
+                        </small>
+                      </td>
+
+                      <td>
+                        <div className="actions">
+                          <Link
+                            className="button secondary"
+                            href={"/admin/caregivers?edit=" + r.id}
+                          >
+                            View / edit
+                          </Link>
+                          <ActionForm
+                            action={deleteEntity}
+                            label="Delete"
+                            confirm="Permanently delete this caregiver/provider?"
+                            className="inline"
+                          >
+                            <input
+                              type="hidden"
+                              name="entity"
+                              value="caregivers"
+                            />
+                            <input type="hidden" name="id" value={r.id} />
+                          </ActionForm>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {!rows.length && (
+            <Empty>No caregiver or provider records match this search.</Empty>
+          )}
+
+          <Pager
+            q={q}
+            page={page}
+            hasNext={rows.length === 24}
+            path="/admin/caregivers"
           />
         </>
       ) : (
