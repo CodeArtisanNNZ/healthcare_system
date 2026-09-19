@@ -89,7 +89,7 @@ function conceptPolarity(normalizedQuery: string, alias: string) {
 
   const escaped = escapeRegExp(a);
   const negation =
-    "(?:no|not|without|nai|nei|na|নাই|নেই|না|হয় না|হয় না|হচ্ছে না|নেই)";
+    "(?:no|not|without|dont have|don't have|do not have|have no|nai|nei|na|নাই|নেই|না|হয় না|হয় না|হচ্ছে না|নেই)";
   const uncertainty =
     "(?:maybe|perhaps|possibly|might|mone hoy|hote pare|sure na|not sure|jani na|নিশ্চিত নই|মনে হয়|মনে হয়|হতে পারে|জানি না)";
 
@@ -101,8 +101,6 @@ function conceptPolarity(normalizedQuery: string, alias: string) {
     "(?:^|\\s)" + escaped + "(?:\\s+\\S+){0,3}\\s+" + negation + "(?:\\s|$)",
     "i",
   );
-
-  if (beforeNegation.test(q) || afterNegation.test(q)) return "absent" as const;
 
   const beforeUncertain = new RegExp(
     "(?:^|\\s)" + uncertainty + "(?:\\s+\\S+){0,4}\\s+" + escaped + "(?:\\s|$)",
@@ -116,6 +114,8 @@ function conceptPolarity(normalizedQuery: string, alias: string) {
   if (beforeUncertain.test(q) || afterUncertain.test(q)) {
     return "uncertain" as const;
   }
+
+  if (beforeNegation.test(q) || afterNegation.test(q)) return "absent" as const;
 
   return "present" as const;
 }
