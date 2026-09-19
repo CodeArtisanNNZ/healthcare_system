@@ -39,56 +39,67 @@ export function LoadingExperience({
       const root = rootRef.current;
 
       anime({
-        targets: root.querySelectorAll(`.${styles.tile}`),
-        scale: [0.72, 1],
-        opacity: [0.35, 1],
-        duration: 760,
-        delay: anime.stagger(105, { from: "center" }),
-        direction: "alternate",
-        loop: true,
-        easing: "easeInOutQuad",
-      });
-
-      anime({
-        targets: root.querySelector(`.${styles.cross}`),
-        translateY: [0, -6],
-        duration: 1650,
+        targets: root.querySelector(`.${styles.logoWrap}`),
+        translateY: [0, -5],
+        scale: [1, 1.025],
+        duration: 1800,
         direction: "alternate",
         loop: true,
         easing: "easeInOutSine",
       });
 
       anime({
-        targets: root.querySelector(`.${styles.halo}`),
-        scale: [0.72, 1.28],
-        opacity: [0.22, 0],
-        duration: 1500,
-        loop: true,
-        easing: "easeOutQuad",
-      });
-
-      anime({
-        targets: root.querySelectorAll(`.${styles.orb}`),
+        targets: root.querySelector(`.${styles.ringOuter}`),
         rotate: "1turn",
-        duration: 3000,
-        delay: anime.stagger(320),
+        duration: 5200,
         loop: true,
         easing: "linear",
       });
 
       anime({
-        targets: root.querySelector(`.${styles.sweep}`),
-        translateX: ["-120%", "120%"],
-        duration: 1750,
+        targets: root.querySelector(`.${styles.ringInner}`),
+        rotate: "-1turn",
+        duration: 3900,
         loop: true,
-        easing: "easeInOutCubic",
+        easing: "linear",
+      });
+
+      anime({
+        targets: root.querySelectorAll(`.${styles.dot}`),
+        scale: [0.65, 1.2],
+        opacity: [0.28, 1],
+        duration: 950,
+        delay: anime.stagger(180),
+        direction: "alternate",
+        loop: true,
+        easing: "easeInOutSine",
+      });
+
+      anime({
+        targets: root.querySelector(`.${styles.glow}`),
+        scale: [0.86, 1.18],
+        opacity: [0.18, 0],
+        duration: 1600,
+        loop: true,
+        easing: "easeOutQuad",
+      });
+
+      anime({
+        targets: root.querySelectorAll(`.${styles.loadingDot}`),
+        translateY: [0, -4],
+        opacity: [0.28, 1],
+        duration: 520,
+        delay: anime.stagger(120),
+        direction: "alternate",
+        loop: true,
+        easing: "easeInOutQuad",
       });
 
       anime({
         targets: root.querySelectorAll(`.${styles.reveal}`),
         opacity: [0, 1],
-        translateY: [8, 0],
-        duration: 520,
+        translateY: [6, 0],
+        duration: 480,
         delay: anime.stagger(90),
         easing: "easeOutCubic",
       });
@@ -127,7 +138,7 @@ export function LoadingExperience({
   if (compact) {
     return (
       <div className={styles.compact} role="status" aria-live="polite">
-        <span className={styles.compactDot} aria-hidden="true" />
+        <img src="/images/logo.png" alt="" className={styles.compactLogo} />
         <div>
           <strong>{title}</strong>
           {message && <span>{message}</span>}
@@ -145,39 +156,38 @@ export function LoadingExperience({
       aria-label={title}
     >
       <div className={styles.visual} aria-hidden="true">
-        <span className={styles.halo} />
+        <span className={styles.glow} />
 
-        <span className={`${styles.orb} ${styles.orbOne}`}>
-          <i />
-        </span>
-        <span className={`${styles.orb} ${styles.orbTwo}`}>
-          <i />
-        </span>
-        <span className={`${styles.orb} ${styles.orbThree}`}>
-          <i />
+        <span className={styles.ringOuter}>
+          <i className={`${styles.dot} ${styles.dotOne}`} />
+          <i className={`${styles.dot} ${styles.dotTwo}`} />
         </span>
 
-        <div className={styles.cross}>
-          <span className={`${styles.tile} ${styles.top}`} />
-          <span className={`${styles.tile} ${styles.left}`} />
-          <span className={`${styles.tile} ${styles.center}`}>
-            <span className={styles.sweep} />
-          </span>
-          <span className={`${styles.tile} ${styles.right}`} />
-          <span className={`${styles.tile} ${styles.bottom}`} />
+        <span className={styles.ringInner}>
+          <i className={`${styles.dot} ${styles.dotThree}`} />
+        </span>
+
+        <div className={styles.logoWrap}>
+          <img
+            src="/images/logo.png"
+            alt=""
+            className={styles.logo}
+          />
         </div>
       </div>
 
       <div className={styles.copy}>
-        <span className={`${styles.brand} ${styles.reveal}`}>
-          Healthcare Central
-        </span>
         <strong className={styles.reveal}>{title}</strong>
         {message && (
           <span className={`${styles.message} ${styles.reveal}`}>
             {message}
           </span>
         )}
+        <span className={`${styles.dots} ${styles.reveal}`} aria-hidden="true">
+          <i className={styles.loadingDot} />
+          <i className={styles.loadingDot} />
+          <i className={styles.loadingDot} />
+        </span>
       </div>
     </div>
   );
