@@ -204,21 +204,48 @@ function hasEmergencySignals(value: string) {
   const q = normalizeConversationalText(value);
 
   return [
-    /\b(can(?:not|'t) breathe|unable to breathe|severe difficulty breathing|not breathing)\b/i,
-    /\b(severe chest pain|crushing chest pain|chest pressure)\b/i,
-    /\b(unconscious|not waking up|unresponsive)\b/i,
-    /\b(severe bleeding|bleeding won(?:'t| not) stop|vomiting blood)\b/i,
-    /\b(face droop|one sided weakness|slurred speech|sudden weakness on one side)\b/i,
-    /\b(seizure lasting|seizure.*5 minutes|continuous seizure)\b/i,
-    /\b(throat swelling.*breath|anaphylaxis)\b/i,
-    /শ্বাস.{0,16}(কষ্ট|নিতে পারছি না|নিতে সমস্যা)/i,
-    /বুকে.{0,14}(তীব্র ব্যথা|চাপ)/i,
-    /অজ্ঞান|জ্ঞান নেই/i,
-    /রক্ত.{0,12}(বন্ধ হচ্ছে না|বমি)/i,
+    // Breathing / choking / severe allergic reaction
+    /\b(can(?:not|'t) breathe|unable to breathe|not breathing|gasping for breath|severe difficulty breathing)\b/i,
+    /\b(choking.{0,20}(cannot|can't|unable).{0,10}breathe|blue lips.{0,20}breath)\b/i,
+    /\b(throat swelling.{0,24}breath|tongue swelling.{0,24}breath|anaphylaxis)\b/i,
+    /শ্বাস.{0,18}(বন্ধ|কষ্ট|নিতে পারছি না|নিতে সমস্যা)/i,
+    /(গলা|জিহ্বা).{0,14}ফুলে.{0,18}শ্বাসকষ্ট/i,
+    /ঠোঁট.{0,12}নীল.{0,18}শ্বাস/i,
+    /\b(shash|sas|dom).{0,20}(bondho|nite parchi na|kosto)\b/i,
+    /\b(gola|jihba).{0,14}fule.{0,18}shash/i,
+
+    // Chest pain / possible cardiac emergency
+    /\b(severe chest pain|crushing chest pain|chest pressure|chest pain.{0,24}(sweating|breath|faint))\b/i,
+    /বুকে.{0,16}(তীব্র ব্যথা|চাপ).{0,24}(শ্বাস|ঘাম|অজ্ঞান)?/i,
+    /\bbuk(?:e)?\s+(?:e\s+)?(?:tibro\s+)?betha.{0,22}(shash|gham|ojnan)?\b/i,
+
+    // Stroke / sudden neurologic deficit
+    /\b(face droop|one sided weakness|one-sided weakness|slurred speech|sudden weakness on one side|sudden vision loss.{0,20}weakness)\b/i,
     /মুখ.{0,12}বেঁকে|এক পাশ.{0,12}(দুর্বল|অবশ)|কথা.{0,12}জড়িয়ে/i,
-    /\bshash.{0,18}(kosto|nite parchi na|problem)\b/i,
-    /\bbuke.{0,14}(tibro betha|onek beshi betha|chap)\b/i,
-    /\b(ojnan|gian nai|rokto bondho hocche na)\b/i,
+    /\b(mukh beke|ek pashe (?:durbol|obosh)|kotha joriye).{0,28}/i,
+
+    // Consciousness / seizure
+    /\b(unconscious|not waking up|unresponsive|fainted.{0,16}not waking)\b/i,
+    /\b(seizure.{0,24}(5 minutes|five minutes|not stopping)|continuous seizure|repeated seizure.{0,24}no recovery)\b/i,
+    /অজ্ঞান|জ্ঞান নেই|খিঁচুনি.{0,18}(থামছে না|৫ মিনিট|পাঁচ মিনিট)/i,
+    /\b(ojnan|gian nai|khichuni.{0,18}(thamche na|5 minute|pach minute))\b/i,
+
+    // Major bleeding / head injury / internal bleeding
+    /\b(severe bleeding|uncontrolled bleeding|heavy bleeding.{0,18}(won't|will not|not) stop|vomiting blood|blood vomit)\b/i,
+    /\b(head bleeding|bleeding from head|head injury.{0,20}(bleeding|unconscious)|severe head injury)\b/i,
+    /রক্ত.{0,16}(বন্ধ হচ্ছে না|অনেক|বমি)|বমি.{0,10}রক্ত/i,
+    /মাথা.{0,14}(থেকে|দিয়ে|কেটে).{0,14}রক্ত/i,
+    /\b(matha.{0,14}(diye|theke|kete).{0,14}rokto|rokto bondho hocche na|bomi te rokto)\b/i,
+
+    // Poisoning / overdose / severe burn / electrical injury / drowning
+    /\b(poisoning|poison swallowed|medicine overdose|drug overdose|severe burn|electric shock.{0,20}unconscious|drowning.{0,20}not breathing)\b/i,
+    /বিষ.{0,12}খেয়েছে|ওষুধ.{0,14}বেশি.{0,10}খেয়েছে|গুরুতর.{0,10}পোড়া|বিদ্যুৎস্পৃষ্ট.{0,14}অজ্ঞান/i,
+    /\b(bish kheyeche|oshudh beshi kheyeche|agun e onek pure|current lege ojnan)\b/i,
+
+    // Pregnancy / postpartum emergencies
+    /\b(pregnan(?:t|cy).{0,24}(heavy bleeding|seizure|fainting)|delivery.{0,20}heavy bleeding)\b/i,
+    /গর্ভাবস্থায়.{0,20}(অতিরিক্ত রক্তপাত|খিঁচুনি)|প্রসবের পর.{0,18}অতিরিক্ত রক্তপাত/i,
+    /\b(pregnan(?:t|cy).{0,20}(onek rokto|khichuni)|delivery.{0,18}onek rokto)\b/i,
   ].some((pattern) => pattern.test(q));
 }
 
@@ -306,6 +333,82 @@ async function searchDirectory(
     (fallback.data || []) as Row[],
     location,
   );
+}
+
+async function emergencyResources(
+  db: Awaited<ReturnType<typeof supabase>>,
+  location: string,
+) {
+  const dedupe = (rows: Row[]) => {
+    const seen = new Set<string>();
+    return rows.filter((row) => {
+      const id = String(row.id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  };
+
+  let hospitals = await searchDirectory(db, "hospital", "", location);
+  let ambulances = await searchDirectory(db, "ambulance", "", location);
+  let matchedArea = location;
+
+  if (location && (hospitals.length < 3 || ambulances.length < 3)) {
+    const { data: fallback } = await db
+      .from("healthcare_area_fallbacks")
+      .select("canonical_area,nearby_areas")
+      .eq("area", location)
+      .maybeSingle();
+
+    const nearby = [
+      text(fallback?.canonical_area),
+      ...((Array.isArray(fallback?.nearby_areas)
+        ? fallback.nearby_areas
+        : []) as string[]),
+    ]
+      .filter(Boolean)
+      .filter((area, index, all) => all.indexOf(area) === index)
+      .filter((area) => normalize(area) !== normalize(location))
+      .slice(0, 4);
+
+    for (const area of nearby) {
+      if (hospitals.length < 3) {
+        hospitals = dedupe([
+          ...hospitals,
+          ...(await searchDirectory(db, "hospital", "", area)),
+        ]);
+      }
+
+      if (ambulances.length < 3) {
+        ambulances = dedupe([
+          ...ambulances,
+          ...(await searchDirectory(db, "ambulance", "", area)),
+        ]);
+      }
+
+      if ((hospitals.length >= 3 || ambulances.length >= 3) && !matchedArea) {
+        matchedArea = area;
+      }
+
+      if (hospitals.length >= 3 && ambulances.length >= 3) break;
+    }
+  }
+
+  // If the directory has no area-specific rows, still show verified emergency
+  // options rather than leaving an urgent user with an empty screen.
+  if (hospitals.length === 0) {
+    hospitals = await searchDirectory(db, "hospital", "", "");
+  }
+
+  if (ambulances.length === 0) {
+    ambulances = await searchDirectory(db, "ambulance", "", "");
+  }
+
+  return {
+    hospitals: dedupe(hospitals).slice(0, 4),
+    ambulances: dedupe(ambulances).slice(0, 4),
+    matchedArea,
+  };
 }
 
 async function resolveDoctorTriage(
@@ -462,6 +565,10 @@ function humanReply({
       return [
         "আপনার বর্ণনায় এমন কিছু লক্ষণ আছে যেগুলোর জন্য দ্রুত সরাসরি চিকিৎসা নেওয়া নিরাপদ।",
         notice || "এখনই নিকটস্থ জরুরি বিভাগে যান বা জরুরি সহায়তা নিন।",
+        "অ্যাম্বুলেন্স বা জাতীয় জরুরি সহায়তা দরকার হলে বাংলাদেশে ৯৯৯-এ কল করুন।",
+        location
+          ? `${location} ও কাছাকাছি এলাকার জরুরি হাসপাতাল এবং অ্যাম্বুলেন্স অপশন নিচে দেখানো হচ্ছে।`
+          : "নিচে জরুরি হাসপাতাল ও অ্যাম্বুলেন্স অপশন দেখানো হচ্ছে। Location বেছে নিলে কাছাকাছি ফলাফল আরও নির্দিষ্ট হবে।",
         "শুধু অনলাইন উত্তর বা সাধারণ ডাক্তার সার্চের জন্য অপেক্ষা করবেন না।",
       ].join(" ");
     }
@@ -470,6 +577,10 @@ function humanReply({
       return [
         "Apnar description-e emon symptom ache jeta urgent hote pare.",
         notice || "Ekhon nearest emergency department-e jawa ba emergency help neya safer.",
+        "Ambulance ba national emergency help dorkar hole Bangladesh-e 999-e call korun.",
+        location
+          ? `${location} ebong kacher area-r emergency hospital o ambulance option niche dekhacchi.`
+          : "Niche emergency hospital o ambulance option dekhacchi. Location select korle kacher result aro specific hobe.",
         "Sudhu online answer-er jonno wait korben na.",
       ].join(" ");
     }
@@ -477,6 +588,10 @@ function humanReply({
     return [
       "Some of the symptoms you described may need urgent in-person assessment.",
       notice || "Please seek the nearest emergency department or emergency help now.",
+      "For an ambulance or national emergency assistance in Bangladesh, call 999.",
+      location
+        ? `Emergency hospitals and ambulance options for ${location} and nearby areas are shown below.`
+        : "Emergency hospital and ambulance options are shown below. Choose a location to narrow them to your area.",
       "Do not wait for an online answer if the symptoms are severe or worsening.",
     ].join(" ");
   }
@@ -684,12 +799,23 @@ export async function POST(request: NextRequest) {
         triage?.emergency_notice || "Urgent medical assessment may be needed";
     }
 
-    let rows = await searchDirectory(
-      db,
-      category,
-      searchTerm,
-      selectedLocation,
-    );
+    let rows: Row[] = [];
+    let emergencyAmbulanceRows: Row[] = [];
+    let emergencyMatchedArea = selectedLocation;
+
+    if (urgent) {
+      const emergency = await emergencyResources(db, selectedLocation);
+      rows = emergency.hospitals;
+      emergencyAmbulanceRows = emergency.ambulances;
+      emergencyMatchedArea = emergency.matchedArea;
+    } else {
+      rows = await searchDirectory(
+        db,
+        category,
+        searchTerm,
+        selectedLocation,
+      );
+    }
 
     if (
       rows.length === 0 &&
@@ -721,6 +847,12 @@ export async function POST(request: NextRequest) {
     }
 
     const results = rows.slice(0, 6).map((row) => resultFor(category, row));
+    const emergencyHospitals = urgent ? results.slice(0, 4) : [];
+    const emergencyAmbulances = urgent
+      ? emergencyAmbulanceRows
+          .slice(0, 4)
+          .map((row) => resultFor("ambulance", row))
+      : [];
 
     const params = new URLSearchParams();
 
@@ -772,6 +904,9 @@ export async function POST(request: NextRequest) {
             context,
             usedNearby,
             matchedArea,
+            emergencyMatchedArea,
+            emergencyHospitalCount: emergencyHospitals.length,
+            emergencyAmbulanceCount: emergencyAmbulances.length,
             primarySpecialty: triage?.primary_specialty_name || null,
           },
         },
@@ -794,6 +929,10 @@ export async function POST(request: NextRequest) {
         usedNearby,
         matchedArea,
         results,
+        emergencyNumber: urgent ? "999" : null,
+        emergencyHospitals,
+        emergencyAmbulances,
+        emergencyMatchedArea,
         directoryUrl,
         directoryLabel: `View all ${categoryTitle[category].toLowerCase()}`,
       },
