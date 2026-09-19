@@ -498,27 +498,71 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
       time_period: z.enum(["morning", "afternoon", "evening", "anytime"]),
       budget: z.enum(["800", "1500", "2500", "flexible"]),
       area: z.enum(healthcareLocations),
-      concern_summary: z.string().trim().max(1200),
+      concern_summary: z.string().trim().min(2, "Tell us the symptoms or reason for the visit.").max(1200),
     }).parse(Object.fromEntries(form));
     const periods = { morning: ["09:00", "12:00"], afternoon: ["12:00", "16:00"], evening: ["16:00", "20:00"], anytime: ["09:00", "20:00"] } as const;
     const [preferredStart, preferredEnd] = periods[input.time_period];
     const budgetMax = input.budget === "flexible" ? 100000 : Number(input.budget);
     const db = await supabase();
-    let doctorId: string | null = null;
+
+    // requested_doctor_id must mean the doctor the patient actually selected.
+    // The old flow replaced that doctor with a local automatic match, which made
+    // the original customer choice impossible for admins to see.
+    let requestedDoctorId: string | null = null;
+    let requestedDoctorLocation: string | null = null;
+    let specialtyId: string | null = input.specialty_id || null;
+
     if (input.doctor_id) {
-      const { data: viewedDoctor, error: doctorError } = await db.from("doctors").select("id,location,specialty_id").eq("id", input.doctor_id).eq("status", "Active").maybeSingle();
+      const { data: viewedDoctor, error: doctorError } = await db
+        .from("doctors")
+        .select("id,location,specialty_id")
+        .eq("id", input.doctor_id)
+        .eq("status", "Active")
+        .maybeSingle();
       check(doctorError);
-      if (viewedDoctor && locationMatches(viewedDoctor.location, input.area)) doctorId = viewedDoctor.id;
+
+      if (viewedDoctor) {
+        requestedDoctorId = viewedDoctor.id;
+        requestedDoctorLocation = viewedDoctor.location || null;
+        specialtyId = viewedDoctor.specialty_id || specialtyId;
+      }
     }
-    if (!doctorId && input.specialty_id) {
-      const { data: localDoctors, error: localError } = await db.from("doctors").select("id,location").eq("status", "Active").eq("specialty_id", input.specialty_id).order("experience", { ascending: false }).limit(100);
+
+    // Local doctors are candidates for the admin to assign; they no longer
+    // overwrite the patient's selected doctor.
+    let ranked: string[] = [];
+    if (specialtyId) {
+      const { data: localDoctors, error: localError } = await db
+        .from("doctors")
+        .select("id,location")
+        .eq("status", "Active")
+        .eq("specialty_id", specialtyId)
+        .order("experience", { ascending: false })
+        .limit(100);
       check(localError);
-      doctorId = localDoctors?.find((doctor) => locationMatches(doctor.location, input.area))?.id || null;
+
+      ranked =
+        localDoctors
+          ?.filter((doctor) => locationMatches(doctor.location, input.area))
+          .map((doctor) => doctor.id)
+          .slice(0, 5) || [];
     }
+
+    if (
+      requestedDoctorId &&
+      requestedDoctorLocation &&
+      locationMatches(requestedDoctorLocation, input.area)
+    ) {
+      ranked = [
+        requestedDoctorId,
+        ...ranked.filter((id) => id !== requestedDoctorId),
+      ].slice(0, 5);
+    }
+
     const { data: request, error } = await db.from("appointment_requests").insert({
       patient_id: user.id,
-      specialty_id: input.specialty_id || null,
-      requested_doctor_id: doctorId,
+      specialty_id: specialtyId,
+      requested_doctor_id: requestedDoctorId,
       preferred_date: input.preferred_date,
       preferred_time_start: preferredStart,
       preferred_time_end: preferredEnd,
@@ -528,10 +572,10 @@ export async function requestAppointment(_: ActionState, form: FormData): Promis
       budget_min: 0,
       budget_max: budgetMax,
       area: input.area,
-      concern_summary: input.concern_summary || null,
+      concern_summary: input.concern_summary,
     }).select("id").single();
     check(error);
-    const ranked = doctorId ? [doctorId] : [];
+
     if (ranked.length) {
       const { error: candidateError } = await db.from("appointment_request_candidates").insert(
         ranked.map((id, index) => ({ request_id: request!.id, doctor_id: id, preference_rank: index + 1 })),
