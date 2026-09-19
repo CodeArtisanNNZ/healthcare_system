@@ -195,7 +195,13 @@
 }
 
 .section {
-  padding-top: 64px;
+  margin-top: 24px;
+  padding: 30px;
+  overflow: hidden;
+  border: 1px solid #d7e5e1;
+  border-radius: 24px;
+  background: rgba(250, 253, 252, 0.94);
+  box-shadow: 0 16px 38px rgba(28, 87, 81, 0.055);
 }
 
 .sectionHeading {
@@ -225,25 +231,34 @@
   margin-top: 25px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
+  border: 1px solid #dce8e5;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #ffffff;
 }
 
 .situationCard {
-  min-height: 225px;
+  min-height: 205px;
   padding: 22px;
   display: block;
-  border: 1px solid #dbe8e5;
-  border-radius: 20px;
-  background: #fbfdfc;
+  border: 0;
+  border-bottom: 1px solid #e3ece9;
+  background: transparent;
   color: inherit;
   text-decoration: none;
-  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  transition: background 150ms ease;
+}
+
+.situationCard:nth-child(odd) {
+  border-right: 1px solid #e3ece9;
+}
+
+.situationCard:nth-last-child(-n + 2) {
+  border-bottom: 0;
 }
 
 .situationCard:hover {
-  transform: translateY(-2px);
-  border-color: #b9d5cf;
-  box-shadow: 0 14px 30px rgba(31, 88, 82, 0.08);
+  background: #f4f9f7;
 }
 
 .iconBox,
@@ -299,8 +314,8 @@
 }
 
 .inlineDivider {
-  margin: 38px 0 0;
-  padding-top: 28px;
+  margin: 30px 0 0;
+  padding-top: 24px;
   display: grid;
   grid-template-columns: minmax(180px, 0.45fr) minmax(0, 1fr);
   gap: 22px;
@@ -313,17 +328,23 @@
 }
 
 .compareGrid {
-  margin-top: 24px;
+  margin-top: 18px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  border: 1px solid #dce8e5;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #ffffff;
 }
 
 .compareCard {
   padding: 22px;
-  border: 1px solid #d8e5e2;
-  border-radius: 18px;
-  background: #fff;
+  border: 0;
+  background: transparent;
+}
+
+.compareCard + .compareCard {
+  border-left: 1px solid #e3ece9;
 }
 
 .compareHeader {
@@ -361,8 +382,8 @@
 }
 
 .scheduleRow {
-  margin-top: 20px;
-  padding: 16px 0 2px;
+  margin-top: 18px;
+  padding: 16px 2px 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -540,6 +561,26 @@
   .steps,
   .providerGrid {
     grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 22px 18px;
+  }
+
+  .situationCard,
+  .situationCard:nth-child(odd),
+  .situationCard:nth-last-child(-n + 2) {
+    border-right: 0;
+    border-bottom: 1px solid #e3ece9;
+  }
+
+  .situationCard:last-child {
+    border-bottom: 0;
+  }
+
+  .compareCard + .compareCard {
+    border-left: 0;
+    border-top: 1px solid #e3ece9;
   }
 
   .inlineDivider {
