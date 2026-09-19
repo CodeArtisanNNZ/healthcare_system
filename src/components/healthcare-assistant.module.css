@@ -179,6 +179,53 @@
   font-size: inherit;
 }
 
+.urgentActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.emergencyResources {
+  margin-top: 14px;
+  display: grid;
+  gap: 16px;
+}
+
+.emergencyResources section {
+  min-width: 0;
+}
+
+.resourceHeading {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.resourceHeading strong {
+  color: #6f1624;
+  font-size: 12px;
+}
+
+.resourceHeading span {
+  color: #8a716f;
+  font-size: 9.5px;
+}
+
+.emergencyResources .resultCard {
+  border-color: #ead8d9;
+  background: #fffdfd;
+}
+
+.emergencyResources .resultActions a {
+  border-color: #ead4d6;
+  background: #fff7f8;
+  color: #8d2334;
+}
+
 .results {
   margin-top: 15px;
   display: grid;
@@ -504,6 +551,22 @@
 }
 
 @media (max-width: 760px) {
+  .urgent {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .urgentActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .resourceHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
   .shell {
     min-height: calc(100vh - 122px);
   }
