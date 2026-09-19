@@ -9,6 +9,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/admin", "Overview"],
         ["/admin/users", "Users"],
         ["/admin/appointments", "Appointment requests"],
+        ["/admin/caregiver-requests", "Caregiver requests"],
         ["/admin/chats", "Patient chats"],
         ...Object.entries(entities).map(([key, value]) => [
           `/admin/${key}`,
@@ -20,12 +21,13 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/patient", "Dashboard"],
         ["/patient/search", "Find a doctor"],
         ["/patient/appointments", "My appointment requests"],
+        ["/caregivers", "Request caregiver"],
+        ["/patient/caregiver-requests", "My caregiver requests"],
         ["/patient/profile", "My profile"],
         ["/patient/prescriptions", "Prescriptions"],
         ["/patient/reports", "Lab reports"],
         ["/patient/lab_tests", "Lab tests"],
         ["/patient/hospitals", "Hospitals"],
-        ["/patient/caregivers", "Caregivers"],
         ["/emergency", "Ambulances"],
       ];
 
