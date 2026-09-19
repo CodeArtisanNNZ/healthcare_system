@@ -9,6 +9,7 @@ export function PortalNav({ admin = false }: { admin?: boolean }) {
         ["/admin", "Overview"],
         ["/admin/users", "Users"],
         ["/admin/appointments", "Appointment requests"],
+        ["/admin/chats", "Patient chats"],
         ...Object.entries(entities).map(([key, value]) => [
           `/admin/${key}`,
           value.title,
