@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getLanguage } from "@/lib/language";
 import { HealthcareAssistant } from "@/components/healthcare-assistant";
+import { NewConversationLink } from "@/components/new-conversation-link";
 import { fileUrl } from "@/lib/storage";
 import styles from "./patient.module.css";
 
@@ -125,10 +126,11 @@ export default async function Patient({
             </div>
           </div>
 
-          <Link className={styles.newChat} href="/patient">
-            <span className={styles.newChatIcon}>+</span>
-            {bn ? "নতুন কথোপকথন" : "New conversation"}
-          </Link>
+          <NewConversationLink
+            className={styles.newChat}
+            iconClassName={styles.newChatIcon}
+            label={bn ? "নতুন কথোপকথন" : "New conversation"}
+          />
 
           <nav className={styles.sideNav}>
             {navItems.map((item) => (
