@@ -161,16 +161,44 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  border: 1px solid #7a0b1c;
   border-radius: 9px;
-  color: #8d2431;
-  background: #fff1f3;
+  color: #ffffff;
+  background: linear-gradient(180deg, #c61b36 0%, #a20f28 58%, #8d0b21 100%);
+  box-shadow:
+    0 4px 0 #6d0818,
+    0 8px 18px rgba(125, 12, 35, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   text-decoration: none;
   font-size: 12px;
   font-weight: 800;
+  text-shadow: 0 1px 1px rgba(74, 0, 14, 0.35);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    filter 140ms ease;
 }
 
 .emergencyLink:hover {
-  background: #ffe7ea;
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 #6d0818,
+    0 10px 22px rgba(125, 12, 35, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.emergencyLink:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 #6d0818,
+    0 5px 12px rgba(125, 12, 35, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.emergencyLink:focus-visible {
+  outline: 3px solid rgba(198, 27, 54, 0.24);
+  outline-offset: 3px;
 }
 
 .emergencyDot {
@@ -178,8 +206,10 @@
   height: 8px;
   flex: 0 0 auto;
   border-radius: 50%;
-  background: #c32639;
-  box-shadow: 0 0 0 4px rgba(195, 38, 57, 0.08);
+  background: #fff5f7;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.16),
+    0 1px 2px rgba(77, 0, 13, 0.35);
 }
 
 .conversation {
@@ -322,7 +352,8 @@
 @media (prefers-reduced-motion: reduce) {
   .newChat,
   .sideLink,
-  .sideLinkActive {
+  .sideLinkActive,
+  .emergencyLink {
     transition: none;
   }
 }
