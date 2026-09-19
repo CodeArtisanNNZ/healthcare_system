@@ -8,7 +8,7 @@ export default async function Admin() {
   await requireUser("admin");
   const db = await supabase();
 
-  const [stats, chatResult] = await Promise.all([
+  const [stats, chatResult, caregiverRequestResult] = await Promise.all([
     Promise.all(
       Object.entries(entities).map(async ([key, e]) => {
         const { count, error } = await db
@@ -19,9 +19,19 @@ export default async function Admin() {
       }),
     ),
     db.from("assistant_messages").select("*", { count: "exact", head: true }),
+    db
+      .from("caregiver_requests")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["Requested", "Reviewing"]),
   ]);
 
-  if (chatResult.error) throw new Error(chatResult.error.message);
+  if (chatResult.error || caregiverRequestResult.error) {
+    throw new Error(
+      chatResult.error?.message ||
+        caregiverRequestResult.error?.message ||
+        "Could not load admin overview.",
+    );
+  }
 
   return (
     <>
@@ -30,6 +40,12 @@ export default async function Admin() {
       </Heading>
 
       <div className="cards">
+        <Link className="card" href="/admin/caregiver-requests">
+          <p className="muted">Caregiver requests needing attention</p>
+          <strong className="stat">{caregiverRequestResult.count || 0}</strong>
+          <p className="text-link">Match caregivers →</p>
+        </Link>
+
         <Link className="card" href="/admin/chats">
           <p className="muted">Patient chat messages</p>
           <strong className="stat">{chatResult.count || 0}</strong>
