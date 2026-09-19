@@ -266,14 +266,30 @@ export default async function AdminAppointments() {
 
                     <div>
                       <p>
-                        <strong>Admin-only phone</strong>
+                        <strong>Appointment / chamber phone</strong>
                         <br />
-                        {value(selectedContact?.phone, "No private phone stored")}
+                        {selectedContact?.phone ? (
+                          <a href={`tel:${String(selectedContact.phone).replace(/[^+\\d]/g, "")}`}>
+                            {selectedContact.phone}
+                          </a>
+                        ) : (
+                          "No booking phone stored"
+                        )}
+                      </p>
+                      <p className="muted">
+                        This may be the diagnostic centre / chamber booking line,
+                        not the doctor&apos;s personal mobile number.
                       </p>
                       <p>
-                        <strong>Admin-only email</strong>
+                        <strong>Doctor / booking email</strong>
                         <br />
-                        {value(selectedContact?.email, "No private email stored")}
+                        {selectedContact?.email ? (
+                          <a href={`mailto:${selectedContact.email}`}>
+                            {selectedContact.email}
+                          </a>
+                        ) : (
+                          "No booking email stored"
+                        )}
                       </p>
                       <p>
                         <strong>Hospital / workplace</strong>
