@@ -5,6 +5,18 @@ import { supabase } from "@/lib/supabase/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { healthcareLocations } from "@/lib/locations";
 import type { Row } from "@/lib/entities";
+import {
+  answeredFromLastQuestion,
+  chooseNextQuestion,
+  dedupeEvidence,
+  extractGenericEvidence,
+  isRedFlagAttribute,
+  questionText,
+  redFlagAnswerIsPositive,
+  redFlagNotice,
+  type ClinicalConceptMatch,
+  type FollowUpQuestion,
+} from "@/lib/clinical-reasoning";
 
 export const runtime = "nodejs";
 
@@ -759,17 +771,78 @@ export async function POST(request: NextRequest) {
     const requestedCategory = parsed.data.category;
     const normalizedCurrent = normalizeConversationalText(originalQuery);
     const carryHistory = shouldCarryRecentSymptomHistory(originalQuery);
-    const userHistory = carryHistory
-      ? parsed.data.history
-          .filter((item) => item.role === "user")
-          .slice(-2)
-          .map((item) => normalizeConversationalText(item.content))
-      : [];
+    const userHistory =
+      requestedCategory === "doctor"
+        ? parsed.data.history
+            .filter((item) => item.role === "user")
+            .slice(-4)
+            .map((item) => normalizeConversationalText(item.content))
+        : carryHistory
+          ? parsed.data.history
+              .filter((item) => item.role === "user")
+              .slice(-2)
+              .map((item) => normalizeConversationalText(item.content))
+          : [];
     const conversationQuery = [...userHistory, normalizedCurrent]
       .filter(Boolean)
       .join(" ")
       .slice(-500);
-    const language = detectLanguage(originalQuery);
+    const language = detectLanguage(conversationQuery);
+
+    let conceptMatches: ClinicalConceptMatch[] = [];
+    let questions: FollowUpQuestion[] = [];
+    let primaryConcept: ClinicalConceptMatch | null = null;
+    let clinicalEvidence = extractGenericEvidence(conversationQuery);
+    let followUp: FollowUpQuestion | null = null;
+    let followUpAnswer = null as ReturnType<typeof answeredFromLastQuestion>;
+
+    if (requestedCategory === "doctor") {
+      const conceptResult = await db.rpc("match_symptom_concepts", {
+        query_text: conversationQuery,
+      });
+
+      if (!conceptResult.error) {
+        conceptMatches = (conceptResult.data || []) as ClinicalConceptMatch[];
+        primaryConcept = conceptMatches[0] || null;
+      } else {
+        console.error("Clinical concept matcher unavailable", conceptResult.error.message);
+      }
+
+      if (primaryConcept) {
+        const questionResult = await db
+          .from("symptom_followup_questions")
+          .select(
+            "id,concept_id,attribute_key,question_en,question_bn,question_banglish,answer_type,options,priority,required",
+          )
+          .eq("concept_id", primaryConcept.concept_id)
+          .eq("active", true)
+          .order("priority");
+
+        if (!questionResult.error) {
+          questions = (questionResult.data || []).map((row) => ({
+            ...row,
+            options: Array.isArray(row.options) ? row.options.map(String) : [],
+          })) as FollowUpQuestion[];
+
+          followUpAnswer = answeredFromLastQuestion(
+            parsed.data.history,
+            originalQuery,
+            questions,
+          );
+
+          if (followUpAnswer) {
+            clinicalEvidence = dedupeEvidence([
+              ...clinicalEvidence,
+              followUpAnswer,
+            ]);
+          }
+
+          followUp = chooseNextQuestion(questions, clinicalEvidence);
+        } else {
+          console.error("Clinical follow-up questions unavailable", questionResult.error.message);
+        }
+      }
+    }
 
     let triage: DoctorTriage | null = null;
     let urgent = hasEmergencySignals(conversationQuery);
@@ -777,12 +850,33 @@ export async function POST(request: NextRequest) {
     if (requestedCategory === "doctor") {
       triage = await resolveDoctorTriage(db, conversationQuery);
       urgent = urgent || triage.urgent;
+
+      if (
+        !urgent &&
+        primaryConcept &&
+        followUpAnswer &&
+        isRedFlagAttribute(followUpAnswer.key) &&
+        redFlagAnswerIsPositive(originalQuery)
+      ) {
+        urgent = true;
+        triage = {
+          ...(triage || emptyTriage),
+          urgent: true,
+          emergency_notice: redFlagNotice(primaryConcept.code, language),
+        };
+        followUp = null;
+      }
     }
+
+    const needsMoreInfo =
+      requestedCategory === "doctor" && !urgent && Boolean(followUp);
 
     const category: Category = urgent ? "hospital" : requestedCategory;
 
     let searchTerm = normalizedCurrent.slice(0, 160);
-    let context = "";
+    let context = primaryConcept
+      ? `Clinical concept: ${primaryConcept.canonical_name}`
+      : "";
 
     if (
       requestedCategory === "doctor" &&
@@ -803,7 +897,9 @@ export async function POST(request: NextRequest) {
     let emergencyAmbulanceRows: Row[] = [];
     let emergencyMatchedArea = selectedLocation;
 
-    if (urgent) {
+    if (needsMoreInfo) {
+      rows = [];
+    } else if (urgent) {
       const emergency = await emergencyResources(db, selectedLocation);
       rows = emergency.hospitals;
       emergencyAmbulanceRows = emergency.ambulances;
@@ -818,6 +914,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (
+      !needsMoreInfo &&
       rows.length === 0 &&
       requestedCategory === "doctor" &&
       !urgent &&
@@ -866,17 +963,20 @@ export async function POST(request: NextRequest) {
       params.toString() ? `?${params.toString()}` : ""
     }`;
 
-    const reply = humanReply({
-      language,
-      requestedCategory,
-      category,
-      urgent,
-      triage,
-      resultCount: results.length,
-      location: selectedLocation,
-      usedNearby,
-      matchedArea,
-    });
+    const reply =
+      needsMoreInfo && followUp
+        ? questionText(followUp, language)
+        : humanReply({
+            language,
+            requestedCategory,
+            category,
+            urgent,
+            triage,
+            resultCount: results.length,
+            location: selectedLocation,
+            usedNearby,
+            matchedArea,
+          });
 
     const chatDb = adminClient();
     const { error: chatSaveError } = await chatDb
@@ -908,6 +1008,16 @@ export async function POST(request: NextRequest) {
             emergencyHospitalCount: emergencyHospitals.length,
             emergencyAmbulanceCount: emergencyAmbulances.length,
             primarySpecialty: triage?.primary_specialty_name || null,
+            clinicalEngine: "v2-mvp",
+            primaryConcept: primaryConcept?.code || null,
+            concepts: conceptMatches.map((item) => ({
+              code: item.code,
+              name: item.canonical_name,
+              score: item.score,
+            })),
+            evidence: clinicalEvidence,
+            needsMoreInfo,
+            followUpAttribute: followUp?.attribute_key || null,
           },
         },
       ]);
@@ -929,6 +1039,29 @@ export async function POST(request: NextRequest) {
         usedNearby,
         matchedArea,
         results,
+        clinicalState: {
+          engine: "v2-mvp",
+          concepts: conceptMatches.map((item) => ({
+            code: item.code,
+            name:
+              language === "bn" && item.canonical_bn
+                ? item.canonical_bn
+                : item.canonical_name,
+            score: item.score,
+            matchedAlias: item.matched_alias,
+          })),
+          evidence: clinicalEvidence,
+          needsMoreInfo,
+        },
+        followUp:
+          needsMoreInfo && followUp
+            ? {
+                attributeKey: followUp.attribute_key,
+                question: questionText(followUp, language),
+                answerType: followUp.answer_type,
+                options: followUp.options,
+              }
+            : null,
         emergencyNumber: urgent ? "16263" : null,
         emergencyHospitals,
         emergencyAmbulances,
