@@ -477,8 +477,8 @@ export function HealthcareAssistant({
 
       <p className={styles.disclaimer}>
         {bn
-          ? "Healthcare Central উপসর্গ থেকে উপযুক্ত সেবার ধরন খুঁজতে সাহায্য করে। এটি রোগ নির্ণয় করে না এবং চিকিৎসকের বিকল্প নয়। জরুরি লক্ষণ হলে সরাসরি জরুরি চিকিৎসা নিন।"
-          : "Healthcare Central helps route symptoms to an appropriate type of care. It does not diagnose conditions or replace a clinician. Seek emergency care for urgent symptoms."}
+          ? "Healthcare Central উপসর্গ থেকে উপযুক্ত সেবার ধরন খুঁজতে সাহায্য করে। এটি রোগ নির্ণয় করে না এবং চিকিৎসকের বিকল্প নয়। জরুরি লক্ষণ হলে সরাসরি জরুরি চিকিৎসা নিন। আপনার chat account-এর সাথে সংরক্ষিত হয় এবং support-এর প্রয়োজনে Healthcare Central administrator দেখতে পারেন।"
+          : "Healthcare Central helps route symptoms to an appropriate type of care. It does not diagnose conditions or replace a clinician. Seek emergency care for urgent symptoms. Your chat is saved to your account and may be reviewed by Healthcare Central administrators for support."}
       </p>
     </section>
   );
