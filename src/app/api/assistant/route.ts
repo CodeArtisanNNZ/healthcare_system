@@ -787,89 +787,391 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await supabase();
+    const stateDb = adminClient();
     const originalQuery = parsed.data.message.trim();
     const requestedCategory = parsed.data.category;
     const normalizedCurrent = normalizeConversationalText(originalQuery);
-    const carryHistory = shouldCarryRecentSymptomHistory(originalQuery);
-    const userHistory =
-      requestedCategory === "doctor"
-        ? parsed.data.history
-            .filter((item) => item.role === "user")
-            .slice(-4)
-            .map((item) => normalizeConversationalText(item.content))
-        : carryHistory
-          ? parsed.data.history
-              .filter((item) => item.role === "user")
-              .slice(-2)
-              .map((item) => normalizeConversationalText(item.content))
-          : [];
-    const conversationQuery = [...userHistory, normalizedCurrent]
-      .filter(Boolean)
-      .join(" ")
-      .slice(-500);
-    const language = detectLanguage(conversationQuery);
+    const conversationId =
+      parsed.data.conversationId || globalThis.crypto.randomUUID();
+    const languageContext = [
+      ...parsed.data.history
+        .filter((item) => item.role === "user")
+        .slice(-2)
+        .map((item) => item.content),
+      originalQuery,
+    ].join(" ");
+    const language = detectLanguage(languageContext);
 
     let conceptMatches: ClinicalConceptMatch[] = [];
+    let currentConceptMatches: ClinicalConceptMatch[] = [];
     let questions: FollowUpQuestion[] = [];
     let primaryConcept: ClinicalConceptMatch | null = null;
-    let clinicalEvidence = extractGenericEvidence(conversationQuery);
+    let clinicalEvidence: ClinicalEvidence[] = [];
     let followUp: FollowUpQuestion | null = null;
-    let followUpAnswer = null as ReturnType<typeof answeredFromLastQuestion>;
+    let followUpAnswer: ClinicalEvidence | null = null;
+    let episode: ClinicalEpisodeRow | null = null;
+    let episodeId: string | null = null;
+    let episodeContext = normalizedCurrent;
+    let newEpisodeStarted = false;
+
+    let currentTriage: DoctorTriage | null = null;
 
     if (requestedCategory === "doctor") {
-      const conceptResult = await db.rpc("match_symptom_concepts", {
-        query_text: conversationQuery,
-      });
+      const [conceptResult, triageResult] = await Promise.all([
+        db.rpc("match_symptom_concepts", {
+          query_text: normalizedCurrent,
+        }),
+        resolveDoctorTriage(db, normalizedCurrent),
+      ]);
 
       if (!conceptResult.error) {
-        conceptMatches = (conceptResult.data || []) as ClinicalConceptMatch[];
-        primaryConcept = conceptMatches[0] || null;
+        currentConceptMatches =
+          (conceptResult.data || []) as ClinicalConceptMatch[];
       } else {
-        console.error("Clinical concept matcher unavailable", conceptResult.error.message);
+        console.error(
+          "Clinical concept matcher unavailable",
+          conceptResult.error.message,
+        );
       }
 
-      if (primaryConcept) {
+      currentTriage = triageResult;
+
+      const currentMentions = classifyConceptMatches(
+        normalizedCurrent,
+        currentConceptMatches,
+      );
+      const currentPrimary =
+        currentMentions.find((item) => item.polarity === "present") ||
+        currentMentions.find((item) => item.polarity === "uncertain") ||
+        null;
+
+      const activeEpisodeResult = await stateDb
+        .from("clinical_episodes")
+        .select(
+          "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
+        )
+        .eq("user_id", user.id)
+        .eq("conversation_id", conversationId)
+        .eq("status", "active")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeEpisodeResult.error) {
+        console.error(
+          "Clinical episode lookup failed",
+          activeEpisodeResult.error.message,
+        );
+      }
+
+      let activeEpisode =
+        (activeEpisodeResult.data as ClinicalEpisodeRow | null) || null;
+      let pendingQuestion: FollowUpQuestion | null = null;
+
+      if (activeEpisode?.pending_question_id) {
+        const pendingResult = await stateDb
+          .from("symptom_followup_questions")
+          .select(
+            "id,concept_id,attribute_key,question_en,question_bn,question_banglish,answer_type,options,priority,required",
+          )
+          .eq("id", activeEpisode.pending_question_id)
+          .maybeSingle();
+
+        if (pendingResult.data) {
+          pendingQuestion = {
+            ...pendingResult.data,
+            options: Array.isArray(pendingResult.data.options)
+              ? pendingResult.data.options.map(String)
+              : [],
+          } as FollowUpQuestion;
+        }
+      }
+
+      if (
+        pendingQuestion &&
+        isLikelyFollowUpAnswer(originalQuery, pendingQuestion)
+      ) {
+        followUpAnswer = answerEvidence(pendingQuestion, originalQuery);
+      }
+
+      let startNewEpisode =
+        !activeEpisode || isExplicitNewProblem(originalQuery);
+
+      if (
+        activeEpisode &&
+        !followUpAnswer &&
+        !activeEpisode.pending_question_id &&
+        currentPrimary?.code &&
+        activeEpisode.primary_concept_code &&
+        currentPrimary.code !== activeEpisode.primary_concept_code
+      ) {
+        startNewEpisode = true;
+      }
+
+      if (
+        activeEpisode &&
+        !followUpAnswer &&
+        !activeEpisode.pending_question_id &&
+        !currentPrimary &&
+        currentTriage?.primary_specialty_name &&
+        activeEpisode.primary_specialty_name &&
+        currentTriage.primary_specialty_name !==
+          activeEpisode.primary_specialty_name &&
+        normalizedCurrent.length >= 5
+      ) {
+        startNewEpisode = true;
+      }
+
+      if (startNewEpisode && activeEpisode) {
+        await stateDb
+          .from("clinical_episodes")
+          .update({
+            status: "closed",
+            closed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            pending_question_id: null,
+            pending_attribute_key: null,
+          })
+          .eq("id", activeEpisode.id)
+          .eq("user_id", user.id);
+
+        activeEpisode = null;
+      }
+
+      if (!activeEpisode) {
+        const createResult = await stateDb
+          .from("clinical_episodes")
+          .insert({
+            user_id: user.id,
+            conversation_id: conversationId,
+            status: "active",
+            primary_concept_id: currentPrimary?.concept_id || null,
+            primary_concept_code: currentPrimary?.code || null,
+            primary_specialty_name:
+              currentPrimary?.default_specialty_name ||
+              currentTriage?.primary_specialty_name ||
+              null,
+            context_text: normalizedCurrent,
+            urgency_level: "unknown",
+          })
+          .select(
+            "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
+          )
+          .single();
+
+        if (createResult.error) {
+          throw new Error(createResult.error.message);
+        }
+
+        episode = createResult.data as ClinicalEpisodeRow;
+        newEpisodeStarted = true;
+      } else {
+        const nextContext = followUpAnswer
+          ? activeEpisode.context_text
+          : [activeEpisode.context_text, normalizedCurrent]
+              .filter(Boolean)
+              .join(" ")
+              .slice(-1500);
+
+        const updateResult = await stateDb
+          .from("clinical_episodes")
+          .update({
+            primary_concept_id:
+              activeEpisode.primary_concept_id ||
+              currentPrimary?.concept_id ||
+              null,
+            primary_concept_code:
+              activeEpisode.primary_concept_code ||
+              currentPrimary?.code ||
+              null,
+            primary_specialty_name:
+              activeEpisode.primary_specialty_name ||
+              currentPrimary?.default_specialty_name ||
+              currentTriage?.primary_specialty_name ||
+              null,
+            context_text: nextContext,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", activeEpisode.id)
+          .eq("user_id", user.id)
+          .select(
+            "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
+          )
+          .single();
+
+        if (updateResult.error) {
+          throw new Error(updateResult.error.message);
+        }
+
+        episode = updateResult.data as ClinicalEpisodeRow;
+      }
+
+      episodeId = episode.id;
+      episodeContext = episode.context_text || normalizedCurrent;
+
+      const episodeConceptResult = await db.rpc("match_symptom_concepts", {
+        query_text: episodeContext,
+      });
+
+      if (!episodeConceptResult.error) {
+        conceptMatches =
+          (episodeConceptResult.data || []) as ClinicalConceptMatch[];
+      } else {
+        conceptMatches = currentConceptMatches;
+      }
+
+      const episodeMentions = classifyConceptMatches(
+        episodeContext,
+        conceptMatches,
+      );
+      const currentMentionsForEvidence = classifyConceptMatches(
+        normalizedCurrent,
+        currentConceptMatches,
+      );
+
+      primaryConcept =
+        episodeMentions.find(
+          (item) =>
+            item.code === episode?.primary_concept_code &&
+            item.polarity !== "absent",
+        ) ||
+        episodeMentions.find((item) => item.polarity === "present") ||
+        episodeMentions.find((item) => item.polarity === "uncertain") ||
+        currentPrimary ||
+        null;
+
+      const newEvidence = dedupeEvidence([
+        ...extractGenericEvidence(originalQuery),
+        ...conceptEvidence(currentMentionsForEvidence),
+        ...(followUpAnswer ? [followUpAnswer] : []),
+      ]);
+
+      if (newEvidence.length) {
+        const evidencePayload = newEvidence.map((item) => ({
+          episode_id: episodeId,
+          concept_id: item.conceptId || null,
+          evidence_key: item.key,
+          value: item.value,
+          polarity: item.polarity || "present",
+          confidence: item.confidence ?? 0.8,
+          source_text: originalQuery,
+          updated_at: new Date().toISOString(),
+        }));
+
+        const evidenceWrite = await stateDb
+          .from("clinical_episode_evidence")
+          .upsert(evidencePayload, {
+            onConflict: "episode_id,evidence_key",
+          });
+
+        if (evidenceWrite.error) {
+          console.error(
+            "Clinical evidence save failed",
+            evidenceWrite.error.message,
+          );
+        }
+      }
+
+      const evidenceResult = await stateDb
+        .from("clinical_episode_evidence")
+        .select(
+          "concept_id,evidence_key,value,polarity,confidence,source_text",
+        )
+        .eq("episode_id", episodeId)
+        .order("updated_at");
+
+      clinicalEvidence = (evidenceResult.data || []).map((item) => ({
+        key: item.evidence_key,
+        value: item.value,
+        source: item.source_text === originalQuery ? "message" : "follow-up",
+        polarity: item.polarity,
+        confidence: Number(item.confidence || 0.8),
+        conceptId: item.concept_id,
+      })) as ClinicalEvidence[];
+
+      const primaryConceptId =
+        episode.primary_concept_id || primaryConcept?.concept_id || null;
+
+      if (primaryConceptId) {
         const questionResult = await db
           .from("symptom_followup_questions")
           .select(
             "id,concept_id,attribute_key,question_en,question_bn,question_banglish,answer_type,options,priority,required",
           )
-          .eq("concept_id", primaryConcept.concept_id)
+          .eq("concept_id", primaryConceptId)
           .eq("active", true)
           .order("priority");
 
         if (!questionResult.error) {
           questions = (questionResult.data || []).map((row) => ({
             ...row,
-            options: Array.isArray(row.options) ? row.options.map(String) : [],
+            options: Array.isArray(row.options)
+              ? row.options.map(String)
+              : [],
           })) as FollowUpQuestion[];
-
-          followUpAnswer = answeredFromLastQuestion(
-            parsed.data.history,
-            originalQuery,
-            questions,
-          );
-
-          if (followUpAnswer) {
-            clinicalEvidence = dedupeEvidence([
-              ...clinicalEvidence,
-              followUpAnswer,
-            ]);
-          }
-
-          followUp = chooseNextQuestion(questions, clinicalEvidence);
-        } else {
-          console.error("Clinical follow-up questions unavailable", questionResult.error.message);
         }
       }
+    } else {
+      const carryHistory = shouldCarryRecentSymptomHistory(originalQuery);
+      const userHistory = carryHistory
+        ? parsed.data.history
+            .filter((item) => item.role === "user")
+            .slice(-2)
+            .map((item) => normalizeConversationalText(item.content))
+        : [];
+
+      episodeContext = [...userHistory, normalizedCurrent]
+        .filter(Boolean)
+        .join(" ")
+        .slice(-500);
+      clinicalEvidence = extractGenericEvidence(originalQuery);
     }
 
     let triage: DoctorTriage | null = null;
-    let urgent = hasEmergencySignals(conversationQuery);
+    let urgent = hasEmergencySignals(episodeContext);
 
     if (requestedCategory === "doctor") {
-      triage = await resolveDoctorTriage(db, conversationQuery);
-      urgent = urgent || triage.urgent;
+      triage = await resolveDoctorTriage(db, episodeContext);
+
+      const episodeMentions = classifyConceptMatches(
+        episodeContext,
+        conceptMatches,
+      );
+      let safetyText =
+        episodeMentions[0]?.normalized_query || episodeContext;
+
+      for (const mention of episodeMentions) {
+        if (mention.polarity === "absent" && mention.matched_alias) {
+          safetyText = safetyText
+            .split(mention.matched_alias.toLowerCase())
+            .join(" ");
+        }
+      }
+
+      const hasAbsentSymptoms = clinicalEvidence.some(
+        (item) =>
+          item.key.startsWith("symptom:") && item.polarity === "absent",
+      );
+
+      urgent =
+        hasEmergencySignals(safetyText) ||
+        Boolean(triage.urgent && !hasAbsentSymptoms);
+
+      if (
+        !triage.primary_specialty_name &&
+        (primaryConcept?.default_specialty_name ||
+          episode?.primary_specialty_name)
+      ) {
+        triage = {
+          ...triage,
+          primary_specialty_id:
+            primaryConcept?.default_specialty_id || null,
+          primary_specialty_name:
+            primaryConcept?.default_specialty_name ||
+            episode?.primary_specialty_name ||
+            null,
+        };
+      }
 
       if (
         !urgent &&
@@ -884,7 +1186,55 @@ export async function POST(request: NextRequest) {
           urgent: true,
           emergency_notice: redFlagNotice(primaryConcept.code, language),
         };
-        followUp = null;
+      }
+
+      followUp = urgent
+        ? null
+        : chooseNextQuestion(
+            questions,
+            clinicalEvidence,
+            primaryConcept?.code || episode?.primary_concept_code || "",
+          );
+
+      if (episodeId) {
+        const episodeUpdate = {
+          pending_question_id: followUp?.id || null,
+          pending_attribute_key: followUp?.attribute_key || null,
+          urgency_level: urgent
+            ? "emergency"
+            : followUp
+              ? "unknown"
+              : "routine",
+          status: urgent ? "closed" : "active",
+          closed_at: urgent ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+          primary_concept_id:
+            episode?.primary_concept_id ||
+            primaryConcept?.concept_id ||
+            null,
+          primary_concept_code:
+            episode?.primary_concept_code ||
+            primaryConcept?.code ||
+            null,
+          primary_specialty_name:
+            triage?.primary_specialty_name ||
+            episode?.primary_specialty_name ||
+            primaryConcept?.default_specialty_name ||
+            null,
+        };
+
+        const stateUpdate = await stateDb
+          .from("clinical_episodes")
+          .update(episodeUpdate)
+          .eq("id", episodeId)
+          .eq("user_id", user.id);
+
+        if (stateUpdate.error) {
+          console.error(
+            "Clinical episode state update failed",
+            stateUpdate.error.message,
+          );
+        }
       }
     }
 
