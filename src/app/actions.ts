@@ -248,15 +248,28 @@ export async function saveEntity(_: ActionState, form: FormData): Promise<Action
     }
 
     const privateContact =
-      key === "doctors" || key === "caregivers"
+      key === "doctors"
         ? { phone: input.phone || null, email: input.email || null }
-        : null;
+        : key === "caregivers"
+          ? {
+              phone: input.phone || null,
+              email: input.email || null,
+              internal_notes: input.internal_notes || null,
+            }
+          : null;
+
+    const privateFields =
+      key === "caregivers"
+        ? ["phone", "email", "internal_notes"]
+        : key === "doctors"
+          ? ["phone", "email"]
+          : [];
 
     const publicInput =
-      key === "doctors" || key === "caregivers"
+      privateFields.length
         ? Object.fromEntries(
             Object.entries(input).filter(
-              ([field]) => !["phone", "email"].includes(field),
+              ([field]) => !privateFields.includes(field),
             ),
           )
         : input;
