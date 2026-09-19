@@ -142,11 +142,130 @@ export default async function AdminEntity({
   }
   const entity = entities[key];
   if (!entity) notFound();
-  const rows = await directory(key, q, page);
+
   const specialties = entity.fields.some((f) => f.key === "specialty_id")
     ? await lookups("specialties")
     : [];
   const medicines = key === "medicine_offers" ? await lookups("medicines") : [];
+
+  let rows: Row[] = [];
+  let totalRows: number | null = null;
+  let doctorAreas: string[] = [];
+  let doctorChambers: string[] = [];
+
+  const doctorFilters = {
+    location: typeof filters.location === "string" ? filters.location.slice(0, 100) : "",
+    specialty: typeof filters.specialty === "string" ? filters.specialty.slice(0, 120) : "",
+    chamber: typeof filters.chamber === "string" ? filters.chamber.slice(0, 220) : "",
+    verification: typeof filters.verification === "string" ? filters.verification.slice(0, 40) : "",
+    status: typeof filters.status === "string" ? filters.status.slice(0, 40) : "",
+    gender: typeof filters.gender === "string" ? filters.gender.slice(0, 20) : "",
+    consultation: typeof filters.consultation === "string" ? filters.consultation.slice(0, 30) : "",
+    sort: typeof filters.sort === "string" ? filters.sort.slice(0, 30) : "name",
+  };
+
+  if (key === "doctors") {
+    const { data: filterRows, error: filterError } = await db
+      .from("doctors")
+      .select("area,chamber_name")
+      .order("area")
+      .limit(1000);
+
+    if (filterError) throw new Error(filterError.message);
+
+    doctorAreas = [...new Set(
+      (filterRows || [])
+        .map((row) => String(row.area || "").trim())
+        .filter(Boolean),
+    )].sort((a, b) => a.localeCompare(b));
+
+    doctorChambers = [...new Set(
+      (filterRows || [])
+        .map((row) => String(row.chamber_name || "").trim())
+        .filter(Boolean),
+    )].sort((a, b) => a.localeCompare(b));
+
+    let doctorQuery = db
+      .from("doctors")
+      .select("*", { count: "exact" });
+
+    if (q) {
+      const term = q.replace(/[,().%_\\"]/g, " ").replace(/\\s+/g, " ").trim();
+      if (term) {
+        doctorQuery = doctorQuery.or(
+          [
+            "full_name",
+            "registration_no",
+            "specialization",
+            "sub_specialty",
+            "qualification",
+            "hospital_name",
+            "chamber_name",
+            "chamber_address",
+            "location",
+            "area",
+            "district",
+            "conditions_treated",
+          ]
+            .map((field) => `${field}.ilike.%${term}%`)
+            .join(","),
+        );
+      }
+    }
+
+    if (doctorFilters.location) {
+      doctorQuery = doctorQuery.eq("area", doctorFilters.location);
+    }
+
+    if (doctorFilters.specialty) {
+      doctorQuery = doctorQuery.eq("specialty_id", doctorFilters.specialty);
+    }
+
+    if (doctorFilters.chamber) {
+      doctorQuery = doctorQuery.eq("chamber_name", doctorFilters.chamber);
+    }
+
+    if (["Verified", "Needs review", "Unverified"].includes(doctorFilters.verification)) {
+      doctorQuery = doctorQuery.eq("verification_status", doctorFilters.verification);
+    }
+
+    if (["Active", "Inactive"].includes(doctorFilters.status)) {
+      doctorQuery = doctorQuery.eq("status", doctorFilters.status);
+    }
+
+    if (["Female", "Male", "Other"].includes(doctorFilters.gender)) {
+      doctorQuery = doctorQuery.eq("gender", doctorFilters.gender);
+    }
+
+    if (["Online", "Chamber", "Both"].includes(doctorFilters.consultation)) {
+      doctorQuery = doctorQuery.eq("consultation_type", doctorFilters.consultation);
+    }
+
+    if (doctorFilters.sort === "newest") {
+      doctorQuery = doctorQuery.order("created_at", { ascending: false });
+    } else if (doctorFilters.sort === "area") {
+      doctorQuery = doctorQuery
+        .order("area", { ascending: true, nullsFirst: false })
+        .order("full_name", { ascending: true });
+    } else if (doctorFilters.sort === "verification") {
+      doctorQuery = doctorQuery
+        .order("verification_status", { ascending: true })
+        .order("full_name", { ascending: true });
+    } else {
+      doctorQuery = doctorQuery.order("full_name", { ascending: true });
+    }
+
+    const { data, error, count } = await doctorQuery.range(
+      (page - 1) * 24,
+      page * 24 - 1,
+    );
+
+    if (error) throw new Error(error.message);
+    rows = (data || []) as Row[];
+    totalRows = count;
+  } else {
+    rows = await directory(key, q, page);
+  }
   let edit: Row | undefined;
   if (typeof filters.edit === "string") {
     const id = z.uuid().safeParse(filters.edit);
@@ -205,56 +324,275 @@ export default async function AdminEntity({
         </ActionForm>
         {edit && <Link href={"/admin/" + key}>Finish editing</Link>}
       </details>
-      <Search q={q} />
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status / detail</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>
-                  <strong>{String(r[entity.nameKey])}</strong>
-                  <small>
-                    {String(r.location || r.email || r.strength || "")}
-                  </small>
-                </td>
-                <td>{String(r.status || r.price || r.priority || "—")}</td>
-                <td>
-                  <div className="actions">
-                    <Link
-                      className="button secondary"
-                      href={"/admin/" + key + "?edit=" + r.id}
-                    >
-                      Edit
-                    </Link>
-                    <ActionForm
-                      action={deleteEntity}
-                      label="Delete"
-                      confirm={
-                        "Permanently delete this " +
-                        entity.singular.toLowerCase() +
-                        "?"
-                      }
-                      className="inline"
-                    >
-                      <input type="hidden" name="entity" value={key} />
-                      <input type="hidden" name="id" value={r.id} />
-                    </ActionForm>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {!rows.length && <Empty>No entries yet. Add one above.</Empty>}
-      <Pager q={q} page={page} hasNext={rows.length === 24} />
+      {key === "doctors" ? (
+        <>
+          <form className="admin-doctor-filters" method="get">
+            <div className="admin-doctor-filter-head">
+              <div>
+                <strong>Filter doctors</strong>
+                <small>Combine filters to find exactly the profiles you need.</small>
+              </div>
+              <Link className="button secondary admin-filter-clear" href="/admin/doctors">
+                Clear filters
+              </Link>
+            </div>
+
+            <div className="admin-doctor-filter-grid">
+              <label className="admin-filter-search">
+                Search
+                <input
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Name, BMDC no., qualification, hospital, chamber…"
+                  maxLength={160}
+                />
+              </label>
+
+              <label>
+                Area
+                <select name="location" defaultValue={doctorFilters.location}>
+                  <option value="">All areas</option>
+                  {doctorAreas.map((area) => (
+                    <option key={area} value={area}>{area}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Specialty
+                <select name="specialty" defaultValue={doctorFilters.specialty}>
+                  <option value="">All specialties</option>
+                  {specialties.map((specialty) => (
+                    <option key={specialty.id} value={specialty.id}>
+                      {String(specialty.name)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Centre / chamber
+                <select name="chamber" defaultValue={doctorFilters.chamber}>
+                  <option value="">All centres / chambers</option>
+                  {doctorChambers.map((chamber) => (
+                    <option key={chamber} value={chamber}>{chamber}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Verification
+                <select name="verification" defaultValue={doctorFilters.verification}>
+                  <option value="">All verification states</option>
+                  <option value="Verified">Verified</option>
+                  <option value="Needs review">Needs review</option>
+                  <option value="Unverified">Unverified</option>
+                </select>
+              </label>
+
+              <label>
+                Status
+                <select name="status" defaultValue={doctorFilters.status}>
+                  <option value="">All statuses</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </label>
+
+              <label>
+                Gender
+                <select name="gender" defaultValue={doctorFilters.gender}>
+                  <option value="">All genders</option>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+
+              <label>
+                Consultation
+                <select name="consultation" defaultValue={doctorFilters.consultation}>
+                  <option value="">All consultation types</option>
+                  <option value="Chamber">Chamber</option>
+                  <option value="Online">Online</option>
+                  <option value="Both">Both</option>
+                </select>
+              </label>
+
+              <label>
+                Sort
+                <select name="sort" defaultValue={doctorFilters.sort}>
+                  <option value="name">Name A–Z</option>
+                  <option value="newest">Newest added</option>
+                  <option value="area">Area</option>
+                  <option value="verification">Verification</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="admin-doctor-filter-actions">
+              <button className="hc-action-button" data-action="search" type="submit">
+                Apply filters
+              </button>
+              <span className="muted">
+                {totalRows === null
+                  ? "Doctor results"
+                  : `${totalRows} doctor${totalRows === 1 ? "" : "s"} found`}
+              </span>
+            </div>
+          </form>
+
+          <div className="table-wrap admin-doctor-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Doctor</th>
+                  <th>Specialty</th>
+                  <th>Location / chamber</th>
+                  <th>Verification / status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const specialtyName =
+                    specialties.find((specialty) => specialty.id === r.specialty_id)?.name ||
+                    r.specialization ||
+                    "—";
+                  const currentParams = new URLSearchParams();
+                  if (q) currentParams.set("q", q);
+                  for (const [name, value] of Object.entries(doctorFilters)) {
+                    if (value && !(name === "sort" && value === "name")) {
+                      currentParams.set(name, value);
+                    }
+                  }
+                  currentParams.set("edit", r.id);
+
+                  return (
+                    <tr key={r.id}>
+                      <td>
+                        <strong>{String(r.full_name)}</strong>
+                        <small>
+                          {r.registration_no
+                            ? `BMDC: ${String(r.registration_no)}`
+                            : String(r.qualification || "")}
+                        </small>
+                      </td>
+                      <td>
+                        <strong>{String(specialtyName)}</strong>
+                        <small>{String(r.specialization || r.sub_specialty || "")}</small>
+                      </td>
+                      <td>
+                        <strong>{String(r.area || r.location || "—")}</strong>
+                        <small>{String(r.chamber_name || r.hospital_name || "")}</small>
+                      </td>
+                      <td>
+                        <span className={`admin-status-pill ${r.verification_status === "Verified" ? "verified" : r.verification_status === "Needs review" ? "review" : ""}`}>
+                          {String(r.verification_status || "Unverified")}
+                        </span>
+                        <small>{String(r.status || "—")}</small>
+                      </td>
+                      <td>
+                        <div className="actions">
+                          <Link
+                            className="button secondary"
+                            href={`/admin/doctors?${currentParams.toString()}`}
+                          >
+                            Edit
+                          </Link>
+                          <ActionForm
+                            action={deleteEntity}
+                            label="Delete"
+                            confirm="Permanently delete this doctor?"
+                            className="inline"
+                          >
+                            <input type="hidden" name="entity" value="doctors" />
+                            <input type="hidden" name="id" value={r.id} />
+                          </ActionForm>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {!rows.length && (
+            <Empty>No doctors match these filters. Clear filters or try another combination.</Empty>
+          )}
+
+          <Pager
+            q={q}
+            page={page}
+            hasNext={rows.length === 24 && (totalRows === null || page * 24 < totalRows)}
+            path="/admin/doctors"
+            filters={{
+              location: doctorFilters.location,
+              specialty: doctorFilters.specialty,
+              chamber: doctorFilters.chamber,
+              verification: doctorFilters.verification,
+              status: doctorFilters.status,
+              gender: doctorFilters.gender,
+              consultation: doctorFilters.consultation,
+              sort: doctorFilters.sort === "name" ? "" : doctorFilters.sort,
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <Search q={q} />
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Status / detail</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <strong>{String(r[entity.nameKey])}</strong>
+                      <small>
+                        {String(r.location || r.email || r.strength || "")}
+                      </small>
+                    </td>
+                    <td>{String(r.status || r.price || r.priority || "—")}</td>
+                    <td>
+                      <div className="actions">
+                        <Link
+                          className="button secondary"
+                          href={"/admin/" + key + "?edit=" + r.id}
+                        >
+                          Edit
+                        </Link>
+                        <ActionForm
+                          action={deleteEntity}
+                          label="Delete"
+                          confirm={
+                            "Permanently delete this " +
+                            entity.singular.toLowerCase() +
+                            "?"
+                          }
+                          className="inline"
+                        >
+                          <input type="hidden" name="entity" value={key} />
+                          <input type="hidden" name="id" value={r.id} />
+                        </ActionForm>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!rows.length && <Empty>No entries yet. Add one above.</Empty>}
+          <Pager q={q} page={page} hasNext={rows.length === 24} />
+        </>
+      )}
     </>
   );
 }
