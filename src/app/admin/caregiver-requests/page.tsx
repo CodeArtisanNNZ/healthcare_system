@@ -141,7 +141,7 @@ export default async function AdminCaregiverRequests() {
       .order("full_name"),
     db
       .from("caregiver_private_contacts")
-      .select("caregiver_id,phone,email"),
+      .select("caregiver_id,phone,email,internal_notes"),
   ]);
 
   if (requestError || caregiverError || contactError) {
@@ -331,6 +331,24 @@ export default async function AdminCaregiverRequests() {
                               "Not specified"}
                           </p>
                           <p style={{ margin: "0.3rem 0" }}>
+                            <strong>Experience / qualification:</strong>{" "}
+                            {[
+                              caregiver.experience !== null &&
+                              caregiver.experience !== undefined
+                                ? String(caregiver.experience) + " years"
+                                : null,
+                              caregiver.qualification,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || "Not specified"}
+                          </p>
+                          <p style={{ margin: "0.3rem 0" }}>
+                            <strong>Languages / source:</strong>{" "}
+                            {[caregiver.languages, caregiver.source_or_agency]
+                              .filter(Boolean)
+                              .join(" · ") || "Not specified"}
+                          </p>
+                          <p style={{ margin: "0.3rem 0" }}>
                             <strong>Admin contact:</strong>{" "}
                             {contact?.phone || contact?.email
                               ? [contact?.phone, contact?.email]
@@ -338,6 +356,12 @@ export default async function AdminCaregiverRequests() {
                                   .join(" · ")
                               : "No contact stored"}
                           </p>
+                          {contact?.internal_notes && (
+                            <p style={{ margin: "0.3rem 0" }}>
+                              <strong>Internal note:</strong>{" "}
+                              {contact.internal_notes}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
