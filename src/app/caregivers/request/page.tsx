@@ -5,8 +5,48 @@ import { ActionForm } from "@/components/action-form";
 import { Heading } from "@/components/ui";
 import { requestCaregiver } from "@/app/actions";
 
-export default async function CaregiverRequestPage() {
+const careTypes = [
+  "Home nursing",
+  "Elder companion",
+  "Dementia support",
+  "Post-stroke and paralysis support",
+  "Bedridden patient care",
+  "Mobility and transfer assistance",
+  "Post-operative care",
+  "Disability support",
+  "Mother and newborn support",
+  "Palliative comfort support",
+  "General personal care",
+] as const;
+
+const patientTypes = [
+  "Older adult",
+  "Dementia or Alzheimer's",
+  "Stroke or paralysis",
+  "Bedridden patient",
+  "Post-surgery patient",
+  "Person with disability",
+  "Mother and newborn",
+  "Chronic illness",
+  "General support",
+] as const;
+
+export default async function CaregiverRequestPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ care_type?: string; patient_type?: string }>;
+}) {
   await requireUser("patient");
+
+  const params = await searchParams;
+  const selectedCareType = careTypes.includes(params.care_type as (typeof careTypes)[number])
+    ? params.care_type!
+    : "";
+  const selectedPatientType = patientTypes.includes(
+    params.patient_type as (typeof patientTypes)[number],
+  )
+    ? params.patient_type!
+    : "";
 
   const dhakaToday = new Date(Date.now() + 6 * 60 * 60 * 1000)
     .toISOString()
@@ -34,7 +74,7 @@ export default async function CaregiverRequestPage() {
           <div className="form-grid">
             <label>
               What kind of care do you need? *
-              <select name="care_type" required defaultValue="">
+              <select name="care_type" required defaultValue={selectedCareType}>
                 <option value="" disabled>Select care type…</option>
                 <option>Home nursing</option>
                 <option>Elder companion</option>
@@ -65,7 +105,7 @@ export default async function CaregiverRequestPage() {
 
             <label>
               What kind of patient is this for? *
-              <select name="patient_type" required defaultValue="">
+              <select name="patient_type" required defaultValue={selectedPatientType}>
                 <option value="" disabled>Select patient type…</option>
                 <option>Older adult</option>
                 <option>Dementia or Alzheimer&apos;s</option>
