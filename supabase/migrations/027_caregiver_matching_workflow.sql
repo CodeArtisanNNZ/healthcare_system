@@ -4,6 +4,7 @@ create table if not exists public.caregiver_private_contacts (
   caregiver_id uuid primary key references public.caregivers(id) on delete cascade,
   phone text,
   email text,
+  internal_notes text,
   updated_at timestamptz not null default now()
 );
 
@@ -85,7 +86,6 @@ alter table public.caregivers
   add column if not exists languages text,
   add column if not exists verification_status text not null default 'Needs review',
   add column if not exists source_or_agency text,
-  add column if not exists internal_notes text,
   add column if not exists care_type text;
 
 do $$
