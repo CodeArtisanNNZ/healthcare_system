@@ -341,11 +341,16 @@ export default async function AdminEntity({
     if (key === "caregivers") {
       const { data: contact, error: contactError } = await db
         .from("caregiver_private_contacts")
-        .select("phone,email")
+        .select("phone,email,internal_notes")
         .eq("caregiver_id", id.data)
         .maybeSingle();
       if (contactError) throw new Error(contactError.message);
-      edit = { ...edit, phone: contact?.phone || "", email: contact?.email || "" };
+      edit = {
+        ...edit,
+        phone: contact?.phone || "",
+        email: contact?.email || "",
+        internal_notes: contact?.internal_notes || "",
+      };
     }
   }
   return (
