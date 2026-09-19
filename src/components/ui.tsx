@@ -194,6 +194,12 @@ export async function DirectoryCard({
                 "bio",
                 "verification_status",
               ] : []),
+              ...(kind === "caregivers" ? [
+                "phone",
+                "email",
+                "internal_notes",
+                "source_or_agency",
+              ] : []),
             ].includes(field.key))
             .map((field) =>
               row[field.key] !== null && row[field.key] !== undefined && row[field.key] !== "" ? (
@@ -213,6 +219,10 @@ export async function DirectoryCard({
           {kind === "doctors" ? (
             <Link className="button secondary hc-action-button" data-action="appointment" href={`/appointments/request?doctor=${row.id}`}>
               Request appointment
+            </Link>
+          ) : kind === "caregivers" ? (
+            <Link className="button secondary hc-action-button" data-action="caregiver" href="/caregivers">
+              Request caregiver
             </Link>
           ) : row.phone ? (
             <a className="button secondary" href={"tel:" + String(row.phone).replace(/[^+\d]/g, "")}>Call</a>
