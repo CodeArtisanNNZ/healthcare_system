@@ -247,12 +247,20 @@ export async function saveEntity(_: ActionState, form: FormData): Promise<Action
       image = await upload(file, "directory-images", user.id);
     }
 
-    const doctorContact = key === "doctors"
-      ? { phone: input.phone || null, email: input.email || null }
-      : null;
-    const publicInput = key === "doctors"
-      ? Object.fromEntries(Object.entries(input).filter(([field]) => !["phone", "email"].includes(field)))
-      : input;
+    const privateContact =
+      key === "doctors" || key === "caregivers"
+        ? { phone: input.phone || null, email: input.email || null }
+        : null;
+
+    const publicInput =
+      key === "doctors" || key === "caregivers"
+        ? Object.fromEntries(
+            Object.entries(input).filter(
+              ([field]) => !["phone", "email"].includes(field),
+            ),
+          )
+        : input;
+
     const row = { ...publicInput, ...(image ? { image_path: image } : {}) };
 
     const result = id
@@ -260,10 +268,24 @@ export async function saveEntity(_: ActionState, form: FormData): Promise<Action
       : await db.from(key).insert(row).select("id").single();
 
     check(result.error);
-    if (key === "doctors" && result.data?.id) {
+
+    if (key === "doctors" && result.data?.id && privateContact) {
       const { error: contactError } = await db
         .from("doctor_private_contacts")
-        .upsert({ doctor_id: result.data.id, ...doctorContact }, { onConflict: "doctor_id" });
+        .upsert(
+          { doctor_id: result.data.id, ...privateContact },
+          { onConflict: "doctor_id" },
+        );
+      check(contactError);
+    }
+
+    if (key === "caregivers" && result.data?.id && privateContact) {
+      const { error: contactError } = await db
+        .from("caregiver_private_contacts")
+        .upsert(
+          { caregiver_id: result.data.id, ...privateContact },
+          { onConflict: "caregiver_id" },
+        );
       check(contactError);
     }
   } catch (e) {
@@ -629,4 +651,239 @@ export async function reviewAppointment(_: ActionState, form: FormData): Promise
     revalidatePath("/admin/appointments"); revalidatePath("/patient/appointments");
     return { success: "Appointment request updated." };
   } catch (e) { return failure(e); }
+}
+
+
+const caregiverCareTypes = [
+  "Home nursing",
+  "Elder companion",
+  "Dementia support",
+  "Post-stroke and paralysis support",
+  "Bedridden patient care",
+  "Mobility and transfer assistance",
+  "Post-operative care",
+  "Disability support",
+  "Mother and newborn support",
+  "Palliative comfort support",
+  "General personal care",
+] as const;
+
+const caregiverPatientTypes = [
+  "Older adult",
+  "Dementia or Alzheimer's",
+  "Stroke or paralysis",
+  "Bedridden patient",
+  "Post-surgery patient",
+  "Person with disability",
+  "Mother and newborn",
+  "Chronic illness",
+  "General support",
+] as const;
+
+export async function requestCaregiver(
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  const user = await requireUser("patient");
+
+  try {
+    const input = z
+      .object({
+        care_type: z.enum(caregiverCareTypes),
+        caregiver_gender_preference: z.enum(["Any", "Female", "Male"]),
+        patient_type: z.enum(caregiverPatientTypes),
+        patient_age_group: z.enum([
+          "Newborn",
+          "Child",
+          "Teen",
+          "Adult",
+          "Older adult",
+        ]),
+        mobility_level: z.enum([
+          "Independent",
+          "Needs some help",
+          "Wheelchair user",
+          "Mostly bedridden",
+          "Fully bedridden",
+          "Not sure",
+        ]),
+        area: z.enum(healthcareLocations),
+        service_address: z.string().trim().min(5).max(500),
+        preferred_date: z.iso.date(),
+        time_period: z.enum([
+          "morning",
+          "afternoon",
+          "evening",
+          "overnight",
+          "24-hour",
+          "anytime",
+        ]),
+        duration: z.enum([
+          "A few hours",
+          "1 day",
+          "3 days",
+          "1 week",
+          "2 weeks",
+          "1 month",
+          "Ongoing support",
+        ]),
+        budget: z.enum(["1200", "1500", "2000", "2500", "3000", "flexible"]),
+        care_notes: z.string().trim().max(1200),
+      })
+      .parse(Object.fromEntries(form));
+
+    const dhakaToday = new Date(Date.now() + 6 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    if (input.preferred_date < dhakaToday) {
+      throw new Error("Choose today or a future start date.");
+    }
+
+    const budgetMax =
+      input.budget === "flexible" ? 100000 : Number(input.budget);
+
+    const db = await supabase();
+    const { error } = await db.from("caregiver_requests").insert({
+      patient_id: user.id,
+      requested_caregiver_id: null,
+      assigned_caregiver_id: null,
+      care_type: input.care_type,
+      caregiver_gender_preference: input.caregiver_gender_preference,
+      patient_type: input.patient_type,
+      patient_age_group: input.patient_age_group,
+      mobility_level: input.mobility_level,
+      area: input.area,
+      service_address: input.service_address,
+      preferred_date: input.preferred_date,
+      time_period: input.time_period,
+      duration: input.duration,
+      budget_max: budgetMax,
+      care_notes: input.care_notes || null,
+      status: "Requested",
+    });
+
+    check(error);
+    revalidatePath("/caregivers");
+    revalidatePath("/patient/caregiver-requests");
+    revalidatePath("/admin/caregiver-requests");
+
+    return {
+      success:
+        "Caregiver request sent. An administrator will match a suitable caregiver and confirm the details.",
+    };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+export async function reviewCaregiverRequest(
+  _: ActionState,
+  form: FormData,
+): Promise<ActionState> {
+  await requireUser("admin");
+
+  try {
+    const input = z
+      .object({
+        id: z.uuid(),
+        status: z.enum(["Reviewing", "Confirmed", "Declined", "Completed"]),
+        assigned_caregiver_id: z.union([z.uuid(), z.literal("")]),
+        confirmed_time: z.string().max(40),
+        contact_info: z.string().trim().max(500),
+        admin_note: z.string().trim().max(1200),
+      })
+      .parse(Object.fromEntries(form));
+
+    const db = await supabase();
+    const { data: current, error: requestError } = await db
+      .from("caregiver_requests")
+      .select(
+        "status,caregiver_gender_preference,area,preferred_date,time_period",
+      )
+      .eq("id", input.id)
+      .single();
+
+    check(requestError);
+
+    let finalContact = input.contact_info || "";
+
+    if (input.assigned_caregiver_id) {
+      const { data: caregiver, error: caregiverError } = await db
+        .from("caregivers")
+        .select("id,full_name,gender,status")
+        .eq("id", input.assigned_caregiver_id)
+        .eq("status", "Active")
+        .single();
+
+      check(caregiverError);
+
+      if (
+        current?.caregiver_gender_preference &&
+        current.caregiver_gender_preference !== "Any" &&
+        caregiver?.gender !== current.caregiver_gender_preference
+      ) {
+        throw new Error(
+          `The patient requested a ${current.caregiver_gender_preference.toLowerCase()} caregiver. Choose a matching caregiver or change the request with the patient first.`,
+        );
+      }
+
+      if (!finalContact) {
+        const { data: contact, error: contactError } = await db
+          .from("caregiver_private_contacts")
+          .select("phone,email")
+          .eq("caregiver_id", input.assigned_caregiver_id)
+          .maybeSingle();
+
+        check(contactError);
+
+        finalContact = [
+          contact?.phone ? `Phone: ${contact.phone}` : "",
+          contact?.email ? `Email: ${contact.email}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+      }
+    }
+
+    if (input.status === "Confirmed") {
+      if (!input.assigned_caregiver_id) {
+        throw new Error("Choose a caregiver before confirming the request.");
+      }
+      if (!input.confirmed_time) {
+        throw new Error("Set the caregiver start date and time.");
+      }
+      if (!finalContact) {
+        throw new Error(
+          "This caregiver has no stored contact. Add a phone/email to the caregiver profile or enter contact instructions.",
+        );
+      }
+    }
+
+    const confirmed = input.status === "Confirmed";
+    const confirmedTime = input.confirmed_time
+      ? new Date(`${input.confirmed_time}:00+06:00`).toISOString()
+      : null;
+
+    const { error } = await db
+      .from("caregiver_requests")
+      .update({
+        status: input.status,
+        assigned_caregiver_id: input.assigned_caregiver_id || null,
+        confirmed_time: confirmedTime,
+        contact_info: finalContact || null,
+        admin_note: input.admin_note || null,
+        confirmed_at: confirmed ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.id);
+
+    check(error);
+    revalidatePath("/admin/caregiver-requests");
+    revalidatePath("/patient/caregiver-requests");
+
+    return { success: "Caregiver request updated." };
+  } catch (e) {
+    return failure(e);
+  }
 }
