@@ -181,6 +181,24 @@ function detectLanguage(value: string): ConversationLanguage {
   return banglishSignals.some((item) => q.includes(item)) ? "banglish" : "en";
 }
 
+
+function shouldCarryRecentSymptomHistory(value: string) {
+  const q = normalizeConversationalText(value).toLowerCase().trim();
+
+  if (!q || q.length > 140) return false;
+
+  const followUpPatterns = [
+    /^(আর|আরও|এছাড়া|এছাড়াও|সাথে|তার সাথে|এখন|আজ|কাল থেকে|গতকাল থেকে|হ্যাঁ|না)\b/i,
+    /^(also|and|plus|now|yes|no|since|for)\b/i,
+    /^(aro|ar|sathe|ekhon|aj|kal theke|hya|na)\b/i,
+    /^\d+\s*(din|day|days|week|weeks|mas|month|months|ghonta|hour|hours)\b/i,
+    /\b(o hocche|o ache|also|too|aro ache|aro hocche|same problem|ager moto|eita|eta|oi ta)\b/i,
+    /(ও হচ্ছে|ও আছে|আরও হচ্ছে|আরও আছে|একই সমস্যা|আগের মতো)/i,
+  ];
+
+  return followUpPatterns.some((pattern) => pattern.test(q));
+}
+
 function hasEmergencySignals(value: string) {
   const q = normalizeConversationalText(value);
 
@@ -473,7 +491,7 @@ function humanReply({
 
       if (language === "bn") {
         return [
-          `আপনার লেখা উপসর্গগুলোর সাথে সবচেয়ে বেশি মিলছে ${specialty} specialist-এর।`,
+          `আপনার লেখা উপসর্গ অনুযায়ী ${specialty} দেখানো সবচেয়ে relevant হতে পারে।`,
           "প্রথমে এই ধরনের ডাক্তার দেখানো একটি যুক্তিসংগত next step হতে পারে।",
           alternatives.length
             ? `আরও সম্ভাব্য specialist: ${alternatives.join(", ")}।`
@@ -492,7 +510,7 @@ function humanReply({
 
       if (language === "banglish") {
         return [
-          `Apnar lekha symptom-gulor sathe ${specialty} specialist-er match beshi.`,
+          `Apnar lekha symptom-gulo onujayi ${specialty} dekhano shobcheye relevant hote pare.`,
           "Prothome ei type-er doctor dekhano reasonable next step hote pare.",
           alternatives.length
             ? `Onno possible specialist: ${alternatives.join(", ")}.`
@@ -510,7 +528,7 @@ function humanReply({
       }
 
       return [
-        `Your symptoms match most closely with a ${specialty}.`,
+        `Based on the symptoms you described, ${specialty} is the most relevant specialty to consider.`,
         "Seeing this type of specialist first would be a reasonable next step.",
         alternatives.length
           ? `Other possible specialist routes: ${alternatives.join(", ")}.`
@@ -623,11 +641,14 @@ export async function POST(request: NextRequest) {
     const db = await supabase();
     const originalQuery = parsed.data.message.trim();
     const requestedCategory = parsed.data.category;
-    const userHistory = parsed.data.history
-      .filter((item) => item.role === "user")
-      .slice(-4)
-      .map((item) => normalizeConversationalText(item.content));
     const normalizedCurrent = normalizeConversationalText(originalQuery);
+    const carryHistory = shouldCarryRecentSymptomHistory(originalQuery);
+    const userHistory = carryHistory
+      ? parsed.data.history
+          .filter((item) => item.role === "user")
+          .slice(-2)
+          .map((item) => normalizeConversationalText(item.content))
+      : [];
     const conversationQuery = [...userHistory, normalizedCurrent]
       .filter(Boolean)
       .join(" ")
