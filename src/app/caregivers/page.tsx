@@ -1,198 +1,128 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { healthcareLocations } from "@/lib/locations";
-import { ActionForm } from "@/components/action-form";
-import { Heading } from "@/components/ui";
-import { requestCaregiver } from "@/app/actions";
+import styles from "./caregivers.module.css";
+
+const careTypes = [
+  ["Older adult care", "Companionship, daily support and help with routines."],
+  ["Dementia support", "Care for memory loss, confusion and supervision needs."],
+  ["Recovery care", "Support after surgery, stroke or reduced mobility."],
+  ["Bedridden care", "Help with positioning, hygiene, feeding and daily comfort."],
+  ["Home nursing", "For needs that may require a trained nurse at home."],
+  ["Mother & newborn", "Short-term support for mother and baby at home."],
+];
 
 export default async function CaregiversPage() {
   await requireUser("patient");
 
-  const dhakaToday = new Date(Date.now() + 6 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-
   return (
-    <div className="container section">
-      <Heading eyebrow="HOME CARE" title="Find the right caregiver">
-        Tell us what kind of care is needed. You do not have to search through
-        random profiles — an administrator will match your request with a
-        suitable verified caregiver.
-      </Heading>
-
-      <div className="card">
-        <ActionForm
-          action={requestCaregiver}
-          label="Send caregiver request"
-          pendingLabel="Sending request…"
-        >
-          <div className="form-grid">
-            <label>
-              What kind of care do you need? *
-              <select name="care_type" required defaultValue="">
-                <option value="" disabled>Select care type…</option>
-                <option>Home nursing</option>
-                <option>Elder companion</option>
-                <option>Dementia support</option>
-                <option>Post-stroke and paralysis support</option>
-                <option>Bedridden patient care</option>
-                <option>Mobility and transfer assistance</option>
-                <option>Post-operative care</option>
-                <option>Disability support</option>
-                <option>Mother and newborn support</option>
-                <option>Palliative comfort support</option>
-                <option>General personal care</option>
-              </select>
-            </label>
-
-            <label>
-              Preferred caregiver gender *
-              <select
-                name="caregiver_gender_preference"
-                required
-                defaultValue="Any"
-              >
-                <option>Any</option>
-                <option>Female</option>
-                <option>Male</option>
-              </select>
-            </label>
-
-            <label>
-              What kind of patient is this for? *
-              <select name="patient_type" required defaultValue="">
-                <option value="" disabled>Select patient type…</option>
-                <option>Older adult</option>
-                <option>Dementia or Alzheimer&apos;s</option>
-                <option>Stroke or paralysis</option>
-                <option>Bedridden patient</option>
-                <option>Post-surgery patient</option>
-                <option>Person with disability</option>
-                <option>Mother and newborn</option>
-                <option>Chronic illness</option>
-                <option>General support</option>
-              </select>
-            </label>
-
-            <label>
-              Patient age group *
-              <select name="patient_age_group" required defaultValue="">
-                <option value="" disabled>Select age group…</option>
-                <option>Newborn</option>
-                <option>Child</option>
-                <option>Teen</option>
-                <option>Adult</option>
-                <option>Older adult</option>
-              </select>
-            </label>
-
-            <label>
-              Mobility *
-              <select name="mobility_level" required defaultValue="">
-                <option value="" disabled>Select mobility…</option>
-                <option>Independent</option>
-                <option>Needs some help</option>
-                <option>Wheelchair user</option>
-                <option>Mostly bedridden</option>
-                <option>Fully bedridden</option>
-                <option>Not sure</option>
-              </select>
-            </label>
-
-            <label>
-              Area *
-              <select name="area" required defaultValue="">
-                <option value="" disabled>Select area…</option>
-                {healthcareLocations
-                  .filter((area) => area !== "Dhaka")
-                  .map((area) => (
-                    <option key={area}>{area}</option>
-                  ))}
-              </select>
-            </label>
-
-            <label>
-              Start date *
-              <input
-                type="date"
-                name="preferred_date"
-                min={dhakaToday}
-                required
-              />
-            </label>
-
-            <label>
-              Preferred shift *
-              <select name="time_period" required defaultValue="">
-                <option value="" disabled>Select shift…</option>
-                <option value="morning">Morning / day</option>
-                <option value="afternoon">Afternoon</option>
-                <option value="evening">Evening</option>
-                <option value="overnight">Night / overnight</option>
-                <option value="24-hour">24-hour support</option>
-                <option value="anytime">Flexible</option>
-              </select>
-            </label>
-
-            <label>
-              How long do you need care? *
-              <select name="duration" required defaultValue="">
-                <option value="" disabled>Select duration…</option>
-                <option>A few hours</option>
-                <option>1 day</option>
-                <option>3 days</option>
-                <option>1 week</option>
-                <option>2 weeks</option>
-                <option>1 month</option>
-                <option>Ongoing support</option>
-              </select>
-            </label>
-
-            <label>
-              Maximum daily budget *
-              <select name="budget" required defaultValue="2000">
-                <option value="1200">Up to ৳1,200/day</option>
-                <option value="1500">Up to ৳1,500/day</option>
-                <option value="2000">Up to ৳2,000/day</option>
-                <option value="2500">Up to ৳2,500/day</option>
-                <option value="3000">Up to ৳3,000/day</option>
-                <option value="flexible">Flexible</option>
-              </select>
-            </label>
-          </div>
-
-          <label>
-            Exact service address *
-            <textarea
-              name="service_address"
-              required
-              maxLength={500}
-              placeholder="House/road, area and any directions the caregiver will need"
-            />
-          </label>
-
-          <label>
-            Anything important the caregiver should know?
-            <textarea
-              name="care_notes"
-              maxLength={1200}
-              placeholder="For example: patient uses a wheelchair, needs help with feeding, has dementia, needs lifting assistance, or requires a trained nurse."
-            />
-          </label>
-
-          <p className="muted">
-            Your request goes to the Healthcare Central administrator. They will
-            compare gender preference, care needs, patient type, area, shift,
-            availability and budget before assigning a caregiver.
+    <div className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}>HEALTHCARE CENTRAL HOME CARE</span>
+          <h1>Care at home, matched around the person.</h1>
+          <p>
+            Explore the kinds of support available, then request a caregiver
+            when you are ready. Healthcare Central reviews the request before
+            confirming a caregiver or care provider.
           </p>
-        </ActionForm>
-      </div>
 
-      <p style={{ marginTop: "1rem" }}>
-        <Link className="button secondary" href="/patient/caregiver-requests">
-          View my caregiver requests
+          <div className={styles.actions}>
+            <Link className={styles.primaryAction} href="/caregivers/request">
+              Request a caregiver
+            </Link>
+            <Link
+              className={styles.secondaryAction}
+              href="/patient/caregiver-requests"
+            >
+              My caregiver requests
+            </Link>
+          </div>
+        </div>
+
+        <div className={styles.heroPanel} aria-hidden="true">
+          <div className={styles.personMark}>
+            <span className={styles.head} />
+            <span className={styles.body} />
+          </div>
+          <div className={styles.careRing}>
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className={styles.heroNote}>
+            <strong>Home care</strong>
+            <span>Flexible support for different needs and schedules.</span>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.section} id="support">
+        <div className={styles.sectionHeading}>
+          <span>CARE OPTIONS</span>
+          <h2>Different situations need different kinds of support.</h2>
+          <p>
+            These are examples only. You can choose the exact care need later
+            when you start a request.
+          </p>
+        </div>
+
+        <div className={styles.careGrid}>
+          {careTypes.map(([title, description]) => (
+            <article className={styles.careCard} key={title}>
+              <span className={styles.cardDot} aria-hidden="true" />
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.process}>
+        <div className={styles.sectionHeading}>
+          <span>HOW IT WORKS</span>
+          <h2>Simple for the patient. Clear for the admin.</h2>
+        </div>
+
+        <div className={styles.steps}>
+          <article>
+            <strong>01</strong>
+            <h3>Tell us what is needed</h3>
+            <p>
+              Share the care type, preferred gender, schedule, duration,
+              location and important patient details.
+            </p>
+          </article>
+          <article>
+            <strong>02</strong>
+            <h3>Healthcare Central reviews</h3>
+            <p>
+              The admin compares the request with available caregivers and
+              provider organizations.
+            </p>
+          </article>
+          <article>
+            <strong>03</strong>
+            <h3>Care is confirmed</h3>
+            <p>
+              You receive the assigned caregiver or provider details after the
+              match is reviewed and confirmed.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className={styles.finalCta}>
+        <div>
+          <span>READY WHEN YOU ARE</span>
+          <h2>Start only when you want to request care.</h2>
+          <p>
+            You can explore this page first. The request form stays separate.
+          </p>
+        </div>
+        <Link className={styles.primaryAction} href="/caregivers/request">
+          Start caregiver request
         </Link>
-      </p>
+      </section>
     </div>
   );
 }
