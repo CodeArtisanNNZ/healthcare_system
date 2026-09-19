@@ -64,9 +64,7 @@ function clean(value: string) {
 }
 
 function escapeRegExp(value: string) {
-  return value.replace(/[\\^$.*+?()[\]{}|]/g, "\\function escapeRegExp(value: string) {
   return value.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
-}");
 }
 
 export function isYes(value: string) {
