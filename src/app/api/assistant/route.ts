@@ -22,6 +22,12 @@ import {
   type ClinicalEvidence,
   type FollowUpQuestion,
 } from "@/lib/clinical-reasoning";
+import {
+  clinicalLlmEnabled,
+  extractClinicalMessage,
+  naturalizeClinicalReply,
+  validatedLlmFacts,
+} from "@/lib/clinical-llm";
 
 export const runtime = "nodejs";
 
@@ -793,10 +799,29 @@ export async function POST(request: NextRequest) {
     const normalizedCurrent = normalizeConversationalText(originalQuery);
     const conversationId =
       parsed.data.conversationId || globalThis.crypto.randomUUID();
-    // Reply in the language of the current message, not the page language
-    // or an older turn. This keeps English questions English even inside a
-    // Bangla UI, while Bangla/Banglish input is answered naturally.
-    const language = detectLanguage(originalQuery);
+
+    // v4: use an LLM only as the language-understanding layer. The existing
+    // deterministic clinical engine still owns urgency, triage and directory
+    // decisions. If no API key is configured, everything falls back to v3.
+    const llmExtraction =
+      requestedCategory === "doctor"
+        ? await extractClinicalMessage({
+            message: originalQuery,
+            history: parsed.data.history,
+            activeEpisodeSummary: null,
+          })
+        : null;
+    const llmFacts = validatedLlmFacts(originalQuery, llmExtraction);
+    const llmUsed = Boolean(llmExtraction);
+    const language: ConversationLanguage =
+      llmExtraction?.language || detectLanguage(originalQuery);
+    const currentClinicalQuery = [
+      normalizedCurrent,
+      llmFacts.canonicalQuery,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .slice(0, 1200);
 
     let conceptMatches: ClinicalConceptMatch[] = [];
     let currentConceptMatches: ClinicalConceptMatch[] = [];
@@ -815,9 +840,9 @@ export async function POST(request: NextRequest) {
     if (requestedCategory === "doctor") {
       const [conceptResult, triageResult] = await Promise.all([
         db.rpc("match_symptom_concepts", {
-          query_text: normalizedCurrent,
+          query_text: currentClinicalQuery,
         }),
-        resolveDoctorTriage(db, normalizedCurrent),
+        resolveDoctorTriage(db, currentClinicalQuery),
       ]);
 
       if (!conceptResult.error) {
@@ -833,7 +858,7 @@ export async function POST(request: NextRequest) {
       currentTriage = triageResult;
 
       const currentMentions = classifyConceptMatches(
-        normalizedCurrent,
+        currentClinicalQuery,
         currentConceptMatches,
       );
       const currentPrimary =
@@ -903,9 +928,17 @@ export async function POST(request: NextRequest) {
         followUpAnswer = answerEvidence(pendingQuestion, originalQuery);
       }
 
+      const llmSaysNewEpisode =
+        Boolean(
+          llmExtraction?.new_episode &&
+            llmExtraction.new_episode_confidence >= 0.78 &&
+            !followUpAnswer,
+        );
+
       let startNewEpisode =
         !activeEpisode ||
         isExplicitNewProblem(originalQuery) ||
+        llmSaysNewEpisode ||
         Boolean(strongDifferentConcept && !followUpAnswer);
 
       if (
@@ -962,7 +995,7 @@ export async function POST(request: NextRequest) {
               currentPrimary?.default_specialty_name ||
               currentTriage?.primary_specialty_name ||
               null,
-            context_text: normalizedCurrent,
+            context_text: currentClinicalQuery,
             urgency_level: "unknown",
           })
           .select(
@@ -979,10 +1012,10 @@ export async function POST(request: NextRequest) {
       } else {
         const nextContext = followUpAnswer
           ? activeEpisode.context_text
-          : [activeEpisode.context_text, normalizedCurrent]
+          : [activeEpisode.context_text, currentClinicalQuery]
               .filter(Boolean)
               .join(" ")
-              .slice(-1500);
+              .slice(-1800);
 
         const updateResult = await stateDb
           .from("clinical_episodes")
@@ -1040,7 +1073,7 @@ export async function POST(request: NextRequest) {
         conceptMatches,
       );
       const currentMentionsForEvidence = classifyConceptMatches(
-        normalizedCurrent,
+        currentClinicalQuery,
         currentConceptMatches,
       );
 
@@ -1055,9 +1088,82 @@ export async function POST(request: NextRequest) {
         currentPrimary ||
         null;
 
+      const llmEvidence: ClinicalEvidence[] = llmFacts.symptoms.flatMap(
+        (item, index) => {
+          const facts: ClinicalEvidence[] = [
+            {
+              key: `llm-symptom:${item.canonical_hint.toLowerCase().replace(/[^a-z0-9]+/g, "-")}:${index}`,
+              value: item.canonical_hint,
+              source: "message",
+              polarity: item.polarity,
+              confidence: 0.94,
+              conceptId: null,
+            },
+          ];
+
+          if (item.severity !== "unknown") {
+            facts.push({
+              key: "severity",
+              value: item.severity,
+              source: "message",
+              polarity: "present",
+              confidence: 0.9,
+              conceptId: null,
+            });
+          }
+
+          if (item.body_site) {
+            facts.push({
+              key: "body_site",
+              value: item.body_site,
+              source: "message",
+              polarity: "present",
+              confidence: 0.9,
+              conceptId: null,
+            });
+          }
+
+          if (item.laterality !== "unknown") {
+            facts.push({
+              key: "laterality",
+              value: item.laterality,
+              source: "message",
+              polarity: "present",
+              confidence: 0.9,
+              conceptId: null,
+            });
+          }
+
+          if (item.duration) {
+            facts.push({
+              key: "duration",
+              value: item.duration,
+              source: "message",
+              polarity: "present",
+              confidence: 0.9,
+              conceptId: null,
+            });
+          }
+
+          if (item.onset) {
+            facts.push({
+              key: "onset",
+              value: item.onset,
+              source: "message",
+              polarity: "present",
+              confidence: 0.9,
+              conceptId: null,
+            });
+          }
+
+          return facts;
+        },
+      );
+
       const newEvidence = dedupeEvidence([
         ...extractGenericEvidence(originalQuery),
         ...conceptEvidence(currentMentionsForEvidence),
+        ...llmEvidence,
         ...(followUpAnswer ? [followUpAnswer] : []),
       ]);
 
@@ -1168,8 +1274,12 @@ export async function POST(request: NextRequest) {
           item.key.startsWith("symptom:") && item.polarity === "absent",
       );
 
+      const llmSafetyText = llmFacts.safetySignals
+        .map((item) => item.canonical_signal)
+        .join(" ");
+
       urgent =
-        hasEmergencySignals(safetyText) ||
+        hasEmergencySignals([safetyText, llmSafetyText].filter(Boolean).join(" ")) ||
         Boolean(triage.urgent && !hasAbsentSymptoms);
 
       if (
@@ -1348,7 +1458,7 @@ export async function POST(request: NextRequest) {
       params.toString() ? `?${params.toString()}` : ""
     }`;
 
-    const reply =
+    const fallbackReply =
       needsMoreInfo && followUp
         ? conversationalFollowUpReply(followUp, language, clinicalEvidence)
         : humanReply({
@@ -1362,6 +1472,36 @@ export async function POST(request: NextRequest) {
             usedNearby,
             matchedArea,
           });
+
+    let reply = fallbackReply;
+
+    if (requestedCategory === "doctor" && llmUsed) {
+      const localizedFollowUp =
+        followUp
+          ? language === "bn"
+            ? followUp.question_bn
+            : language === "banglish"
+              ? followUp.question_banglish
+              : followUp.question_en
+          : null;
+
+      const naturalReply = await naturalizeClinicalReply({
+        language,
+        decision: urgent
+          ? "urgent"
+          : needsMoreInfo
+            ? "ask_followup"
+            : "recommend",
+        knownFacts: clinicalEvidence.map(
+          (item) =>
+            `${item.key}: ${item.polarity || "present"} = ${item.value}`,
+        ),
+        requiredMessage: fallbackReply,
+        followUpQuestion: localizedFollowUp,
+      });
+
+      if (naturalReply) reply = naturalReply;
+    }
 
     const chatDb = adminClient();
     const { error: chatSaveError } = await chatDb
@@ -1379,7 +1519,14 @@ export async function POST(request: NextRequest) {
           episode_id: episodeId,
           metadata: {
             source: "healthcare-assistant",
-            clinicalEngine: requestedCategory === "doctor" ? "v3" : null,
+            clinicalEngine:
+              requestedCategory === "doctor"
+                ? llmUsed
+                  ? "v4-llm"
+                  : "v3-fallback"
+                : null,
+            llmConfigured: clinicalLlmEnabled(),
+            llmUsed,
           },
         },
         {
@@ -1400,7 +1547,14 @@ export async function POST(request: NextRequest) {
             emergencyHospitalCount: emergencyHospitals.length,
             emergencyAmbulanceCount: emergencyAmbulances.length,
             primarySpecialty: triage?.primary_specialty_name || null,
-            clinicalEngine: requestedCategory === "doctor" ? "v3" : null,
+            clinicalEngine:
+              requestedCategory === "doctor"
+                ? llmUsed
+                  ? "v4-llm"
+                  : "v3-fallback"
+                : null,
+            llmConfigured: clinicalLlmEnabled(),
+            llmUsed,
             conversationId,
             episodeId,
             newEpisodeStarted,
@@ -1439,7 +1593,14 @@ export async function POST(request: NextRequest) {
         matchedArea,
         results,
         clinicalState: {
-          engine: requestedCategory === "doctor" ? "v3" : "directory",
+          engine:
+            requestedCategory === "doctor"
+              ? llmUsed
+                ? "v4-llm"
+                : "v3-fallback"
+              : "directory",
+          llmConfigured: clinicalLlmEnabled(),
+          llmUsed,
           concepts: conceptMatches.map((item) => ({
             code: item.code,
             name:
@@ -1451,6 +1612,13 @@ export async function POST(request: NextRequest) {
           })),
           evidence: clinicalEvidence,
           needsMoreInfo,
+          languageUnderstanding: llmUsed
+            ? {
+                normalizedSummary: llmExtraction?.normalized_summary || "",
+                symptomCount: llmFacts.symptoms.length,
+                safetySignalCount: llmFacts.safetySignals.length,
+              }
+            : null,
         },
         followUp:
           needsMoreInfo && followUp
