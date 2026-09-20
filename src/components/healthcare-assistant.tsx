@@ -622,8 +622,8 @@ export function HealthcareAssistant({
 
       <p className={styles.disclaimer}>
         {bn
-          ? "Healthcare Central উপসর্গ থেকে উপযুক্ত সেবার ধরন খুঁজতে সাহায্য করে। এটি রোগ নির্ণয় করে না এবং চিকিৎসকের বিকল্প নয়। জরুরি লক্ষণ হলে সরাসরি জরুরি চিকিৎসা নিন। আপনার chat account-এর সাথে সংরক্ষিত হয় এবং support-এর প্রয়োজনে Healthcare Central administrator দেখতে পারেন।"
-          : "Healthcare Central helps route symptoms to an appropriate type of care. It does not diagnose conditions or replace a clinician. Seek emergency care for urgent symptoms. Your chat is saved to your account and may be reviewed by Healthcare Central administrators for support."}
+          ? "Healthcare Central উপসর্গ থেকে উপযুক্ত সেবার ধরন খুঁজতে সাহায্য করে। এটি রোগ নির্ণয় করে না এবং চিকিৎসকের বিকল্প নয়। জরুরি লক্ষণ হলে সরাসরি জরুরি চিকিৎসা নিন। AI language understanding চালু থাকলে আপনার লেখা বোঝার জন্য বার্তার একটি সীমিত অংশ configured AI provider-এর মাধ্যমে server-side process হতে পারে। আপনার chat account-এর সাথে সংরক্ষিত হয় এবং support-এর প্রয়োজনে Healthcare Central administrator দেখতে পারেন।"
+          : "Healthcare Central helps route symptoms to an appropriate type of care. It does not diagnose conditions or replace a clinician. Seek emergency care for urgent symptoms. When AI language understanding is enabled, a limited portion of your message may be processed server-side by the configured AI provider to understand your wording. Your chat is saved to your account and may be reviewed by Healthcare Central administrators for support."}
       </p>
     </section>
   );
