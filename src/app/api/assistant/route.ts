@@ -1456,9 +1456,14 @@ export async function POST(request: NextRequest) {
           needsMoreInfo && followUp
             ? {
                 attributeKey: followUp.attribute_key,
-                question: questionText(followUp, language),
+                question:
+                  language === "bn"
+                    ? followUp.question_bn
+                    : language === "banglish"
+                      ? followUp.question_banglish
+                      : followUp.question_en,
                 answerType: followUp.answer_type,
-                options: followUp.options,
+                options: [],
               }
             : null,
         emergencyNumber: urgent ? "16263" : null,
