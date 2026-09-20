@@ -52,6 +52,7 @@ type DoctorTriage = {
 type AssistantResponse = {
   category: Category;
   requestedCategory?: Category;
+  language?: "en" | "bn" | "banglish";
   conversationId?: string;
   episodeId?: string | null;
   newEpisodeStarted?: boolean;
@@ -231,18 +232,6 @@ export function HealthcareAssistant({
     }
   }
 
-  const quickPrompts = bn
-    ? [
-        "আমার মাথা ব্যথা আর বমি হচ্ছে, কোন ডাক্তার দেখাব?",
-        "আমার দাঁতে ব্যথা, কী করা উচিত?",
-        "কয়েকদিন ধরে কাশি ও শ্বাস নিতে কষ্ট হচ্ছে",
-      ]
-    : [
-        "Amar matha betha ar bomi hocche, kon doctor dekhabo?",
-        "My tooth hurts. What kind of doctor should I see?",
-        "I have had cough and breathing trouble for a few days.",
-      ];
-
   return (
     <section
       className={styles.shell}
@@ -265,23 +254,11 @@ export function HealthcareAssistant({
       </div>
 
       <div className={styles.chatWindow} data-hc-chat="true" aria-live="polite">
-        {messages.length === 0 && (
-          <div className={styles.quickPrompts} data-hc-quick-prompts="true">
-            {quickPrompts.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                data-hc-quick-prompt="true"
-                onClick={() => setQuery(prompt)}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
-
         {messages.map((message) => {
           const response = message.response;
+          const assistantBn = response?.language
+            ? response.language === "assistantBn"
+            : bn;
 
           if (message.role === "user") {
             return (
@@ -296,57 +273,18 @@ export function HealthcareAssistant({
               <div className={styles.assistantBubble}>
                 <p className={styles.replyText}>{message.content}</p>
 
-                {response?.followUp?.options?.length ? (
-                  <div className={styles.followUpOptions}>
-                    {response.followUp.options.map((option) => {
-                      const labels: Record<string, string> = {
-                        Yes: bn ? "হ্যাঁ" : "Yes",
-                        No: bn ? "না" : "No",
-                        "Not sure": bn ? "নিশ্চিত নই" : "Not sure",
-                        Today: bn ? "আজ" : "Today",
-                        "Just now": bn ? "এইমাত্র" : "Just now",
-                        "1–3 days": bn ? "১–৩ দিন" : "1–3 days",
-                        "1–3 days ago": bn ? "১–৩ দিন আগে" : "1–3 days ago",
-                        "4–7 days": bn ? "৪–৭ দিন" : "4–7 days",
-                        "More than a week": bn ? "এক সপ্তাহের বেশি" : "More than a week",
-                        "More than 3 days": bn ? "৩ দিনের বেশি" : "More than 3 days",
-                        "Less than 1 hour": bn ? "১ ঘণ্টার কম" : "Less than 1 hour",
-                        "Less than 6 hours": bn ? "৬ ঘণ্টার কম" : "Less than 6 hours",
-                        Longer: bn ? "আরও আগে থেকে" : "Longer",
-                        "Longer ago": bn ? "আরও আগে" : "Longer ago",
-                        "Upper abdomen": bn ? "পেটের উপরের অংশ" : "Upper abdomen",
-                        "Lower abdomen": bn ? "তলপেট" : "Lower abdomen",
-                        "Right side": bn ? "ডান পাশে" : "Right side",
-                        "Left side": bn ? "বাম পাশে" : "Left side",
-                        "All over": bn ? "সারা পেটে" : "All over",
-                      };
-
-                      return (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => void sendMessage(option)}
-                          disabled={busy}
-                        >
-                          {labels[option] || option}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-
                 {response?.urgent && (
                   <>
                     <div className={styles.urgent}>
                       <div>
                         <strong>
-                          {bn
+                          {assistantBn
                             ? "জরুরি মূল্যায়ন প্রয়োজন হতে পারে"
                             : "Urgent assessment may be needed"}
                         </strong>
                         <span>
                           {response.triage?.emergency_notice ||
-                            (bn
+                            (assistantBn
                               ? "গুরুতর বা দ্রুত খারাপ হওয়া উপসর্গ হলে সরাসরি জরুরি চিকিৎসা নিন।"
                               : "Seek emergency care for severe or rapidly worsening symptoms.")}
                         </span>
@@ -358,7 +296,7 @@ export function HealthcareAssistant({
                           href={"tel:" + (response.emergencyNumber || "16263")}
                         >
                           <span>
-                            {bn
+                            {assistantBn
                               ? "স্বাস্থ্য হটলাইন ১৬২৬৩"
                               : `Health hotline ${response.emergencyNumber || "16263"}`}
                           </span>
@@ -369,7 +307,7 @@ export function HealthcareAssistant({
                           data-action="emergency"
                           href="/emergency"
                         >
-                          <span>{bn ? "সব জরুরি নম্বর" : "Emergency directory"}</span>
+                          <span>{assistantBn ? "সব জরুরি নম্বর" : "Emergency directory"}</span>
                           <ActionGlyph kind="emergency" />
                         </Link>
                       </div>
@@ -382,16 +320,16 @@ export function HealthcareAssistant({
                           <section>
                             <div className={styles.resourceHeading}>
                               <strong>
-                                {bn
+                                {assistantBn
                                   ? "জরুরি হাসপাতাল / ইমার্জেন্সি সেন্টার"
                                   : "Emergency hospitals / centres"}
                               </strong>
                               <span>
                                 {response.location
-                                  ? bn
+                                  ? assistantBn
                                     ? `${response.location} ও কাছাকাছি`
                                     : `${response.location} and nearby`
-                                  : bn
+                                  : assistantBn
                                     ? "Location দিলে কাছাকাছি ফলাফল দেখাবে"
                                     : "Choose a location for closer matches"}
                               </span>
@@ -427,17 +365,17 @@ export function HealthcareAssistant({
                                   <div className={styles.resultActions}>
                                     {result.secondaryPhone && (
                                       <a href={callHref(result.secondaryPhone)}>
-                                        {bn ? "ইমার্জেন্সি কল" : "Emergency call"}
+                                        {assistantBn ? "ইমার্জেন্সি কল" : "Emergency call"}
                                       </a>
                                     )}
                                     {result.phone && (
                                       <a href={callHref(result.phone)}>
-                                        {bn ? "কল করুন" : "Call hospital"}
+                                        {assistantBn ? "কল করুন" : "Call hospital"}
                                       </a>
                                     )}
                                     {result.href && (
                                       <Link href={result.href}>
-                                        {bn ? "বিস্তারিত" : "View details"}
+                                        {assistantBn ? "বিস্তারিত" : "View details"}
                                       </Link>
                                     )}
                                   </div>
@@ -450,9 +388,9 @@ export function HealthcareAssistant({
                         {response.emergencyAmbulances?.length ? (
                           <section>
                             <div className={styles.resourceHeading}>
-                              <strong>{bn ? "অ্যাম্বুলেন্স" : "Ambulance options"}</strong>
+                              <strong>{assistantBn ? "অ্যাম্বুলেন্স" : "Ambulance options"}</strong>
                               <span>
-                                {bn
+                                {assistantBn
                                   ? "উপলভ্য নম্বরে সরাসরি কল করুন"
                                   : "Call an available service directly"}
                               </span>
@@ -482,12 +420,12 @@ export function HealthcareAssistant({
                                   <div className={styles.resultActions}>
                                     {result.phone && (
                                       <a href={callHref(result.phone)}>
-                                        {bn ? "অ্যাম্বুলেন্স কল" : "Call ambulance"}
+                                        {assistantBn ? "অ্যাম্বুলেন্স কল" : "Call ambulance"}
                                       </a>
                                     )}
                                     {result.secondaryPhone && (
                                       <a href={callHref(result.secondaryPhone)}>
-                                        {bn ? "বিকল্প নম্বর" : "Alternate number"}
+                                        {assistantBn ? "বিকল্প নম্বর" : "Alternate number"}
                                       </a>
                                     )}
                                   </div>
@@ -533,17 +471,17 @@ export function HealthcareAssistant({
                         <div className={styles.resultActions}>
                           {result.phone && (
                             <a href={callHref(result.phone)}>
-                              {bn ? "কল করুন" : "Call"}
+                              {assistantBn ? "কল করুন" : "Call"}
                             </a>
                           )}
 
                           {result.secondaryPhone && (
                             <a href={callHref(result.secondaryPhone)}>
                               {response.category === "ambulance"
-                                ? bn
+                                ? assistantBn
                                   ? "বিকল্প নম্বর"
                                   : "Alternate number"
-                                : bn
+                                : assistantBn
                                   ? "জরুরি কল"
                                   : "Emergency call"}
                             </a>
@@ -551,7 +489,7 @@ export function HealthcareAssistant({
 
                           {result.href && (
                             <Link href={result.href}>
-                              {bn ? "বিস্তারিত" : "View details"}
+                              {assistantBn ? "বিস্তারিত" : "View details"}
                             </Link>
                           )}
                         </div>
@@ -560,21 +498,14 @@ export function HealthcareAssistant({
                   </div>
                 ) : null}
 
-                {response && (
-                  <div className={styles.answerActions}>
-                    <Link href={response.directoryUrl}>
-                      {bn ? "আরও ফলাফল দেখুন" : response.directoryLabel}
-                    </Link>
-                    {response.requestedCategory === "doctor" &&
-                      !response.urgent &&
-                      response.triage?.primary_specialty_name && (
-                        <span>
-                          {"Suggested: " +
-                            response.triage.primary_specialty_name}
-                        </span>
-                      )}
-                  </div>
-                )}
+                {response &&
+                  !response.clinicalState?.needsMoreInfo && (
+                    <div className={styles.answerActions}>
+                      <Link href={response.directoryUrl}>
+                        {assistantBn ? "আরও ফলাফল দেখুন" : response.directoryLabel}
+                      </Link>
+                    </div>
+                  )}
               </div>
             </div>
           );
@@ -665,8 +596,8 @@ export function HealthcareAssistant({
             rows={2}
             placeholder={
               bn
-                ? "যেমন: Amar 3 din dhore matha betha, bomi bomi lage. Amar ki kora uchit?"
-                : "Example: Amar 3 din dhore matha betha, bomi bomi lage. Kon doctor dekhabo?"
+                ? "আপনার কী সমস্যা হচ্ছে নিজের ভাষায় লিখুন..."
+                : "Tell me what you are feeling in your own words..."
             }
           />
 
