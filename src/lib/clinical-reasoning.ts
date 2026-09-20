@@ -257,7 +257,7 @@ export function isLikelyFollowUpAnswer(
 ) {
   if (!question) return false;
   const q = clean(value);
-  if (!q || q.length > 100) return false;
+  if (!q || q.length > 320) return false;
 
   if (isYes(q) || isNo(q) || isNotSure(q)) return true;
 
@@ -272,6 +272,14 @@ export function isLikelyFollowUpAnswer(
   ) {
     return true;
   }
+
+  if (
+    /(weak|weakness|numb|numbness|cannot move|can't move|unable to move|bladder|bowel|urine control|stool control|groin|trauma|accident|bleeding|blood|swelling|swollen|breathing|breathe|swallow|blue lips|faint|vision loss|chemical|deformity|cold limb|nil hoye|obosh|durbol|rokto|fule|shash|gile|ojnan|দুর্বল|অবশ|রক্ত|ফুলে|শ্বাস|গিলতে|অজ্ঞান|দৃষ্টি)/i.test(q)
+  ) {
+    return true;
+  }
+
+  if (question.answer_type === "text" && q.length <= 280) return true;
 
   return question.options.some((option) => clean(option) === q);
 }
@@ -321,7 +329,45 @@ export function isRedFlagAttribute(key: string) {
 }
 
 export function redFlagAnswerIsPositive(answer: string) {
-  return isYes(answer);
+  const q = clean(answer);
+
+  if (isNotSure(q) || isNo(q)) return false;
+  if (isYes(q)) return true;
+
+  const explicitNegative =
+    /\b(no|not|without|dont have|don't have|do not have|nai|nei|na)\b/i.test(q) ||
+    /(নাই|নেই|না|হচ্ছে না|হয় না|হয় না)/i.test(answer);
+
+  if (explicitNegative) return false;
+
+  return /(weak|weakness|numb|numbness|cannot move|can't move|unable to move|bladder|bowel|urine control|stool control|groin|major trauma|accident|heavy bleeding|bone visible|deformity|cold|blue|severe breathing|can't breathe|cannot breathe|unable to breathe|swallow saliva|tongue swelling|throat swelling|faint|vision loss|chemical exposure|blood in stool|black stool|severe dehydration|obosh|durbol|narate parchi na|rokto|haddi dekha|thanda|nil|shash nite parchi na|gola fule|jihba fule|ojnan|দুর্বল|অবশ|নড়াতে পারছি না|নড়াতে পারছি না|রক্ত|হাড় দেখা|হাড় দেখা|ঠান্ডা|নীল|শ্বাস নিতে পারছি না|গলা ফুলে|জিহ্বা ফুলে|অজ্ঞান|দৃষ্টি চলে গেছে)/i.test(q);
+}
+
+export function conversationalFollowUpReply(
+  question: FollowUpQuestion,
+  language: ConversationLanguage,
+  evidence: ClinicalEvidence[],
+) {
+  const askedSomethingAlready = evidence.some(
+    (item) => item.source === "follow-up" || item.polarity === "answer",
+  );
+  const q = questionText(question, language);
+
+  if (language === "bn") {
+    return askedSomethingAlready
+      ? `বুঝলাম। আর একটি বিষয় জানতে চাই—${q}`
+      : `বুঝলাম। কোথায় দেখানো উচিত বলার আগে একটি গুরুত্বপূর্ণ বিষয় জানতে চাই—${q}`;
+  }
+
+  if (language === "banglish") {
+    return askedSomethingAlready
+      ? `Bujhlam. Aro ekta jinis jante chai—${q}`
+      : `Bujhlam. Kothay dekhano uchit bolar age ekta important jinis jante chai—${q}`;
+  }
+
+  return askedSomethingAlready
+    ? `Got it. One more thing I want to understand: ${q}`
+    : `Got it. Before I suggest where to go, I want to check one important thing: ${q}`;
 }
 
 export function redFlagNotice(
