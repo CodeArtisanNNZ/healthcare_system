@@ -257,7 +257,7 @@ export function HealthcareAssistant({
         {messages.map((message) => {
           const response = message.response;
           const assistantBn = response?.language
-            ? response.language === "assistantBn"
+            ? response.language === "bn"
             : bn;
 
           if (message.role === "user") {
