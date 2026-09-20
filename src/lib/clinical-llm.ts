@@ -164,11 +164,18 @@ type ResponsePayload = {
 };
 
 function configured() {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+  return (
+    process.env.HCC_LLM_ENABLED?.trim().toLowerCase() !== "false" &&
+    Boolean(process.env.OPENAI_API_KEY?.trim())
+  );
 }
 
-function model() {
-  return process.env.OPENAI_CLINICAL_MODEL?.trim() || "gpt-5.6-luna";
+function extractionModel() {
+  return process.env.OPENAI_CLINICAL_MODEL?.trim() || "gpt-5.6-terra";
+}
+
+function replyModel() {
+  return process.env.OPENAI_REPLY_MODEL?.trim() || "gpt-5.6-luna";
 }
 
 function responseText(payload: ResponsePayload) {
@@ -194,12 +201,14 @@ async function openAiStructured<T>({
   system,
   user,
   maxOutputTokens,
+  modelId,
 }: {
   schemaName: string;
   schema: Record<string, unknown>;
   system: string;
   user: string;
   maxOutputTokens: number;
+  modelId: string;
 }): Promise<T | null> {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
@@ -212,7 +221,7 @@ async function openAiStructured<T>({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: model(),
+        model: modelId,
         store: false,
         reasoning: { effort: "low" },
         max_output_tokens: maxOutputTokens,
@@ -285,6 +294,7 @@ export async function extractClinicalMessage({
     schemaName: "hcc_clinical_extraction",
     schema: extractionJsonSchema,
     maxOutputTokens: 1100,
+    modelId: extractionModel(),
     system: `
 You are the language-understanding layer for Healthcare Central, a patient-facing healthcare navigation system in Bangladesh.
 
@@ -391,6 +401,7 @@ export async function naturalizeClinicalReply({
     schemaName: "hcc_patient_reply",
     schema: replyJsonSchema,
     maxOutputTokens: 350,
+    modelId: replyModel(),
     system: `
 You write the final conversational wording for Healthcare Central.
 
