@@ -28,6 +28,9 @@ const extractionSchema = z.object({
   new_episode: z.boolean(),
   new_episode_confidence: z.number().min(0).max(1),
   normalized_summary: z.string().max(800),
+  answers_previous_question: z.boolean(),
+  previous_answer_polarity: z.enum(["yes", "no", "uncertain", "other", "none"]),
+  answer_summary: z.string().max(300),
   symptoms: z.array(symptomSchema).max(20),
   safety_signals: z.array(safetySignalSchema).max(10),
   contextual_notes: z.array(z.string().max(180)).max(10),
@@ -44,6 +47,9 @@ const extractionJsonSchema = {
     "new_episode",
     "new_episode_confidence",
     "normalized_summary",
+    "answers_previous_question",
+    "previous_answer_polarity",
+    "answer_summary",
     "symptoms",
     "safety_signals",
     "contextual_notes",
@@ -64,6 +70,12 @@ const extractionJsonSchema = {
       maximum: 1,
     },
     normalized_summary: { type: "string" },
+    answers_previous_question: { type: "boolean" },
+    previous_answer_polarity: {
+      type: "string",
+      enum: ["yes", "no", "uncertain", "other", "none"],
+    },
+    answer_summary: { type: "string" },
     symptoms: {
       type: "array",
       maxItems: 20,
@@ -283,10 +295,12 @@ export async function extractClinicalMessage({
   message,
   history,
   activeEpisodeSummary,
+  pendingQuestion,
 }: {
   message: string;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   activeEpisodeSummary?: string | null;
+  pendingQuestion?: string | null;
 }) {
   if (!configured()) return null;
 
@@ -311,6 +325,9 @@ Rules:
 - safety_signals may contain only safety-relevant facts explicitly stated in the current message; each must include exact source_text.
 - Do not infer diagnoses such as appendicitis, heart attack, infection, or cancer.
 - Do not infer pregnancy, age, sex, medication use, or medical history unless explicitly stated.
+- If pending_question is present, decide whether the CURRENT message is answering it. Set answers_previous_question accordingly.
+- For an answer to the pending question, previous_answer_polarity must be yes, no, uncertain, or other. Use none when it is not an answer.
+- answer_summary should restate only the answer in a short neutral phrase; use an empty string when it is not an answer.
 - If the message is merely "yes", "no", a duration, location, or another short follow-up answer, keep symptoms empty unless the answer itself names a symptom.
 - Language must reflect the CURRENT patient message: en for English, bn for Bangla script, banglish for transliterated Bangla/mixed Bangla-English.
 `.trim(),
@@ -318,6 +335,7 @@ Rules:
       current_message: message,
       recent_conversation: compactHistory(history),
       active_episode_summary: activeEpisodeSummary || null,
+      pending_question: pendingQuestion || null,
     }),
   });
 
