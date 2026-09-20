@@ -800,15 +800,92 @@ export async function POST(request: NextRequest) {
     const conversationId =
       parsed.data.conversationId || globalThis.crypto.randomUUID();
 
-    // v4: use an LLM only as the language-understanding layer. The existing
-    // deterministic clinical engine still owns urgency, triage and directory
-    // decisions. If no API key is configured, everything falls back to v3.
+    // Load the current clinical episode before calling the LLM so the language
+    // layer can resolve references such as "it", "there", or a natural answer
+    // to the last follow-up question. No name, email or other profile identity
+    // is sent to the model.
+    let prefetchedActiveEpisode: ClinicalEpisodeRow | null = null;
+    let prefetchedPendingQuestion: FollowUpQuestion | null = null;
+
+    if (requestedCategory === "doctor") {
+      const activeEpisodeResult = await stateDb
+        .from("clinical_episodes")
+        .select(
+          "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
+        )
+        .eq("user_id", user.id)
+        .eq("conversation_id", conversationId)
+        .eq("status", "active")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeEpisodeResult.error) {
+        console.error(
+          "Clinical episode lookup failed",
+          activeEpisodeResult.error.message,
+        );
+      } else {
+        prefetchedActiveEpisode =
+          (activeEpisodeResult.data as ClinicalEpisodeRow | null) || null;
+      }
+
+      if (prefetchedActiveEpisode?.pending_question_id) {
+        const pendingResult = await stateDb
+          .from("symptom_followup_questions")
+          .select(
+            "id,concept_id,attribute_key,question_en,question_bn,question_banglish,answer_type,options,priority,required",
+          )
+          .eq("id", prefetchedActiveEpisode.pending_question_id)
+          .maybeSingle();
+
+        if (pendingResult.data) {
+          prefetchedPendingQuestion = {
+            ...pendingResult.data,
+            options: Array.isArray(pendingResult.data.options)
+              ? pendingResult.data.options.map(String)
+              : [],
+          } as FollowUpQuestion;
+        }
+      }
+    }
+
+    const episodeSummaryForLlm = prefetchedActiveEpisode
+      ? [
+          prefetchedActiveEpisode.primary_concept_code
+            ? `Primary concept: ${prefetchedActiveEpisode.primary_concept_code}`
+            : "",
+          prefetchedActiveEpisode.primary_specialty_name
+            ? `Current route: ${prefetchedActiveEpisode.primary_specialty_name}`
+            : "",
+          prefetchedActiveEpisode.context_text
+            ? `Episode context: ${prefetchedActiveEpisode.context_text.slice(-900)}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" | ")
+      : null;
+
+    const pendingQuestionForLlm = prefetchedPendingQuestion
+      ? [
+          prefetchedPendingQuestion.question_en,
+          prefetchedPendingQuestion.question_bn,
+          prefetchedPendingQuestion.question_banglish,
+        ]
+          .filter(Boolean)
+          .join(" / ")
+      : null;
+
+    // v4: the LLM is the language-understanding layer. The deterministic
+    // clinical engine still owns urgency, triage and directory decisions.
+    // If no API key is configured or the model call fails, HCC falls back to v3.
     const llmExtraction =
       requestedCategory === "doctor"
         ? await extractClinicalMessage({
             message: originalQuery,
             history: parsed.data.history,
-            activeEpisodeSummary: null,
+            activeEpisodeSummary: episodeSummaryForLlm,
+            pendingQuestion: pendingQuestionForLlm,
           })
         : null;
     const llmFacts = validatedLlmFacts(originalQuery, llmExtraction);
@@ -866,47 +943,8 @@ export async function POST(request: NextRequest) {
         currentMentions.find((item) => item.polarity === "uncertain") ||
         null;
 
-      const activeEpisodeResult = await stateDb
-        .from("clinical_episodes")
-        .select(
-          "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
-        )
-        .eq("user_id", user.id)
-        .eq("conversation_id", conversationId)
-        .eq("status", "active")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (activeEpisodeResult.error) {
-        console.error(
-          "Clinical episode lookup failed",
-          activeEpisodeResult.error.message,
-        );
-      }
-
-      let activeEpisode =
-        (activeEpisodeResult.data as ClinicalEpisodeRow | null) || null;
-      let pendingQuestion: FollowUpQuestion | null = null;
-
-      if (activeEpisode?.pending_question_id) {
-        const pendingResult = await stateDb
-          .from("symptom_followup_questions")
-          .select(
-            "id,concept_id,attribute_key,question_en,question_bn,question_banglish,answer_type,options,priority,required",
-          )
-          .eq("id", activeEpisode.pending_question_id)
-          .maybeSingle();
-
-        if (pendingResult.data) {
-          pendingQuestion = {
-            ...pendingResult.data,
-            options: Array.isArray(pendingResult.data.options)
-              ? pendingResult.data.options.map(String)
-              : [],
-          } as FollowUpQuestion;
-        }
-      }
+      let activeEpisode = prefetchedActiveEpisode;
+      let pendingQuestion = prefetchedPendingQuestion;
 
       const strongDifferentConcept =
         Boolean(
@@ -917,15 +955,36 @@ export async function POST(request: NextRequest) {
             Number(currentPrimary.score || 0) >= 0.82,
         );
 
+      const llmUnderstandsFollowUp =
+        Boolean(
+          pendingQuestion &&
+            llmExtraction?.answers_previous_question &&
+            llmExtraction.previous_answer_polarity !== "none",
+        );
+
       const looksLikeFollowUp =
         Boolean(
           pendingQuestion &&
             !strongDifferentConcept &&
-            isLikelyFollowUpAnswer(originalQuery, pendingQuestion),
+            (isLikelyFollowUpAnswer(originalQuery, pendingQuestion) ||
+              llmUnderstandsFollowUp),
         );
 
       if (pendingQuestion && looksLikeFollowUp) {
-        followUpAnswer = answerEvidence(pendingQuestion, originalQuery);
+        let answerValue = originalQuery;
+
+        if (llmUnderstandsFollowUp && llmExtraction) {
+          answerValue =
+            llmExtraction.previous_answer_polarity === "yes"
+              ? "Yes"
+              : llmExtraction.previous_answer_polarity === "no"
+                ? "No"
+                : llmExtraction.previous_answer_polarity === "uncertain"
+                  ? "Not sure"
+                  : llmExtraction.answer_summary || originalQuery;
+        }
+
+        followUpAnswer = answerEvidence(pendingQuestion, answerValue);
       }
 
       const llmSaysNewEpisode =
@@ -1303,7 +1362,7 @@ export async function POST(request: NextRequest) {
         primaryConcept &&
         followUpAnswer &&
         isRedFlagAttribute(followUpAnswer.key) &&
-        redFlagAnswerIsPositive(originalQuery)
+        redFlagAnswerIsPositive(followUpAnswer.value)
       ) {
         urgent = true;
         triage = {
