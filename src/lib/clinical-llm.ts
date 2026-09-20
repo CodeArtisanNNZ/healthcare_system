@@ -183,7 +183,9 @@ function configured() {
 }
 
 function extractionModel() {
-  return process.env.OPENAI_CLINICAL_MODEL?.trim() || "gpt-5.6-terra";
+  // Low-cost default: Luna is strong enough for constrained structured extraction.
+  // Terra remains available as an opt-in override for difficult testing.
+  return process.env.OPENAI_CLINICAL_MODEL?.trim() || "gpt-5.6-luna";
 }
 
 function replyModel() {
@@ -284,10 +286,10 @@ function compactHistory(
   history: Array<{ role: "user" | "assistant"; content: string }>,
 ) {
   return history
-    .slice(-6)
+    .slice(-4)
     .map((item) => ({
       role: item.role,
-      content: item.content.slice(0, 420),
+      content: item.content.slice(0, 320),
     }));
 }
 
@@ -307,7 +309,7 @@ export async function extractClinicalMessage({
   const result = await openAiStructured<LlmClinicalExtraction>({
     schemaName: "hcc_clinical_extraction",
     schema: extractionJsonSchema,
-    maxOutputTokens: 1100,
+    maxOutputTokens: 700,
     modelId: extractionModel(),
     system: `
 You are the language-understanding layer for Healthcare Central, a patient-facing healthcare navigation system in Bangladesh.
@@ -418,7 +420,7 @@ export async function naturalizeClinicalReply({
   const result = await openAiStructured<z.infer<typeof replySchema>>({
     schemaName: "hcc_patient_reply",
     schema: replyJsonSchema,
-    maxOutputTokens: 350,
+    maxOutputTokens: 220,
     modelId: replyModel(),
     system: `
 You write the final conversational wording for Healthcare Central.
