@@ -258,7 +258,7 @@ async function openAiStructured<T>({
           },
         },
       }),
-      signal: AbortSignal.timeout(8500),
+      signal: AbortSignal.timeout(3500),
     });
 
     const payload = (await response.json()) as ResponsePayload;
@@ -286,10 +286,10 @@ function compactHistory(
   history: Array<{ role: "user" | "assistant"; content: string }>,
 ) {
   return history
-    .slice(-4)
+    .slice(-3)
     .map((item) => ({
       role: item.role,
-      content: item.content.slice(0, 320),
+      content: item.content.slice(0, 240),
     }));
 }
 
@@ -309,7 +309,7 @@ export async function extractClinicalMessage({
   const result = await openAiStructured<LlmClinicalExtraction>({
     schemaName: "hcc_clinical_extraction",
     schema: extractionJsonSchema,
-    maxOutputTokens: 700,
+    maxOutputTokens: 450,
     modelId: extractionModel(),
     system: `
 You are the language-understanding layer for Healthcare Central, a patient-facing healthcare navigation system in Bangladesh.
