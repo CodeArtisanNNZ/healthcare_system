@@ -25,7 +25,6 @@ import {
 import {
   clinicalLlmEnabled,
   extractClinicalMessage,
-  naturalizeClinicalReply,
   validatedLlmFacts,
 } from "@/lib/clinical-llm";
 
@@ -236,6 +235,46 @@ function shouldCarryRecentSymptomHistory(value: string) {
   ];
 
   return followUpPatterns.some((pattern) => pattern.test(q));
+}
+
+function shouldUseClinicalLlmFastPath({
+  message,
+  pendingQuestion,
+  fastConceptMatches,
+  fastTriage,
+}: {
+  message: string;
+  pendingQuestion: FollowUpQuestion | null;
+  fastConceptMatches: ClinicalConceptMatch[];
+  fastTriage: DoctorTriage | null;
+}) {
+  if (!clinicalLlmEnabled()) return false;
+
+  // Cheap, obvious answers should never wait for an LLM.
+  if (
+    pendingQuestion &&
+    isLikelyFollowUpAnswer(message, pendingQuestion)
+  ) {
+    return false;
+  }
+
+  // A free-form reply to an active clinical question is where the LLM adds
+  // the most value, so use it when the deterministic parser cannot recognize it.
+  if (pendingQuestion) return true;
+
+  const q = normalizeConversationalText(message).toLowerCase();
+  const topScore = Number(fastConceptMatches[0]?.score || 0);
+  const confidentLocalMatch =
+    topScore >= 0.9 || Boolean(fastTriage?.primary_specialty_name);
+
+  const linguisticallyComplex =
+    q.length > 90 ||
+    /\b(but|however|although|except|without|not|maybe|possibly|nai|nei|na|kintu|tobe|mone hoy|hote pare)\b/i.test(q) ||
+    /(কিন্তু|তবে|নেই|নাই|না|মনে হয়|মনে হয়|হতে পারে)/i.test(message);
+
+  // Known/simple symptoms stay on the fast local path. Unknown, ambiguous,
+  // negated, multi-clause, or conversational messages get one LLM pass.
+  return linguisticallyComplex || !confidentLocalMatch;
 }
 
 function hasEmergencySignals(value: string) {
@@ -800,25 +839,33 @@ export async function POST(request: NextRequest) {
     const conversationId =
       parsed.data.conversationId || globalThis.crypto.randomUUID();
 
-    // Load the current clinical episode before calling the LLM so the language
-    // layer can resolve references such as "it", "there", or a natural answer
-    // to the last follow-up question. No name, email or other profile identity
-    // is sent to the model.
+    // Fast path: load episode state and run the cheap deterministic concept/triage
+    // probes in parallel. Most common symptoms can be answered without waiting
+    // for any model call.
     let prefetchedActiveEpisode: ClinicalEpisodeRow | null = null;
     let prefetchedPendingQuestion: FollowUpQuestion | null = null;
+    let fastConceptMatches: ClinicalConceptMatch[] = [];
+    let fastTriage: DoctorTriage | null = null;
 
     if (requestedCategory === "doctor") {
-      const activeEpisodeResult = await stateDb
-        .from("clinical_episodes")
-        .select(
-          "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
-        )
-        .eq("user_id", user.id)
-        .eq("conversation_id", conversationId)
-        .eq("status", "active")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [activeEpisodeResult, fastConceptResult, fastTriageResult] =
+        await Promise.all([
+          stateDb
+            .from("clinical_episodes")
+            .select(
+              "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
+            )
+            .eq("user_id", user.id)
+            .eq("conversation_id", conversationId)
+            .eq("status", "active")
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          db.rpc("match_symptom_concepts", {
+            query_text: normalizedCurrent,
+          }),
+          resolveDoctorTriage(db, normalizedCurrent),
+        ]);
 
       if (activeEpisodeResult.error) {
         console.error(
@@ -829,6 +876,18 @@ export async function POST(request: NextRequest) {
         prefetchedActiveEpisode =
           (activeEpisodeResult.data as ClinicalEpisodeRow | null) || null;
       }
+
+      if (!fastConceptResult.error) {
+        fastConceptMatches =
+          (fastConceptResult.data || []) as ClinicalConceptMatch[];
+      } else {
+        console.error(
+          "Fast clinical concept probe failed",
+          fastConceptResult.error.message,
+        );
+      }
+
+      fastTriage = fastTriageResult;
 
       if (prefetchedActiveEpisode?.pending_question_id) {
         const pendingResult = await stateDb
@@ -859,7 +918,7 @@ export async function POST(request: NextRequest) {
             ? `Current route: ${prefetchedActiveEpisode.primary_specialty_name}`
             : "",
           prefetchedActiveEpisode.context_text
-            ? `Episode context: ${prefetchedActiveEpisode.context_text.slice(-900)}`
+            ? `Episode context: ${prefetchedActiveEpisode.context_text.slice(-600)}`
             : "",
         ]
           .filter(Boolean)
@@ -876,18 +935,24 @@ export async function POST(request: NextRequest) {
           .join(" / ")
       : null;
 
-    // v4: the LLM is the language-understanding layer. The deterministic
-    // clinical engine still owns urgency, triage and directory decisions.
-    // If no API key is configured or the model call fails, HCC falls back to v3.
-    const llmExtraction =
-      requestedCategory === "doctor"
-        ? await extractClinicalMessage({
-            message: originalQuery,
-            history: parsed.data.history,
-            activeEpisodeSummary: episodeSummaryForLlm,
-            pendingQuestion: pendingQuestionForLlm,
-          })
-        : null;
+    const shouldCallLlm =
+      requestedCategory === "doctor" &&
+      shouldUseClinicalLlmFastPath({
+        message: originalQuery,
+        pendingQuestion: prefetchedPendingQuestion,
+        fastConceptMatches,
+        fastTriage,
+      });
+
+    // At most ONE model call per message. Known/common symptoms skip the model.
+    const llmExtraction = shouldCallLlm
+      ? await extractClinicalMessage({
+          message: originalQuery,
+          history: parsed.data.history,
+          activeEpisodeSummary: episodeSummaryForLlm,
+          pendingQuestion: pendingQuestionForLlm,
+        })
+      : null;
     const llmFacts = validatedLlmFacts(originalQuery, llmExtraction);
     const llmUsed = Boolean(llmExtraction);
     const language: ConversationLanguage =
@@ -915,24 +980,29 @@ export async function POST(request: NextRequest) {
     let currentTriage: DoctorTriage | null = null;
 
     if (requestedCategory === "doctor") {
-      const [conceptResult, triageResult] = await Promise.all([
-        db.rpc("match_symptom_concepts", {
-          query_text: currentClinicalQuery,
-        }),
-        resolveDoctorTriage(db, currentClinicalQuery),
-      ]);
+      if (llmUsed) {
+        const [conceptResult, triageResult] = await Promise.all([
+          db.rpc("match_symptom_concepts", {
+            query_text: currentClinicalQuery,
+          }),
+          resolveDoctorTriage(db, currentClinicalQuery),
+        ]);
 
-      if (!conceptResult.error) {
-        currentConceptMatches =
-          (conceptResult.data || []) as ClinicalConceptMatch[];
+        if (!conceptResult.error) {
+          currentConceptMatches =
+            (conceptResult.data || []) as ClinicalConceptMatch[];
+        } else {
+          console.error(
+            "Clinical concept matcher unavailable",
+            conceptResult.error.message,
+          );
+        }
+
+        currentTriage = triageResult;
       } else {
-        console.error(
-          "Clinical concept matcher unavailable",
-          conceptResult.error.message,
-        );
+        currentConceptMatches = fastConceptMatches;
+        currentTriage = fastTriage;
       }
-
-      currentTriage = triageResult;
 
       const currentMentions = classifyConceptMatches(
         currentClinicalQuery,
@@ -1532,35 +1602,9 @@ export async function POST(request: NextRequest) {
             matchedArea,
           });
 
-    let reply = fallbackReply;
-
-    if (requestedCategory === "doctor" && llmUsed) {
-      const localizedFollowUp =
-        followUp
-          ? language === "bn"
-            ? followUp.question_bn
-            : language === "banglish"
-              ? followUp.question_banglish
-              : followUp.question_en
-          : null;
-
-      const naturalReply = await naturalizeClinicalReply({
-        language,
-        decision: urgent
-          ? "urgent"
-          : needsMoreInfo
-            ? "ask_followup"
-            : "recommend",
-        knownFacts: clinicalEvidence.map(
-          (item) =>
-            `${item.key}: ${item.polarity || "present"} = ${item.value}`,
-        ),
-        requiredMessage: fallbackReply,
-        followUpQuestion: localizedFollowUp,
-      });
-
-      if (naturalReply) reply = naturalReply;
-    }
+    // Speed-first v4: the clinical extraction may use one LLM call, but the
+    // patient-facing wording is generated locally so we never wait for a second model.
+    const reply = fallbackReply;
 
     const chatDb = adminClient();
     const { error: chatSaveError } = await chatDb
