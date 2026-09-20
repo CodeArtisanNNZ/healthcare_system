@@ -42,7 +42,7 @@ SERPER_API_KEY=OPTIONAL_LIVE_SEARCH_KEY
 # Optional Clinical AI v4
 HCC_LLM_ENABLED=true
 OPENAI_API_KEY=YOUR_SERVER_ONLY_OPENAI_API_KEY
-OPENAI_CLINICAL_MODEL=gpt-5.6-terra
+OPENAI_CLINICAL_MODEL=gpt-5.6-luna
 OPENAI_REPLY_MODEL=gpt-5.6-luna
 ```
 
@@ -65,9 +65,11 @@ Patient free text
 
 The LLM is intentionally **not** allowed to independently diagnose disease, prescribe treatment, change the emergency level, or invent a specialty. Structured extraction is constrained with JSON Schema and source-text validation. HCC sends only the recent chat/clinical context needed for interpretation; it does not include the patient's account name or email in the LLM prompt. OpenAI Responses requests are sent with `store: false`.
 
-Default models:
-- `gpt-5.6-terra` for symptom-language extraction and contextual understanding.
+Low-cost defaults:
+- `gpt-5.6-luna` for symptom-language extraction and contextual understanding.
 - `gpt-5.6-luna` for concise natural patient-facing wording.
+
+For a strict low-budget deployment, configure an enforced OpenAI project hard spend limit in the OpenAI Platform. A target of roughly USD 3.50–3.75/month leaves some exchange-rate/tax headroom under a ৳500/month ceiling. Terra can still be enabled manually by changing `OPENAI_CLINICAL_MODEL` when testing difficult cases.
 
 Both are configurable through server environment variables. For production healthcare use, review your provider agreement, privacy requirements, clinical validation process, monitoring, and local regulatory obligations before enabling the LLM for real patient traffic.
 
