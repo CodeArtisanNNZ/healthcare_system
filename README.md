@@ -38,9 +38,38 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_OR_LEGACY_ANON_KEY
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
 SERPER_API_KEY=OPTIONAL_LIVE_SEARCH_KEY
+
+# Optional Clinical AI v4
+HCC_LLM_ENABLED=true
+OPENAI_API_KEY=YOUR_SERVER_ONLY_OPENAI_API_KEY
+OPENAI_CLINICAL_MODEL=gpt-5.6-terra
+OPENAI_REPLY_MODEL=gpt-5.6-luna
 ```
 
-The service-role key is needed only for administrator Auth-account changes and the manual legacy-upload script. Do not prefix it with `NEXT_PUBLIC_`, commit it, or put it into client components. Leave `SERPER_API_KEY` empty if you only need catalog comparisons. No credentials from the PHP archive were carried over.
+The service-role key and OpenAI key are server-only secrets. Do not prefix either with `NEXT_PUBLIC_`, commit them, or put them into client components. Leave `SERPER_API_KEY` empty if you only need catalog comparisons. If `OPENAI_API_KEY` is missing or `HCC_LLM_ENABLED=false`, the assistant automatically falls back to the deterministic Clinical Reasoning v3 engine. No credentials from the PHP archive were carried over.
+
+## Clinical AI v4
+
+The patient assistant can optionally use an LLM as a **language-understanding and conversation layer** while keeping the deterministic Healthcare Central safety and routing logic in control.
+
+Flow:
+
+```text
+Patient free text
+  -> LLM structured extraction
+  -> validated symptom facts / negation / context
+  -> HCC clinical episode + emergency + triage engine
+  -> doctor/hospital/ambulance database
+  -> LLM natural-language wording
+```
+
+The LLM is intentionally **not** allowed to independently diagnose disease, prescribe treatment, change the emergency level, or invent a specialty. Structured extraction is constrained with JSON Schema and source-text validation. HCC sends only the recent chat/clinical context needed for interpretation; it does not include the patient's account name or email in the LLM prompt. OpenAI Responses requests are sent with `store: false`.
+
+Default models:
+- `gpt-5.6-terra` for symptom-language extraction and contextual understanding.
+- `gpt-5.6-luna` for concise natural patient-facing wording.
+
+Both are configurable through server environment variables. For production healthcare use, review your provider agreement, privacy requirements, clinical validation process, monitoring, and local regulatory obligations before enabling the LLM for real patient traffic.
 
 ## 2. Create the Supabase database and buckets
 
