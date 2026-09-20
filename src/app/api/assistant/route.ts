@@ -8,6 +8,7 @@ import type { Row } from "@/lib/entities";
 import {
   answerEvidence,
   chooseNextQuestion,
+  conversationalFollowUpReply,
   classifyConceptMatches,
   conceptEvidence,
   dedupeEvidence,
@@ -15,7 +16,6 @@ import {
   isExplicitNewProblem,
   isLikelyFollowUpAnswer,
   isRedFlagAttribute,
-  questionText,
   redFlagAnswerIsPositive,
   redFlagNotice,
   type ClinicalConceptMatch,
@@ -793,14 +793,10 @@ export async function POST(request: NextRequest) {
     const normalizedCurrent = normalizeConversationalText(originalQuery);
     const conversationId =
       parsed.data.conversationId || globalThis.crypto.randomUUID();
-    const languageContext = [
-      ...parsed.data.history
-        .filter((item) => item.role === "user")
-        .slice(-2)
-        .map((item) => item.content),
-      originalQuery,
-    ].join(" ");
-    const language = detectLanguage(languageContext);
+    // Reply in the language of the current message, not the page language
+    // or an older turn. This keeps English questions English even inside a
+    // Bangla UI, while Bangla/Banglish input is answered naturally.
+    const language = detectLanguage(originalQuery);
 
     let conceptMatches: ClinicalConceptMatch[] = [];
     let currentConceptMatches: ClinicalConceptMatch[] = [];
@@ -887,15 +883,30 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (
-        pendingQuestion &&
-        isLikelyFollowUpAnswer(originalQuery, pendingQuestion)
-      ) {
+      const strongDifferentConcept =
+        Boolean(
+          activeEpisode &&
+            currentPrimary?.code &&
+            activeEpisode.primary_concept_code &&
+            currentPrimary.code !== activeEpisode.primary_concept_code &&
+            Number(currentPrimary.score || 0) >= 0.82,
+        );
+
+      const looksLikeFollowUp =
+        Boolean(
+          pendingQuestion &&
+            !strongDifferentConcept &&
+            isLikelyFollowUpAnswer(originalQuery, pendingQuestion),
+        );
+
+      if (pendingQuestion && looksLikeFollowUp) {
         followUpAnswer = answerEvidence(pendingQuestion, originalQuery);
       }
 
       let startNewEpisode =
-        !activeEpisode || isExplicitNewProblem(originalQuery);
+        !activeEpisode ||
+        isExplicitNewProblem(originalQuery) ||
+        Boolean(strongDifferentConcept && !followUpAnswer);
 
       if (
         activeEpisode &&
@@ -1339,7 +1350,7 @@ export async function POST(request: NextRequest) {
 
     const reply =
       needsMoreInfo && followUp
-        ? questionText(followUp, language)
+        ? conversationalFollowUpReply(followUp, language, clinicalEvidence)
         : humanReply({
             language,
             requestedCategory,
@@ -1414,6 +1425,7 @@ export async function POST(request: NextRequest) {
       {
         category,
         requestedCategory,
+        language,
         conversationId,
         episodeId,
         newEpisodeStarted,
