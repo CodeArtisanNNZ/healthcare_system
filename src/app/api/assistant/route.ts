@@ -704,6 +704,7 @@ function humanReply({
   location,
   usedNearby,
   matchedArea,
+  primaryConceptCode,
 }: {
   language: ConversationLanguage;
   requestedCategory: Category;
@@ -1629,7 +1630,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (
-      !needsMoreInfo &&
+      !needsGuidance &&
       rows.length === 0 &&
       requestedCategory === "doctor" &&
       !urgent &&
