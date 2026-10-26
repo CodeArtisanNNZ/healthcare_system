@@ -115,6 +115,86 @@ const emptyTriage: DoctorTriage = {
   suggestions: [],
 };
 
+const medicineFirstConceptCodes = new Set([
+  "headache",
+  "dizziness",
+  "fever",
+  "cough",
+  "nausea",
+  "vomiting",
+  "diarrhea",
+  "abdominal_bloating",
+  "acid_reflux",
+  "appetite_loss",
+  "general_weakness",
+]);
+
+function applyMedicineFirstRoute(
+  triage: DoctorTriage | null,
+  primaryConcept: ClinicalConceptMatch | null,
+  urgent: boolean,
+): DoctorTriage | null {
+  if (
+    urgent ||
+    !primaryConcept ||
+    !medicineFirstConceptCodes.has(primaryConcept.code)
+  ) {
+    return triage;
+  }
+
+  return {
+    ...(triage || emptyTriage),
+    urgent: false,
+    emergency_notice: null,
+    primary_specialty_id: null,
+    primary_specialty_name: "Medicine Specialist",
+    suggestions: [],
+  };
+}
+
+function medicineFirstGuidance(
+  conceptCode: string | null,
+  language: ConversationLanguage,
+) {
+  if (conceptCode === "headache") {
+    if (language === "bn") {
+      return "মৃদু মাথাব্যথা হলে বিশ্রাম, পানি পান, নিয়মিত খাবার ও কিছুক্ষণ স্ক্রিন থেকে দূরে থাকা সহায়ক হতে পারে। ব্যথা না কমলে, বারবার হলে, বা দৈনন্দিন কাজে বাধা দিলে আগে একজন সাধারণ চিকিৎসক বা মেডিসিন ডাক্তার দেখান।";
+    }
+
+    if (language === "banglish") {
+      return "Mild matha betha hole rest, pani, regular khabar ebong kichukhon screen theke dure thaka helpful hote pare. Betha na komle, bar bar hole, ba daily kaj-e problem korle age General Physician ba Medicine doctor dekhan.";
+    }
+
+    return "For a mild headache, rest, fluids, regular food, and a break from screen strain may help. If it does not improve, keeps returning, or affects daily life, start with a General Physician or Medicine doctor.";
+  }
+
+  if (conceptCode === "dizziness") {
+    if (language === "bn") {
+      return "মাথা ঘুরলে বসে বা শুয়ে পড়ুন, সিঁড়ি বা গাড়ি চালানো এড়িয়ে চলুন এবং সম্ভব হলে পানি পান করুন। এটি চলতে থাকলে, বারবার হলে, বা উদ্বেগজনক মনে হলে একজন সাধারণ চিকিৎসক বা মেডিসিন ডাক্তার দেখান।";
+    }
+
+    if (language === "banglish") {
+      return "Matha ghurle bose ba suye porun, siri ba gari chalano avoid korun, ebong possible hole pani pan korun. Eta cholte thakle, bar bar hole, ba chintar mone hole General Physician ba Medicine doctor dekhan.";
+    }
+
+    return "If you feel dizzy, sit or lie down, avoid driving or stairs, and drink fluids if you can. If it continues, returns, or worries you, start with a General Physician or Medicine doctor.";
+  }
+
+  return null;
+}
+
+function unclearSymptomReply(language: ConversationLanguage) {
+  if (language === "bn") {
+    return "আপনার লেখা থেকে সমস্যাটি নিশ্চিতভাবে বুঝতে পারিনি, তাই ভুলভাবে কোনো বিশেষজ্ঞ সাজেস্ট করছি না। কোথায় সমস্যা হচ্ছে, কতদিন ধরে, এবং এটি হালকা না তীব্র—এগুলো লিখুন। হঠাৎ তীব্র বা দ্রুত খারাপ হওয়া উপসর্গ হলে সরাসরি জরুরি চিকিৎসা নিন।";
+  }
+
+  if (language === "banglish") {
+    return "Apnar lekha theke problem-ta nischit vabe bujhte parini, tai vul specialist suggest korchi na. Kothay problem hocche, koto din dhore, ebong halka na tibro—egulo bolun. Hotat tibro ba rapidly worse symptom hole direct emergency care nin.";
+  }
+
+  return "I am not confident that I understood the symptom, so I will not guess a specialist. Please say where the problem is, how long it has been happening, and whether it is mild or severe. Seek emergency care for symptoms that are sudden, severe, or rapidly worsening.";
+}
+
 const entityByCategory: Record<Category, string> = {
   doctor: "doctors",
   medicine: "medicines",
@@ -634,6 +714,7 @@ function humanReply({
   location: string;
   usedNearby: boolean;
   matchedArea: string;
+  primaryConceptCode: string | null;
 }) {
   if (urgent) {
     const notice = triage?.emergency_notice?.trim();
@@ -675,6 +756,8 @@ function humanReply({
 
   if (requestedCategory === "doctor") {
     const specialty = triage?.primary_specialty_name?.trim();
+    const localGuidance = medicineFirstGuidance(primaryConceptCode, language);
+    const guidance = localGuidance || guidance;
 
     if (specialty) {
       const alternatives = (triage?.suggestions || [])
@@ -689,7 +772,7 @@ function humanReply({
           alternatives.length
             ? `আরও সম্ভাব্য specialist: ${alternatives.join(", ")}।`
             : "",
-          triage?.patient_guidance || "",
+          guidance,
           resultCount
             ? usedNearby && matchedArea
               ? `${location}-এ এই specialist-এর exact match পাইনি। কাছের ${matchedArea} এলাকার ${resultCount} জন matching doctor দেখাচ্ছি।`
@@ -708,7 +791,7 @@ function humanReply({
           alternatives.length
             ? `Onno possible specialist: ${alternatives.join(", ")}.`
             : "",
-          triage?.patient_guidance || "",
+          guidance,
           resultCount
             ? usedNearby && matchedArea
               ? `${location}-e ei specialist-er exact match paini. Kacher ${matchedArea} area-r ${resultCount} jon matching doctor dekhacchi.`
@@ -726,7 +809,7 @@ function humanReply({
         alternatives.length
           ? `Other possible specialist routes: ${alternatives.join(", ")}.`
           : "",
-        triage?.patient_guidance || "",
+        guidance,
         resultCount
           ? usedNearby && matchedArea
             ? `I could not find an exact ${location} match for this specialist, so I am showing ${resultCount} matching doctor${resultCount === 1 ? "" : "s"} from nearby ${matchedArea}.`
@@ -1427,6 +1510,8 @@ export async function POST(request: NextRequest) {
         };
       }
 
+      triage = applyMedicineFirstRoute(triage, primaryConcept, urgent);
+
       if (
         !urgent &&
         primaryConcept &&
@@ -1494,6 +1579,12 @@ export async function POST(request: NextRequest) {
 
     const needsMoreInfo =
       requestedCategory === "doctor" && !urgent && Boolean(followUp);
+    const needsClarification =
+      requestedCategory === "doctor" &&
+      !urgent &&
+      !primaryConcept &&
+      llmFacts.symptoms.length === 0;
+    const needsGuidance = needsMoreInfo || needsClarification;
 
     const category: Category = urgent ? "hospital" : requestedCategory;
 
@@ -1521,7 +1612,7 @@ export async function POST(request: NextRequest) {
     let emergencyAmbulanceRows: Row[] = [];
     let emergencyMatchedArea = selectedLocation;
 
-    if (needsMoreInfo) {
+    if (needsGuidance) {
       rows = [];
     } else if (urgent) {
       const emergency = await emergencyResources(db, selectedLocation);
@@ -1590,7 +1681,9 @@ export async function POST(request: NextRequest) {
     const fallbackReply =
       needsMoreInfo && followUp
         ? conversationalFollowUpReply(followUp, language, clinicalEvidence)
-        : humanReply({
+        : needsClarification
+          ? unclearSymptomReply(language)
+          : humanReply({
             language,
             requestedCategory,
             category,
@@ -1600,6 +1693,8 @@ export async function POST(request: NextRequest) {
             location: selectedLocation,
             usedNearby,
             matchedArea,
+            primaryConceptCode:
+              primaryConcept?.code || episode?.primary_concept_code || null,
           });
 
     // Speed-first v4: the clinical extraction may use one LLM call, but the
@@ -1668,7 +1763,7 @@ export async function POST(request: NextRequest) {
               score: item.score,
             })),
             evidence: clinicalEvidence,
-            needsMoreInfo,
+            needsMoreInfo: needsGuidance,
             followUpAttribute: followUp?.attribute_key || null,
           },
         },
@@ -1714,7 +1809,7 @@ export async function POST(request: NextRequest) {
             matchedAlias: item.matched_alias,
           })),
           evidence: clinicalEvidence,
-          needsMoreInfo,
+          needsMoreInfo: needsGuidance,
           languageUnderstanding: llmUsed
             ? {
                 normalizedSummary: llmExtraction?.normalized_summary || "",
@@ -1734,7 +1829,7 @@ export async function POST(request: NextRequest) {
                       ? followUp.question_banglish
                       : followUp.question_en,
                 answerType: followUp.answer_type,
-                options: [],
+                options: followUp.options,
               }
             : null,
         emergencyNumber: urgent ? "16263" : null,
