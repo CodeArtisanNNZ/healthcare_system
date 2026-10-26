@@ -241,15 +241,15 @@ export function HealthcareAssistant({
     >
       <div className={styles.heading} data-hc-assistant-heading="true">
         <span className={styles.label}>
-          {bn ? "Healthcare Central সহকারী" : "Healthcare Central Assistant"}
+          {bn ? "উপসর্গ নির্দেশনা" : "Symptom guidance"}
         </span>
         <h2 id="assistant-title">
-          {bn ? "কীভাবে সাহায্য করতে পারি?" : "How can I help?"}
+          {bn ? "আপনার কী সমস্যা হচ্ছে?" : "What are you feeling?"}
         </h2>
         <p className={styles.headingCopy}>
           {bn
-            ? "আপনার সমস্যা নিজের ভাষায় লিখুন—বাংলা, English বা Banglish যেকোনোভাবে।"
-            : "Describe what you need in English, Bangla or Banglish."}
+            ? "বাংলা, English বা Banglish-এ লিখুন। আমরা জরুরি লক্ষণ আগে যাচাই করি এবং পরের সঠিক পদক্ষেপ বুঝতে সাহায্য করি—এটি রোগ নির্ণয় নয়।"
+            : "Write in English, Bangla or Banglish. We check urgent warning signs first and help you choose the next step — this is not a diagnosis."}
         </p>
       </div>
 
@@ -272,6 +272,27 @@ export function HealthcareAssistant({
             <div className={styles.assistantRow} key={message.id}>
               <div className={styles.assistantBubble}>
                 <p className={styles.replyText}>{message.content}</p>
+
+                {response?.followUp?.answerType === "choice" &&
+                response.followUp.options.length > 0 ? (
+                  <div
+                    className={styles.followUpOptions}
+                    aria-label={response.followUp.question}
+                  >
+                    {response.followUp.options.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          void sendMessage(option);
+                        }}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
 
                 {response?.urgent && (
                   <>
