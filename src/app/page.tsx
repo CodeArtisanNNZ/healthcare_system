@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
     { href: "/patient/search", icon: "⌕", title: bn ? "আমার উপসর্গ আছে" : "I have symptoms", text: bn ? "করণীয় বুঝুন ও সঠিক কেয়ার খুঁজুন।" : "Get guidance on what to do next.", tone: "mint" },
     { href: "/doctors", icon: "✚", title: bn ? "আমার ডাক্তার প্রয়োজন" : "I need a doctor", text: bn ? "ঢাকায় বিশেষজ্ঞ ও সেবা খুঁজুন।" : "Find suitable doctors in Dhaka.", tone: "white" },
     { href: "/caregivers", icon: "⌂", title: bn ? "আমার হোম কেয়ার প্রয়োজন" : "I need home care", text: bn ? "প্রিয়জনের জন্য কেয়ার অনুরোধ করুন।" : "Request support for someone you love.", tone: "white" },
-    { href: "/emergency", icon: "✦", title: bn ? "আমার জরুরি সহায়তা প্রয়োজন" : "I need urgent help", text: bn ? "দ্রুত জরুরি যোগাযোগ ও নির্দেশনা পান।" : "Get emergency guidance and contacts.", tone: "urgent" },
+    { href: "/emergency", icon: "!", title: bn ? "আমার জরুরি সহায়তা প্রয়োজন" : "I need urgent help", text: bn ? "দ্রুত জরুরি যোগাযোগ ও নির্দেশনা পান।" : "Get emergency guidance and contacts.", tone: "urgent" },
   ];
 
   return <main className={styles.page}>
@@ -32,9 +32,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
       <HeroImageRotator className={styles.heroPhoto} />
       <div className={styles.heroInner}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>{bn ? "আরও সহজ, আরও কাছের কেয়ার" : "BETTER CARE. CLOSER TO HOME."}</p>
+          <p className={styles.eyebrow}>{bn ? "আপনার স্বাস্থ্যতথ্য, এক জায়গায়" : "YOUR HEALTH RECORDS, IN ONE PLACE."}</p>
           <h1>{bn ? <>আপনার প্রয়োজনের <em>সঠিক কেয়ার</em> খুঁজুন।</> : <>Find the care <em>you need.</em></>}</h1>
-          <p className={styles.heroText}>{bn ? "ডাক্তার থেকে হোম কেয়ার—ঢাকার নির্ভরযোগ্য স্বাস্থ্যসেবা এক জায়গা থেকে শুরু করুন।" : "A simpler way to find trusted healthcare support in Dhaka — from doctors to home care, all in one place."}</p>
+          <p className={styles.heroText}>{bn ? "ডাক্তার, প্রেসক্রিপশন ও কেয়ার সেবার সঙ্গে আপনার স্বাস্থ্যতথ্য গুছিয়ে রাখুন—যখন প্রয়োজন, তখনই হাতের কাছে।" : "Keep your health information organised alongside the care you need — from doctor visits and prescriptions to ongoing support, always within reach."}</p>
           <div className={styles.heroActions}>
             <Link className={styles.getCare} href={getCare}>{user ? (bn ? "ড্যাশবোর্ড খুলুন" : "Open dashboard") : (bn ? "শুরু করুন" : "Get started")} <span>→</span></Link>
           </div>
