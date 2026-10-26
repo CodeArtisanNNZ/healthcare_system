@@ -758,7 +758,7 @@ function humanReply({
   if (requestedCategory === "doctor") {
     const specialty = triage?.primary_specialty_name?.trim();
     const localGuidance = medicineFirstGuidance(primaryConceptCode, language);
-    const guidance = localGuidance || guidance;
+    const guidance = localGuidance || triage?.patient_guidance || "";
 
     if (specialty) {
       const alternatives = (triage?.suggestions || [])
