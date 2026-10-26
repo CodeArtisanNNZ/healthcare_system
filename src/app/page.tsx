@@ -69,5 +69,22 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ l
       <div className={styles.servicesHead}><div><p className={styles.eyebrow}>{bn ? "আমাদের সেবাসমূহ" : "OUR SERVICES"}</p><h2>{bn ? "সব পরিস্থিতির জন্য কেয়ার।" : "Care for every situation."}</h2></div><p>{bn ? "দৈনন্দিন স্বাস্থ্যসেবা থেকে বিশেষজ্ঞ কেয়ার—প্রয়োজনীয় সেবা কাছেই খুঁজুন।" : "From everyday health needs to specialised care, find trusted services near you."}</p></div>
       <div className={styles.serviceGrid}>{serviceCards.map((service)=><Link href={service.href} key={service.title} className={`${styles.serviceCard} ${styles[service.tone]}`}><span className={styles.serviceIcon}>{service.icon}</span><div><h3>{bn ? service.bn : service.title}</h3><p>{bn ? service.bnText : service.text}</p></div><span className={styles.serviceArrow}>→</span></Link>)}</div>
     </section>
+
+
+    <section className={styles.anatomySection}>
+      <div className={styles.anatomyCard}>
+        <div className={styles.anatomyCopy}>
+          <p className={styles.eyebrow}>{bn ? "মানবদেহ অন্বেষণ করুন" : "EXPLORE THE HUMAN BODY"}</p>
+          <h2>{bn ? "শরীরকে ভেতর থেকে দেখুন।" : "See the body from the inside."}</h2>
+          <p>{bn ? "চোখ, মস্তিষ্ক, হৃদ্‌যন্ত্র, ফুসফুসসহ প্রধান অঙ্গগুলো একটি ইন্টারঅ্যাকটিভ ৩ডি ভিউতে ঘুরিয়ে ও জুম করে দেখুন।" : "Explore the eyes, brain, heart, lungs and other major structures in an interactive 3D view. Rotate and zoom to look closer."}</p>
+        </div>
+        <details className={styles.anatomyDetails}>
+          <summary>{bn ? "৩ডি বডি এক্সপ্লোরার খুলুন" : "Open 3D body explorer"} <span>→</span></summary>
+          <div className={styles.anatomyFrame}>
+            <iframe src={`/anatomy-explorer-v13.html?lang=${language}`} title={bn ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ" : "Interactive 3D human anatomy"} loading="lazy" allowFullScreen />
+          </div>
+        </details>
+      </div>
+    </section>
   </main>;
 }
