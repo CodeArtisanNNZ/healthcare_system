@@ -1,186 +1,73 @@
 import Link from "next/link";
 import { currentUser } from "@/lib/auth";
 import { getLanguage } from "@/lib/language";
-import { ServiceCarousel } from "@/components/service-carousel";
-import { ActionGlyph } from "@/components/action-glyph";
 import styles from "./home.module.css";
+import { HeroImageRotator } from "@/components/hero-image-rotator";
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ lang?: string }>;
-}) {
-  const [user, language] = await Promise.all([
-    currentUser(),
-    getLanguage(searchParams),
-  ]);
+const serviceCards = [
+  { href: "/doctors", icon: "✚", title: "Doctor consultation", bn: "ডাক্তার পরামর্শ", text: "Find the right specialist", bnText: "সঠিক বিশেষজ্ঞ খুঁজুন", tone: "mint" },
+  { href: "/caregivers", icon: "⌂", title: "Home care services", bn: "হোম কেয়ার সেবা", text: "Nursing and everyday support", bnText: "নার্সিং ও দৈনন্দিন সহায়তা", tone: "coral" },
+  { href: "/lab-tests", icon: "⌁", title: "Diagnostic tests", bn: "ডায়াগনস্টিক টেস্ট", text: "Labs, tests and locations", bnText: "ল্যাব, টেস্ট ও লোকেশন", tone: "mint" },
+  { href: "/medicines", icon: "◒", title: "Medicine support", bn: "ওষুধ সহায়তা", text: "Compare available listings", bnText: "উপলব্ধ তালিকা তুলনা করুন", tone: "coral" },
+  { href: "/patient/search", icon: "♡", title: "Find a doctor", bn: "ডাক্তার খুঁজুন", text: "Search by symptoms or specialty", bnText: "উপসর্গ বা বিশেষত্ব দিয়ে খুঁজুন", tone: "mint" },
+  { href: "/hospitals", icon: "▦", title: "Hospitals nearby", bn: "কাছের হাসপাতাল", text: "Explore departments and locations", bnText: "বিভাগ ও লোকেশন দেখুন", tone: "mint" },
+  { href: "/emergency", icon: "!", title: "Urgent care support", bn: "জরুরি সহায়তা", text: "Emergency contacts, quickly", bnText: "দ্রুত জরুরি যোগাযোগ", tone: "coral" },
+  { href: "/caregivers", icon: "◌", title: "Care for families", bn: "পরিবারের কেয়ার", text: "Support for parents and loved ones", bnText: "বাবা-মা ও প্রিয়জনের সহায়তা", tone: "mint" },
+];
 
+export default async function Home({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
+  const [user, language] = await Promise.all([currentUser(), getLanguage(searchParams)]);
   const bn = language === "bn";
+  const getCare = user ? "/patient" : "/login";
 
-  return (
-    <div className={styles.page}>
-      <section className={styles.hero}>
-        <div className={styles.heroInner}>
-          <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>
-              {bn ? "হেলথকেয়ার সেন্ট্রাল" : "Healthcare Central"}
-            </p>
+  const heroCards = [
+    { href: "/patient/search", icon: "⌕", title: bn ? "আমার উপসর্গ আছে" : "I have symptoms", text: bn ? "করণীয় বুঝুন ও সঠিক কেয়ার খুঁজুন।" : "Get guidance on what to do next.", tone: "mint" },
+    { href: "/doctors", icon: "✚", title: bn ? "আমার ডাক্তার প্রয়োজন" : "I need a doctor", text: bn ? "ঢাকায় বিশেষজ্ঞ ও সেবা খুঁজুন।" : "Find suitable doctors in Dhaka.", tone: "white" },
+    { href: "/caregivers", icon: "⌂", title: bn ? "আমার হোম কেয়ার প্রয়োজন" : "I need home care", text: bn ? "প্রিয়জনের জন্য কেয়ার অনুরোধ করুন।" : "Request support for someone you love.", tone: "white" },
+    { href: "/emergency", icon: "✦", title: bn ? "আমার জরুরি সহায়তা প্রয়োজন" : "I need urgent help", text: bn ? "দ্রুত জরুরি যোগাযোগ ও নির্দেশনা পান।" : "Get emergency guidance and contacts.", tone: "urgent" },
+  ];
 
-            <h1>
-              {bn
-                ? "প্রয়োজনীয় স্বাস্থ্যসেবা খুঁজুন।"
-                : "Find the care you need."}
-            </h1>
-
-            <p className={styles.heroText}>
-              {bn
-                ? "ডাক্তার, হাসপাতাল, ওষুধ, ল্যাব টেস্ট, কেয়ারগিভার ও জরুরি সেবা—এক জায়গা থেকে শুরু করুন।"
-                : "Doctors, hospitals, medicines, lab tests, caregivers and urgent support — start from one place."}
-            </p>
-
-            <div className={styles.heroActions}>
-              {user ? (
-                <Link
-                  className={`${styles.primaryButton} hc-action-button`}
-                  data-action="dashboard"
-                  href="/patient"
-                >
-                  <span>{bn ? "ড্যাশবোর্ড খুলুন" : "Open dashboard"}</span>
-                  <ActionGlyph kind="dashboard" />
-                </Link>
-              ) : (
-                <Link
-                  className={`${styles.primaryButton} hc-action-button`}
-                  data-action="login"
-                  href="/login"
-                >
-                  <span>{bn ? "লগ ইন" : "Log in"}</span>
-                  <ActionGlyph kind="login" />
-                </Link>
-              )}
-            </div>
+  return <main className={styles.page}>
+    <section className={styles.hero}>
+      <HeroImageRotator className={styles.heroPhoto} />
+      <div className={styles.heroInner}>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>{bn ? "আরও সহজ, আরও কাছের কেয়ার" : "BETTER CARE. CLOSER TO HOME."}</p>
+          <h1>{bn ? <>আপনার প্রয়োজনের <em>সঠিক কেয়ার</em> খুঁজুন।</> : <>Find the care <em>you need.</em></>}</h1>
+          <p className={styles.heroText}>{bn ? "ডাক্তার থেকে হোম কেয়ার—ঢাকার নির্ভরযোগ্য স্বাস্থ্যসেবা এক জায়গা থেকে শুরু করুন।" : "A simpler way to find trusted healthcare support in Dhaka — from doctors to home care, all in one place."}</p>
+          <div className={styles.heroActions}>
+            <Link className={styles.getCare} href={getCare}>{user ? (bn ? "ড্যাশবোর্ড খুলুন" : "Open dashboard") : (bn ? "শুরু করুন" : "Get started")} <span>→</span></Link>
+          </div>
+          <div className={styles.heroCards}>
+            {heroCards.map((card) => <Link key={card.title} href={card.href} className={`${styles.heroCard} ${styles[card.tone]}`}>
+              <span className={styles.cardIcon}>{card.icon}</span>
+              <h2>{card.title}</h2><p>{card.text}</p><span className={styles.cardArrow}>→</span>
+            </Link>)}
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section className={styles.servicesSection} id="services">
-        <div className={styles.sectionHeading}>
-          <p>{bn ? "সেবা" : "Services"}</p>
+    <section className={styles.trustStrip} aria-label={bn ? "বিশ্বাসের তথ্য" : "Trust information"}>
+      <div><span>⌖</span><p><strong>{bn ? "ঢাকাকেন্দ্রিক" : "Dhaka-focused"}</strong>{bn ? "ঢাকা ও আশপাশের কেয়ার অপশন।" : "Care options across Dhaka and nearby areas."}</p></div>
+      <div><span>✓</span><p><strong>{bn ? "অ্যাডমিন যাচাই করা অনুরোধ" : "Admin-confirmed requests"}</strong>{bn ? "নিরাপত্তা ও মানের জন্য অনুরোধ পর্যালোচনা করা হয়।" : "Requests are reviewed for safety and quality."}</p></div>
+      <div><span>⌑</span><p><strong>{bn ? "ব্যক্তিগত ও নিরাপদ" : "Private contact sharing"}</strong>{bn ? "নিশ্চিত হওয়ার পরই যোগাযোগের তথ্য শেয়ার হয়।" : "Contact details are shared after confirmation."}</p></div>
+    </section>
 
-          <h2>
-            {bn ? "আমাদের সেবাগুলো দেখুন" : "Explore our services"}
-          </h2>
+    <section className={styles.process}>
+      <div className={styles.processIntro}>
+        <p className={styles.eyebrow}>{bn ? "এটি যেভাবে কাজ করে" : "HOW IT WORKS"}</p>
+        <h2>{bn ? "কয়েকটি সহজ ধাপে সঠিক কেয়ার পান।" : "Get the right care in a few simple steps."}</h2>
+        <p>{bn ? "প্রয়োজন জানান, আমরা উপযুক্ত স্থানীয় অপশন পর্যালোচনা করি, তারপর নিশ্চিত তথ্য পাইয়ে দিই।" : "From your first request to confirmed support, we make healthcare easier for you."}</p>
+      </div>
+      <div className={styles.steps}>
+        {[["01",bn ? "আপনার প্রয়োজন জানান" : "Describe your need",bn ? "কয়েকটি সহজ তথ্য দিন।" : "Tell us what you need, in your own words."],["02",bn ? "স্থানীয়ভাবে ম্যাচ করি" : "We match locally",bn ? "উপযুক্ত কেয়ার প্রোভাইডার দেখা হয়।" : "We review suitable care providers nearby."],["03",bn ? "নিশ্চিত তথ্য পান" : "Get confirmed details",bn ? "সময়, অপশন ও যোগাযোগের নির্দেশনা পান।" : "Receive the confirmed plan and contact details."]].map(([number,title,text])=><article key={number}><span>{number}</span><div><h3>{title}</h3><p>{text}</p></div></article>)}
+      </div>
+    </section>
 
-          <span>
-            {bn
-              ? "কার্ডগুলো পাশে সরান। কোনো কার্ডে চাপ দিলে সেটি ঘুরে সেবাটির সংক্ষিপ্ত বিবরণ দেখাবে।"
-              : "Slide through the cards. Tap any service to flip it and see a short overview of what it provides."}
-          </span>
-        </div>
-
-        <ServiceCarousel language={language} />
-      </section>
-
-      <section className={styles.anatomySection}>
-        <div className={styles.anatomyCard}>
-          <div className={styles.anatomyHeading}>
-            <p>
-              {bn
-                ? "মানবদেহ অন্বেষণ করুন"
-                : "Explore the human body"}
-            </p>
-
-            <h2>
-              {bn
-                ? "শরীরকে ভেতর থেকে দেখুন"
-                : "See the body from the inside"}
-            </h2>
-
-            <span>
-              {bn
-                ? "চোখ, মস্তিষ্ক, থাইরয়েড, ফুসফুস, হৃদ্‌যন্ত্রসহ প্রধান অঙ্গগুলো একটি ইন্টারঅ্যাকটিভ ৩ডি ভিউতে দেখুন। এক্সপ্লোরার খুলে স্পর্শ বা ড্র্যাগ করে ঘোরাতে ও জুম করতে পারবেন।"
-                : "Explore the eyes, brain, thyroid, lungs, heart and other major structures in an interactive 3D view. Open the explorer, then touch or drag to rotate and zoom."}
-            </span>
-          </div>
-
-          <details className={styles.anatomyDetails}>
-            <summary
-              className={`${styles.anatomyOpenButton} hc-action-button`}
-              data-action="arrow"
-            >
-              <span className={styles.openLabel}>
-                {bn ? "৩ডি বডি এক্সপ্লোরার খুলুন" : "Open 3D body explorer"}
-              </span>
-              <span className={styles.closeLabel}>
-                {bn ? "৩ডি বডি এক্সপ্লোরার বন্ধ করুন" : "Close 3D body explorer"}
-              </span>
-              <ActionGlyph kind="arrow" />
-            </summary>
-
-            <div className={styles.anatomyFrameWrap}>
-              <iframe
-                className={styles.anatomyFrame}
-                src={`/anatomy-explorer-v13.html?lang=${language}`}
-                title={
-                  bn
-                    ? "ইন্টারঅ্যাকটিভ ৩ডি মানবদেহ"
-                    : "Interactive 3D human anatomy"
-                }
-                loading="lazy"
-                allowFullScreen
-              />
-            </div>
-          </details>
-        </div>
-      </section>
-
-      <section className={styles.bottomRow}>
-        <article className={styles.assistantCard}>
-          <div>
-            <span>{bn ? "সহকারী" : "Assistant"}</span>
-
-            <h2>
-              {bn
-                ? "লগ ইন করে Healthcare Central Assistant ব্যবহার করুন"
-                : "Use Healthcare Central Assistant after you sign in"}
-            </h2>
-          </div>
-
-          <Link
-            className="hc-action-button"
-            data-action={user ? "assistant" : "login"}
-            href={user ? "/patient" : "/login"}
-          >
-            <span>
-              {user
-                ? bn
-                  ? "Assistant খুলুন"
-                  : "Open Assistant"
-                : bn
-                  ? "লগ ইন"
-                  : "Log in"}
-            </span>
-            <ActionGlyph kind={user ? "assistant" : "login"} />
-          </Link>
-        </article>
-
-        <article className={styles.emergencyCard}>
-          <div>
-            <span>{bn ? "জরুরি" : "Emergency"}</span>
-
-            <h2>
-              {bn
-                ? "দ্রুত সহায়তা প্রয়োজন?"
-                : "Need urgent help?"}
-            </h2>
-          </div>
-
-          <Link className="hc-action-button" data-action="emergency" href="/emergency">
-            <span>{bn ? "জরুরি সহায়তা" : "Emergency Help"}</span>
-            <ActionGlyph kind="emergency" />
-          </Link>
-        </article>
-      </section>
-    </div>
-  );
+    <section className={styles.services} id="services">
+      <div className={styles.servicesHead}><div><p className={styles.eyebrow}>{bn ? "আমাদের সেবাসমূহ" : "OUR SERVICES"}</p><h2>{bn ? "সব পরিস্থিতির জন্য কেয়ার।" : "Care for every situation."}</h2></div><p>{bn ? "দৈনন্দিন স্বাস্থ্যসেবা থেকে বিশেষজ্ঞ কেয়ার—প্রয়োজনীয় সেবা কাছেই খুঁজুন।" : "From everyday health needs to specialised care, find trusted services near you."}</p></div>
+      <div className={styles.serviceGrid}>{serviceCards.map((service)=><Link href={service.href} key={service.title} className={`${styles.serviceCard} ${styles[service.tone]}`}><span className={styles.serviceIcon}>{service.icon}</span><div><h3>{bn ? service.bn : service.title}</h3><p>{bn ? service.bnText : service.text}</p></div><span className={styles.serviceArrow}>→</span></Link>)}</div>
+    </section>
+  </main>;
 }
