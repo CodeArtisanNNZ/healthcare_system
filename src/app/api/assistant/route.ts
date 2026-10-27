@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { currentUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase/server";
@@ -338,23 +338,23 @@ function shouldUseClinicalLlmFastPath({
     return false;
   }
 
-  // A free-form reply to an active clinical question is where the LLM adds
-  // the most value, so use it when the deterministic parser cannot recognize it.
-  if (pendingQuestion) return true;
+  // Follow-up answers must remain instant. The deterministic parser already
+  // handles short answers, choices, durations and common red-flag wording.
+  if (pendingQuestion) return false;
 
   const q = normalizeConversationalText(message).toLowerCase();
   const topScore = Number(fastConceptMatches[0]?.score || 0);
   const confidentLocalMatch =
     topScore >= 0.9 || Boolean(fastTriage?.primary_specialty_name);
 
-  const linguisticallyComplex =
-    q.length > 90 ||
-    /\b(but|however|although|except|without|not|maybe|possibly|nai|nei|na|kintu|tobe|mone hoy|hote pare)\b/i.test(q) ||
-    /(কিন্তু|তবে|নেই|নাই|না|মনে হয়|মনে হয়|হতে পারে)/i.test(message);
-
-  // Known/simple symptoms stay on the fast local path. Unknown, ambiguous,
-  // negated, multi-clause, or conversational messages get one LLM pass.
-  return linguisticallyComplex || !confidentLocalMatch;
+  // LLM extraction is a narrow fallback for a longer, unknown description.
+  // Known Bangla/Banglish symptoms and emergency wording always stay local.
+  return (
+    !confidentLocalMatch &&
+    q.length >= 36 &&
+    q.length <= 300 &&
+    !hasEmergencySignals(message)
+  );
 }
 
 function hasEmergencySignals(value: string) {
@@ -932,9 +932,10 @@ export async function POST(request: NextRequest) {
     let fastTriage: DoctorTriage | null = null;
 
     if (requestedCategory === "doctor") {
-      const [activeEpisodeResult, fastConceptResult, fastTriageResult] =
-        await Promise.all([
-          stateDb
+      // The first message in a new browser conversation cannot have an active
+      // episode yet, so avoid an unnecessary database round trip.
+      const activeEpisodeLookup = parsed.data.conversationId
+        ? stateDb
             .from("clinical_episodes")
             .select(
               "id,user_id,conversation_id,status,primary_concept_id,primary_concept_code,primary_specialty_name,context_text,pending_question_id,pending_attribute_key,urgency_level",
@@ -944,7 +945,12 @@ export async function POST(request: NextRequest) {
             .eq("status", "active")
             .order("updated_at", { ascending: false })
             .limit(1)
-            .maybeSingle(),
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null });
+
+      const [activeEpisodeResult, fastConceptResult, fastTriageResult] =
+        await Promise.all([
+          activeEpisodeLookup,
           db.rpc("match_symptom_concepts", {
             query_text: normalizedCurrent,
           }),
@@ -1270,15 +1276,22 @@ export async function POST(request: NextRequest) {
       episodeId = episode.id;
       episodeContext = episode.context_text || normalizedCurrent;
 
-      const episodeConceptResult = await db.rpc("match_symptom_concepts", {
-        query_text: episodeContext,
-      });
+      const canReuseFastClinicalLookup =
+        !llmUsed && episodeContext === normalizedCurrent;
 
-      if (!episodeConceptResult.error) {
-        conceptMatches =
-          (episodeConceptResult.data || []) as ClinicalConceptMatch[];
-      } else {
+      if (canReuseFastClinicalLookup) {
         conceptMatches = currentConceptMatches;
+      } else {
+        const episodeConceptResult = await db.rpc("match_symptom_concepts", {
+          query_text: episodeContext,
+        });
+
+        if (!episodeConceptResult.error) {
+          conceptMatches =
+            (episodeConceptResult.data || []) as ClinicalConceptMatch[];
+        } else {
+          conceptMatches = currentConceptMatches;
+        }
       }
 
       const episodeMentions = classifyConceptMatches(
@@ -1406,22 +1419,28 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const evidenceResult = await stateDb
-        .from("clinical_episode_evidence")
-        .select(
-          "concept_id,evidence_key,value,polarity,confidence,source_text",
-        )
-        .eq("episode_id", episodeId)
-        .order("updated_at");
+      if (newEpisodeStarted) {
+        // A new episode has no prior evidence. Reuse the validated facts we
+        // just wrote instead of issuing a read immediately after the write.
+        clinicalEvidence = newEvidence;
+      } else {
+        const evidenceResult = await stateDb
+          .from("clinical_episode_evidence")
+          .select(
+            "concept_id,evidence_key,value,polarity,confidence,source_text",
+          )
+          .eq("episode_id", episodeId)
+          .order("updated_at");
 
-      clinicalEvidence = (evidenceResult.data || []).map((item) => ({
-        key: item.evidence_key,
-        value: item.value,
-        source: item.source_text === originalQuery ? "message" : "follow-up",
-        polarity: item.polarity,
-        confidence: Number(item.confidence || 0.8),
-        conceptId: item.concept_id,
-      })) as ClinicalEvidence[];
+        clinicalEvidence = (evidenceResult.data || []).map((item) => ({
+          key: item.evidence_key,
+          value: item.value,
+          source: item.source_text === originalQuery ? "message" : "follow-up",
+          polarity: item.polarity,
+          confidence: Number(item.confidence || 0.8),
+          conceptId: item.concept_id,
+        })) as ClinicalEvidence[];
+      }
 
       const primaryConceptId =
         episode.primary_concept_id || primaryConcept?.concept_id || null;
@@ -1465,7 +1484,10 @@ export async function POST(request: NextRequest) {
     let urgent = hasEmergencySignals(episodeContext);
 
     if (requestedCategory === "doctor") {
-      triage = await resolveDoctorTriage(db, episodeContext);
+      triage =
+        !llmUsed && episodeContext === normalizedCurrent
+          ? currentTriage
+          : await resolveDoctorTriage(db, episodeContext);
 
       const episodeMentions = classifyConceptMatches(
         episodeContext,
@@ -1702,77 +1724,80 @@ export async function POST(request: NextRequest) {
     // patient-facing wording is generated locally so we never wait for a second model.
     const reply = fallbackReply;
 
-    const chatDb = adminClient();
-    const { error: chatSaveError } = await chatDb
-      .from("assistant_messages")
-      .insert([
-        {
-          user_id: user.id,
-          role: "user",
-          content: originalQuery,
-          category: requestedCategory,
-          requested_category: requestedCategory,
-          location: selectedLocation || null,
-          urgent,
-          conversation_id: conversationId,
-          episode_id: episodeId,
-          metadata: {
-            source: "healthcare-assistant",
-            clinicalEngine:
-              requestedCategory === "doctor"
-                ? llmUsed
-                  ? "v4-llm"
-                  : "v3-fallback"
-                : null,
-            llmConfigured: clinicalLlmEnabled(),
-            llmUsed,
+    // Preserve the audit trail without holding the user-facing response open.
+    // Next.js runs this after the response is sent.
+    after(async () => {
+      const { error: chatSaveError } = await adminClient()
+        .from("assistant_messages")
+        .insert([
+          {
+            user_id: user.id,
+            role: "user",
+            content: originalQuery,
+            category: requestedCategory,
+            requested_category: requestedCategory,
+            location: selectedLocation || null,
+            urgent,
+            conversation_id: conversationId,
+            episode_id: episodeId,
+            metadata: {
+              source: "healthcare-assistant",
+              clinicalEngine:
+                requestedCategory === "doctor"
+                  ? llmUsed
+                    ? "v4-llm"
+                    : "v3-fallback"
+                  : null,
+              llmConfigured: clinicalLlmEnabled(),
+              llmUsed,
+            },
           },
-        },
-        {
-          user_id: user.id,
-          role: "assistant",
-          content: reply,
-          category,
-          requested_category: requestedCategory,
-          location: selectedLocation || null,
-          urgent,
-          conversation_id: conversationId,
-          episode_id: episodeId,
-          metadata: {
-            context,
-            usedNearby,
-            matchedArea,
-            emergencyMatchedArea,
-            emergencyHospitalCount: emergencyHospitals.length,
-            emergencyAmbulanceCount: emergencyAmbulances.length,
-            primarySpecialty: triage?.primary_specialty_name || null,
-            clinicalEngine:
-              requestedCategory === "doctor"
-                ? llmUsed
-                  ? "v4-llm"
-                  : "v3-fallback"
-                : null,
-            llmConfigured: clinicalLlmEnabled(),
-            llmUsed,
-            conversationId,
-            episodeId,
-            newEpisodeStarted,
-            primaryConcept: primaryConcept?.code || null,
-            concepts: conceptMatches.map((item) => ({
-              code: item.code,
-              name: item.canonical_name,
-              score: item.score,
-            })),
-            evidence: clinicalEvidence,
-            needsMoreInfo: needsGuidance,
-            followUpAttribute: followUp?.attribute_key || null,
+          {
+            user_id: user.id,
+            role: "assistant",
+            content: reply,
+            category,
+            requested_category: requestedCategory,
+            location: selectedLocation || null,
+            urgent,
+            conversation_id: conversationId,
+            episode_id: episodeId,
+            metadata: {
+              context,
+              usedNearby,
+              matchedArea,
+              emergencyMatchedArea,
+              emergencyHospitalCount: emergencyHospitals.length,
+              emergencyAmbulanceCount: emergencyAmbulances.length,
+              primarySpecialty: triage?.primary_specialty_name || null,
+              clinicalEngine:
+                requestedCategory === "doctor"
+                  ? llmUsed
+                    ? "v4-llm"
+                    : "v3-fallback"
+                  : null,
+              llmConfigured: clinicalLlmEnabled(),
+              llmUsed,
+              conversationId,
+              episodeId,
+              newEpisodeStarted,
+              primaryConcept: primaryConcept?.code || null,
+              concepts: conceptMatches.map((item) => ({
+                code: item.code,
+                name: item.canonical_name,
+                score: item.score,
+              })),
+              evidence: clinicalEvidence,
+              needsMoreInfo: needsGuidance,
+              followUpAttribute: followUp?.attribute_key || null,
+            },
           },
-        },
-      ]);
+        ]);
 
-    if (chatSaveError) {
-      console.error("Assistant chat history save failed", chatSaveError);
-    }
+      if (chatSaveError) {
+        console.error("Assistant chat history save failed", chatSaveError);
+      }
+    });
 
     return NextResponse.json(
       {
