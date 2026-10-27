@@ -1484,10 +1484,11 @@ export async function POST(request: NextRequest) {
     let urgent = hasEmergencySignals(episodeContext);
 
     if (requestedCategory === "doctor") {
-      triage =
-        !llmUsed && episodeContext === normalizedCurrent
+      const resolvedTriage =
+        (!llmUsed && episodeContext === normalizedCurrent
           ? currentTriage
-          : await resolveDoctorTriage(db, episodeContext);
+          : await resolveDoctorTriage(db, episodeContext)) || emptyTriage;
+      triage = resolvedTriage;
 
       const episodeMentions = classifyConceptMatches(
         episodeContext,
@@ -1515,15 +1516,15 @@ export async function POST(request: NextRequest) {
 
       urgent =
         hasEmergencySignals([safetyText, llmSafetyText].filter(Boolean).join(" ")) ||
-        Boolean(triage.urgent && !hasAbsentSymptoms);
+        Boolean(resolvedTriage.urgent && !hasAbsentSymptoms);
 
       if (
-        !triage.primary_specialty_name &&
+        !resolvedTriage.primary_specialty_name &&
         (primaryConcept?.default_specialty_name ||
           episode?.primary_specialty_name)
       ) {
         triage = {
-          ...triage,
+          ...resolvedTriage,
           primary_specialty_id:
             primaryConcept?.default_specialty_id || null,
           primary_specialty_name:
