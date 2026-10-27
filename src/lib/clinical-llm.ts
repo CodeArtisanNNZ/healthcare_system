@@ -188,6 +188,12 @@ function extractionModel() {
   return process.env.OPENAI_CLINICAL_MODEL?.trim() || "gpt-5.6-luna";
 }
 
+function clinicalTimeoutMs() {
+  const configuredTimeout = Number(process.env.HCC_LLM_TIMEOUT_MS || 1200);
+  if (!Number.isFinite(configuredTimeout)) return 1200;
+  return Math.min(1500, Math.max(400, Math.round(configuredTimeout)));
+}
+
 function replyModel() {
   return process.env.OPENAI_REPLY_MODEL?.trim() || "gpt-5.6-luna";
 }
@@ -258,7 +264,7 @@ async function openAiStructured<T>({
           },
         },
       }),
-      signal: AbortSignal.timeout(3500),
+      signal: AbortSignal.timeout(clinicalTimeoutMs()),
     });
 
     const payload = (await response.json()) as ResponsePayload;
