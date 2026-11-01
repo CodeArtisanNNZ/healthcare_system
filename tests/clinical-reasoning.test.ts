@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   classifyConceptMatches,
   redFlagAnswerIsPositive,
+  shouldHonorUrgentTriage,
   type ClinicalConceptMatch,
 } from "../src/lib/clinical-reasoning";
 
@@ -57,4 +58,14 @@ test("unambiguous affirmative answers are recognized", () => {
   assert.equal(redFlagAnswerIsPositive("yes"), true);
   assert.equal(redFlagAnswerIsPositive("হ্যাঁ"), true);
   assert.equal(redFlagAnswerIsPositive("cannot breathe"), true);
+});
+
+test("urgent triage is not canceled by unrelated negated symptoms", () => {
+  const absent = { key: "symptom:chest_pain", value: "Chest pain", source: "message" as const, polarity: "absent" as const };
+  const present = { key: "symptom:breathing_difficulty", value: "Breathing difficulty", source: "message" as const, polarity: "present" as const };
+  assert.equal(shouldHonorUrgentTriage(true, [absent, present]), true);
+  assert.equal(shouldHonorUrgentTriage(true, [absent]), false);
+  assert.equal(shouldHonorUrgentTriage(true, []), true);
+  assert.equal(shouldHonorUrgentTriage(false, [present]), false);
+  assert.equal(shouldHonorUrgentTriage(true, [absent, { ...present, polarity: "uncertain" }]), true);
 });
