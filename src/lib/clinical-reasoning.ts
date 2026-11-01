@@ -363,6 +363,22 @@ export function redFlagAnswerIsPositive(answer: string) {
   return false;
 }
 
+/**
+ * A negated complaint must never cancel a DIFFERENT present complaint.
+ * Suppress an urgent DB hit only when every recognized symptom is explicitly
+ * absent; unknown and present mentions remain conservatively urgent.
+ *
+ * This does not replace clinician review of the underlying routing rules.
+ */
+export function shouldHonorUrgentTriage(
+  databaseUrgent: boolean,
+  evidence: ClinicalEvidence[],
+) {
+  if (!databaseUrgent) return false;
+  const symptoms = evidence.filter((item) => item.key.startsWith("symptom:"));
+  return symptoms.length === 0 || symptoms.some((item) => item.polarity !== "absent");
+}
+
 export function conversationalFollowUpReply(
   question: FollowUpQuestion,
   language: ConversationLanguage,
