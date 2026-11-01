@@ -83,50 +83,49 @@ export function isNotSure(value: string) {
 }
 
 function conceptPolarity(normalizedQuery: string, alias: string) {
-  const q = clean(normalizedQuery);
-  const a = clean(alias);
-  if (!q || !a) return "uncertain" as const;
+  // Split contrast clauses BEFORE removing punctuation. A negation attached
+  // to one complaint must not erase a different complaint in the same input.
+  const raw = normalizedQuery.normalize("NFC").toLowerCase();
+  const a = clean(alias.normalize("NFC"));
+  if (!raw || !a) return "uncertain" as const;
 
-  const clauses = q
-    .split(/(?:\\b(?:but|however|kintu|tobe|and|also|ar)\\b|কিন্তু|তবে|আর|,|;)/i)
-    .map((item) => item.trim())
+  const clauses = raw
+    .split(/\b(?:but|however|kintu|tobe|and|also|ar)\b|কিন্তু|তবে|এবং|আর|[,;।]/iu)
+    .map(clean)
     .filter(Boolean);
-  const scope =
-    clauses.find((item) => item.includes(a)) ||
-    q;
-
   const escaped = escapeRegExp(a);
+  const aliasPattern = new RegExp("(?:^|\\s)" + escaped + "(?:\\s|$)", "iu");
+  const scope = clauses.find((item) => aliasPattern.test(item)) || clean(raw);
+
+  // "Cannot breathe" is a PRESENT breathing problem, not an absent symptom
+  // merely because "not" / "na" occurs at the end of the expression.
+  if (
+    /(?:\b(?:cannot|can't|unable to)\s+(?:breathe|move)\b|shash\s+nite\s+parchi\s+na|শ্বাস\s+নিতে\s+পারছি\s+না)/iu.test(scope) &&
+    /(?:breath|shash|শ্বাস|move|নড়|নড়)/iu.test(a)
+  ) {
+    return "present" as const;
+  }
+
   const negation =
-    "(?:no|not|without|dont have|don't have|do not have|have no|nai|nei|na|নাই|নেই|না|হয় না|হয় না|হচ্ছে না|নেই)";
+    "(?:no|not|without|dont have|don't have|do not have|have no|nai|nei|na|নাই|নেই|না|হয় না|হয় না|হচ্ছে না)";
   const uncertainty =
     "(?:maybe|perhaps|possibly|might|mone hoy|hote pare|sure na|not sure|jani na|নিশ্চিত নই|মনে হয়|মনে হয়|হতে পারে|জানি না)";
 
-  const beforeNegation = new RegExp(
-    "(?:^|\\s)" + negation + "(?:\\s+\\S+){0,2}\\s+" + escaped + "(?:\\s|$)",
-    "i",
-  );
-  const afterNegation = new RegExp(
-    "(?:^|\\s)" + escaped + "(?:\\s+\\S+){0,2}\\s+" + negation + "(?:\\s|$)",
-    "i",
-  );
+  const nearby = (qualifier: string, words: number) => {
+    // Keep the token-distance bound adjacent to the matched alias.
+    const pre = new RegExp(
+      "(?:^|\\s)" + qualifier + "(?:\\s+\\S+){0," + words + "}\\s+" + escaped + "(?:\\s|$)",
+      "iu",
+    );
+    const post = new RegExp(
+      "(?:^|\\s)" + escaped + "(?:\\s+\\S+){0," + words + "}\\s+" + qualifier + "(?:\\s|$)",
+      "iu",
+    );
+    return pre.test(scope) || post.test(scope);
+  };
 
-  const beforeUncertain = new RegExp(
-    "(?:^|\\s)" + uncertainty + "(?:\\s+\\S+){0,3}\\s+" + escaped + "(?:\\s|$)",
-    "i",
-  );
-  const afterUncertain = new RegExp(
-    "(?:^|\\s)" + escaped + "(?:\\s+\\S+){0,3}\\s+" + uncertainty + "(?:\\s|$)",
-    "i",
-  );
-
-  if (beforeUncertain.test(scope) || afterUncertain.test(scope)) {
-    return "uncertain" as const;
-  }
-
-  if (beforeNegation.test(scope) || afterNegation.test(scope)) {
-    return "absent" as const;
-  }
-
+  if (nearby(uncertainty, 3)) return "uncertain" as const;
+  if (nearby(negation, 3)) return "absent" as const;
   return "present" as const;
 }
 
@@ -329,18 +328,39 @@ export function isRedFlagAttribute(key: string) {
 }
 
 export function redFlagAnswerIsPositive(answer: string) {
-  const q = clean(answer);
+  const q = clean(answer.normalize("NFC"));
+  if (!q || isNotSure(q)) return false;
 
-  if (isNotSure(q) || isNo(q)) return false;
-  if (isYes(q)) return true;
+  // Only treat an isolated yes/no as a complete response. "No weakness but
+  // cannot breathe" is NOT a negative answer to an emergency screening question.
+  if (/^(?:yes|yeah|yep|y|ache|hya|haa|ha|ji|জি|হ্যাঁ|হ্যা|আছে)$/iu.test(q)) {
+    return true;
+  }
+  if (/^(?:no|nope|n|nai|nei|na|নাই|নেই|না)$/iu.test(q)) {
+    return false;
+  }
 
-  const explicitNegative =
-    /\b(no|not|without|dont have|don't have|do not have|nai|nei|na)\b/i.test(q) ||
-    /(নাই|নেই|না|হচ্ছে না|হয় না|হয় না)/i.test(answer);
+  const redFlagPattern =
+    /\b(?:weakness|weak|numbness|numb|cannot move|can't move|unable to move|bladder|bowel|urine control|stool control|groin|major trauma|accident|heavy bleeding|bleeding|blood|bone visible|deformity|cold limb|blue lips|severe breathing|can't breathe|cannot breathe|unable to breathe|swallow saliva|tongue swelling|throat swelling|faint|vision loss|chemical exposure|blood in stool|black stool|severe dehydration|obosh|durbol|narate parchi na|rokto|haddi dekha|shash nite parchi na|gola fule|jihba fule|ojnan)\b|(?:দুর্বল|অবশ|নড়াতে পারছি না|নড়াতে পারছি না|রক্ত|হাড় দেখা|হাড় দেখা|ঠান্ডা|নীল|শ্বাস নিতে পারছি না|গলা ফুলে|জিহ্বা ফুলে|অজ্ঞান|দৃষ্টি চলে গেছে)/giu;
 
-  if (explicitNegative) return false;
+  const clauses = answer
+    .normalize("NFC")
+    .split(/\b(?:but|however|kintu|tobe|and|also|ar)\b|কিন্তু|তবে|আর|এবং|[,;।]/iu);
 
-  return /(weak|weakness|numb|numbness|cannot move|can't move|unable to move|bladder|bowel|urine control|stool control|groin|major trauma|accident|heavy bleeding|bone visible|deformity|cold|blue|severe breathing|can't breathe|cannot breathe|unable to breathe|swallow saliva|tongue swelling|throat swelling|faint|vision loss|chemical exposure|blood in stool|black stool|severe dehydration|obosh|durbol|narate parchi na|rokto|haddi dekha|thanda|nil|shash nite parchi na|gola fule|jihba fule|ojnan|দুর্বল|অবশ|নড়াতে পারছি না|নড়াতে পারছি না|রক্ত|হাড় দেখা|হাড় দেখা|ঠান্ডা|নীল|শ্বাস নিতে পারছি না|গলা ফুলে|জিহ্বা ফুলে|অজ্ঞান|দৃষ্টি চলে গেছে)/i.test(q);
+  for (const clause of clauses) {
+    for (const match of clause.matchAll(redFlagPattern)) {
+      if (conceptPolarity(clause, match[0]) !== "absent") {
+        return true;
+      }
+    }
+  }
+
+  // Affirmatives with an explanation but without a listed keyword are still
+  // affirmative; a mixed/negated explanation must not be blindly treated so.
+  if (/^(?:yes|yeah|yep|জি|হ্যাঁ|হ্যা)(?:\s|$)/iu.test(q)) {
+    return !/\b(?:no|not|without|nai|nei)\b|(?:নাই|নেই|না)/iu.test(q);
+  }
+  return false;
 }
 
 export function conversationalFollowUpReply(
