@@ -18,6 +18,7 @@ import {
   isRedFlagAttribute,
   redFlagAnswerIsPositive,
   redFlagNotice,
+  shouldHonorUrgentTriage,
   type ClinicalConceptMatch,
   type ClinicalEvidence,
   type FollowUpQuestion,
@@ -1505,18 +1506,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const hasAbsentSymptoms = clinicalEvidence.some(
-        (item) =>
-          item.key.startsWith("symptom:") && item.polarity === "absent",
-      );
-
       const llmSafetyText = llmFacts.safetySignals
         .map((item) => item.canonical_signal)
         .join(" ");
 
       urgent =
         hasEmergencySignals([safetyText, llmSafetyText].filter(Boolean).join(" ")) ||
-        Boolean(resolvedTriage.urgent && !hasAbsentSymptoms);
+        shouldHonorUrgentTriage(resolvedTriage.urgent, clinicalEvidence);
 
       if (
         !resolvedTriage.primary_specialty_name &&
